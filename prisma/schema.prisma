@@ -1,0 +1,73 @@
+// Prisma schema for the Coffee Shop Website
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+model Product {
+  id            String      @id @default(uuid())
+  nameEn        String      @unique
+  nameKh        String
+  descriptionEn String?
+  descriptionKh String?
+  price         Float
+  category      String
+  image         String
+  isAvailable   Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  orderItems    OrderItem[]
+}
+
+model Order {
+  id            String      @id @default(uuid())
+  customerName  String
+  customerPhone String
+  orderType     String // 'PickUp' | 'Delivery'
+  totalAmount   Float
+  orderStatus   String      @default("PENDING") // 'PENDING' | 'AWAITING_VERIFICATION' | 'PREPARING' | 'COMPLETED' | 'CANCELLED'
+  note          String?
+  address       String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  items         OrderItem[]
+  payment       Payment?
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+  createdAt DateTime @default(now())
+}
+
+model Payment {
+  id            String    @id @default(uuid())
+  orderId       String    @unique
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  paymentMethod String    @default("KHQR") // 'KHQR' (static shop QR, manually verified by staff)
+  paymentStatus String    @default("UNPAID") // 'UNPAID' | 'PAID' | 'FAILED'
+  paidAt        DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Admin {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
+  <g fill="none" stroke="#3A1E05" stroke-width="2">
+    <path d="M0,40 C20,10 40,10 60,40 C80,70 100,70 120,40 C140,10 160,10 160,40" />
+    <path d="M0,120 C20,90 40,90 60,120 C80,150 100,150 120,120 C140,90 160,90 160,120" />
+    <path d="M40,0 C10,20 10,40 40,60 C70,80 70,100 40,120 C10,140 10,160 40,160" />
+    <path d="M120,0 C90,20 90,40 120,60 C150,80 150,100 120,120 C90,140 90,160 120,160" />
+    <circle cx="0" cy="40" r="4" />
+    <circle cx="60" cy="40" r="4" />
+    <circle cx="120" cy="40" r="4" />
+    <circle cx="160" cy="40" r="4" />
+    <circle cx="0" cy="120" r="4" />
+    <circle cx="60" cy="120" r="4" />
+    <circle cx="120" cy="120" r="4" />
+    <circle cx="160" cy="120" r="4" />
+    <circle cx="40" cy="0" r="4" />
+    <circle cx="40" cy="60" r="4" />
+    <circle cx="40" cy="120" r="4" />
+    <circle cx="40" cy="160" r="4" />
+    <circle cx="120" cy="0" r="4" />
+    <circle cx="120" cy="60" r="4" />
+    <circle cx="120" cy="120" r="4" />
+    <circle cx="120" cy="160" r="4" />
+    <circle cx="80" cy="80" r="5" />
+  </g>
+</svg>
