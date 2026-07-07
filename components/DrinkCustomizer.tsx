@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Coffee, Minus, Plus, Snowflake, X } from "lucide-react";
+import { Coffee, Minus, Plus, Snowflake, Sparkles, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { localizedName } from "@/lib/i18n";
 import { randomSaying, type CulturalSaying } from "@/lib/i18n";
+import { randomFortune, type Fortune } from "@/lib/fortunes";
 import SayingBlock from "@/components/SayingBlock";
 import {
   EXTRA_SHOT_PRICE,
@@ -46,6 +47,12 @@ export default function DrinkCustomizer({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSaying(randomSaying());
   }, []);
+
+  // 🔮 Destiny Cup fortune teller
+  const [fortune, setFortune] = useState<Fortune | null>(null);
+  function shakeFortune() {
+    setFortune(randomFortune());
+  }
 
   const canAddShots = allowsShots(product.category);
   const surcharge = customizationSurcharge(customization);
@@ -178,6 +185,38 @@ export default function DrinkCustomizer({
               </div>
             </section>
           )}
+
+          {/* 🔮 The Destiny Cup fortune teller */}
+          <section className="rounded-2xl border-2 border-dashed border-clay-400 bg-clay-50 px-4 py-4 dark:border-clay-500 dark:bg-coffee-900/40">
+            <button
+              type="button"
+              onClick={shakeFortune}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-clay-400 to-crimson-400 py-2.5 text-sm font-bold text-white shadow-sm transition-transform hover:scale-[1.02] active:scale-95"
+            >
+              <Sparkles size={16} />
+              {lang === "km"
+                ? "ទាយឆ្នោតកែវកាហ្វេ 🔮"
+                : "Shake for Coffee Fortune 🔮"}
+            </button>
+            {fortune && (
+              <div
+                key={fortune.km}
+                className="animate-pop-in mt-3 rounded-xl bg-white/80 px-4 py-3 text-center dark:bg-coffee-800/80"
+              >
+                <p className="text-3xl">{fortune.emoji}</p>
+                <p className="mt-1 font-heading text-sm leading-relaxed text-coffee-800 dark:text-cream-50">
+                  {lang === "km" ? fortune.km : fortune.en}
+                </p>
+                <button
+                  type="button"
+                  onClick={shakeFortune}
+                  className="mt-2 text-xs font-semibold text-clay-600 underline dark:text-clay-400"
+                >
+                  {lang === "km" ? "ទាយម្ដងទៀត ✨" : "Shake again ✨"}
+                </button>
+              </div>
+            )}
+          </section>
 
           {/* Ancestral proverb */}
           {saying && (

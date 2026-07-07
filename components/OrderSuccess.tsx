@@ -2,18 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  Bike,
-  Coffee,
-  PackageCheck,
-  ScrollText,
-  XCircle,
-  type LucideIcon,
-} from "lucide-react";
+import { Sparkles, XCircle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import KhmerDivider from "@/components/KhmerDivider";
-import SayingBlock from "@/components/SayingBlock";
-import { CULTURAL } from "@/lib/i18n";
+import BongBear, { type BongBearPose } from "@/components/mascots/BongBear";
+import type { Fortune } from "@/lib/fortunes";
 import type {
   OrderStatus,
   OrderStatusResponseBody,
@@ -22,12 +14,8 @@ import type {
 
 const POLL_INTERVAL_MS = 4000;
 
-/**
- * Maps an order's lifecycle status to a position in the 3-phase customer
- * tracker: 0 = received, 1 = brewing, 2 = ready. COMPLETED collapses onto the
- * final phase; CANCELLED is handled separately.
- */
-function statusToPhase(status: OrderStatus): number {
+/** 0 = waiting (sleeping), 1 = brewing, 2 = ready (leaping). */
+function statusToPhase(status: OrderStatus): 0 | 1 | 2 {
   switch (status) {
     case "PENDING":
     case "AWAITING_VERIFICATION":
@@ -42,20 +30,24 @@ function statusToPhase(status: OrderStatus): number {
   }
 }
 
+const POSE_BY_PHASE: BongBearPose[] = ["sleep", "brew", "cheer"];
+const MASCOT_LEFT = ["12%", "50%", "88%"];
+
 export default function OrderSuccess({
   orderId,
   orderType,
+  fortune,
 }: {
   orderId: string;
   orderType: OrderType;
+  fortune?: Fortune | null;
 }) {
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
   const [status, setStatus] = useState<OrderStatus>("PREPARING");
   const statusRef = useRef<OrderStatus>("PREPARING");
 
   useEffect(() => {
     let cancelled = false;
-
     const poll = async () => {
       try {
         const res = await fetch(`/api/orders/status/${orderId}`);
@@ -67,10 +59,9 @@ export default function OrderSuccess({
           setStatus(data.orderStatus);
         }
       } catch {
-        // transient network hiccup — the next tick retries
+        // transient network hiccup — next tick retries
       }
     };
-
     poll();
     const interval = setInterval(poll, POLL_INTERVAL_MS);
     return () => {
@@ -80,24 +71,23 @@ export default function OrderSuccess({
   }, [orderId]);
 
   const shortId = `#${orderId.slice(0, 8).toUpperCase()}`;
+  const isDelivery = orderType === "Delivery";
 
   if (status === "CANCELLED") {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-4 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full border border-crimson-500 bg-crimson-50 text-crimson-600 dark:bg-coffee-800">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-crimson-400 bg-crimson-50 text-crimson-600">
           <XCircle size={36} />
         </div>
         <h1 className="mt-6 font-heading text-3xl text-coffee-900 dark:text-cream-50">
           {t("track.cancelledTitle")}
         </h1>
-        <KhmerDivider className="mt-4" />
         <p className="mt-4 text-coffee-500 dark:text-cream-300">
-          {`${t("track.orderLabel")} ${shortId} — `}
-          {t("track.cancelledDesc")}
+          {`${t("track.orderLabel")} ${shortId} — ${t("track.cancelledDesc")}`}
         </p>
         <Link
           href="/menu"
-          className="mt-8 rounded-xl bg-gold-500 px-8 py-3 font-semibold text-coffee-900 transition-colors hover:bg-gold-600"
+          className="mt-8 rounded-full bg-clay-400 px-8 py-3 font-bold text-white transition-transform hover:scale-105"
         >
           {t("success.orderSomethingElse")}
         </Link>
@@ -105,120 +95,111 @@ export default function OrderSuccess({
     );
   }
 
-  const isDelivery = orderType === "Delivery";
   const phase = statusToPhase(status);
+  const pose = POSE_BY_PHASE[phase];
 
-  const phases: {
-    icon: LucideIcon;
-    title: string;
-    desc: string;
-    animate?: boolean;
-  }[] = [
-    {
-      icon: ScrollText,
-      title: t("track.received"),
-      desc: t("track.receivedDesc"),
-    },
-    {
-      icon: Coffee,
-      title: t("track.brewing"),
-      desc: t("track.brewingDesc"),
-      animate: true,
-    },
-    {
-      icon: isDelivery ? Bike : PackageCheck,
-      title: isDelivery ? t("track.readyDelivery") : t("track.ready"),
-      desc: t("track.readyDesc"),
-    },
+  const stations = [
+    { emoji: "💤", label: t("track.received") },
+    { emoji: "☕", label: t("track.brewing") },
+    { emoji: "🎉", label: isDelivery ? t("track.readyDelivery") : t("track.ready") },
   ];
 
-  const progressWidth = phase === 0 ? "0%" : phase === 1 ? "50%" : "100%";
+  const phaseTitle =
+    phase === 2
+      ? lang === "km"
+        ? "កាហ្វេឆ្ងាញ់រួចរាល់ហើយ មកទទួលយកក្តីស្រឡាញ់ទៅ! 🎉"
+        : "Your yummy coffee is ready — come collect all the love! 🎉"
+      : phase === 1
+        ? t("track.brewing")
+        : lang === "km"
+          ? "Bong Bear កំពុងសម្រាកបន្តិច 😴"
+          : "Bong Bear is taking a little nap 😴";
+
+  const phaseDesc =
+    phase === 2
+      ? t("track.readyDesc")
+      : phase === 1
+        ? t("track.brewingDesc")
+        : t("track.receivedDesc");
 
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center px-4 py-12 text-center">
-      <span className="text-[11px] font-semibold uppercase tracking-[0.3em] text-gold-600">
-        {t("track.title")}
+    <div className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center px-4 py-10 text-center">
+      <span className="rounded-full bg-matcha-200 px-4 py-1 text-xs font-bold uppercase tracking-widest text-matcha-700">
+        {t("track.title")} · {shortId}
       </span>
-      <h1 className="mt-3 font-heading text-2xl text-coffee-900 dark:text-cream-50 sm:text-3xl">
-        {phases[phase].title}
+      <h1 className="mt-4 font-heading text-2xl font-bold leading-snug text-coffee-900 dark:text-cream-50 sm:text-3xl">
+        {phaseTitle}
       </h1>
-      <KhmerDivider className="mt-4" />
-      <p className="mt-3 text-sm text-coffee-500 dark:text-cream-300">
-        {t("track.orderLabel")} {shortId}
-      </p>
 
-      {/* Horizontal progress pipeline */}
-      <div className="relative mt-10 flex w-full justify-between">
-        {/* Track + fill */}
-        <div className="absolute left-0 right-0 top-7 h-1 rounded-full bg-coffee-200 dark:bg-coffee-700">
-          <div
-            className="h-full rounded-full bg-gold-500 transition-all duration-700 ease-out"
-            style={{ width: progressWidth }}
-          />
+      {/* 🎲 Mini board-game timeline */}
+      <div className="relative mt-8 w-full rounded-3xl border-2 border-clay-400 bg-gradient-to-b from-cream-100 to-clay-50 px-4 pb-6 pt-24 dark:from-coffee-800 dark:to-coffee-900">
+        {/* Walking mascot */}
+        <div
+          className="absolute top-2 z-10 -translate-x-1/2 transition-all duration-700 ease-out"
+          style={{ left: MASCOT_LEFT[phase] }}
+        >
+          <div className={phase === 2 ? "animate-leap" : "animate-float-cute"}>
+            <BongBear pose={pose} size={92} />
+          </div>
         </div>
 
-        {phases.map((node, index) => {
-          const Icon = node.icon;
-          const isDone = index < phase;
-          const isCurrent = index === phase;
-          const isActive = index <= phase;
-          return (
-            <div
-              key={index}
-              className="relative z-10 flex w-1/3 flex-col items-center px-1"
-            >
-              <div
-                className={`flex h-14 w-14 items-center justify-center rounded-full border-2 transition-colors ${
-                  isActive
-                    ? "border-gold-500 bg-gold-500 text-coffee-900"
-                    : "border-coffee-200 bg-cream-50 text-coffee-300 dark:border-coffee-700 dark:bg-coffee-800 dark:text-coffee-500"
-                } ${isCurrent ? "animate-urgent-pulse" : ""}`}
-              >
-                <Icon
-                  size={24}
-                  className={isCurrent && node.animate ? "animate-pulse" : ""}
-                />
-              </div>
-              <p
-                className={`mt-3 text-xs font-semibold leading-tight sm:text-sm ${
-                  isActive
-                    ? "text-coffee-900 dark:text-cream-50"
-                    : "text-coffee-400 dark:text-cream-400"
-                }`}
-              >
-                {node.title}
-              </p>
-              {isDone && (
-                <span className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-gold-600">
-                  ✓
-                </span>
-              )}
-            </div>
-          );
-        })}
+        {/* Dotted path */}
+        <div className="relative mt-2">
+          <div className="absolute left-[12%] right-[12%] top-5 border-t-4 border-dotted border-clay-400" />
+          <div className="relative flex justify-between">
+            {stations.map((station, i) => {
+              const active = i <= phase;
+              const current = i === phase;
+              return (
+                <div key={i} className="flex w-1/3 flex-col items-center">
+                  <div
+                    className={`flex h-11 w-11 items-center justify-center rounded-full border-2 text-lg transition-all ${
+                      active
+                        ? "border-gold-500 bg-gold-100"
+                        : "border-clay-100 bg-white/70 opacity-60 dark:bg-coffee-800"
+                    } ${current ? "animate-urgent-pulse scale-110" : ""}`}
+                  >
+                    {station.emoji}
+                  </div>
+                  <p
+                    className={`mt-2 text-[11px] font-bold leading-tight sm:text-xs ${
+                      active
+                        ? "text-coffee-800 dark:text-cream-50"
+                        : "text-coffee-400 dark:text-cream-400"
+                    }`}
+                  >
+                    {station.label}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      {/* Current phase description */}
-      <div className="mt-8 flex items-center gap-3 rounded-2xl bg-coffee-100 px-6 py-4 text-coffee-800 dark:bg-coffee-800 dark:text-cream-100">
-        {(() => {
-          const Icon = phases[phase].icon;
-          return <Icon className="shrink-0 animate-pulse" size={22} />;
-        })()}
-        <span className="text-left text-sm font-medium">
-          {phases[phase].desc}
-        </span>
-      </div>
+      <p className="mt-5 flex items-center gap-2 rounded-2xl bg-matcha-100 px-5 py-3 text-sm font-medium text-coffee-800 dark:bg-coffee-800 dark:text-cream-100">
+        {phase === 2 && <Sparkles size={18} className="text-gold-600" />}
+        {phaseDesc}
+      </p>
 
-      {/* Ancestral farewell blessing */}
-      <div className="mt-8 w-full rounded-2xl border border-gold-500/40 bg-gradient-to-b from-crimson-600 to-crimson-700 px-6 py-7 text-cream-50">
-        <SayingBlock saying={CULTURAL.blessing} variant="light" size="md" />
-      </div>
+      {/* 🔮 Destiny Cup fortune */}
+      {fortune && (
+        <div className="animate-pop-in mt-6 w-full rounded-3xl border-2 border-dashed border-clay-400 bg-gradient-to-b from-clay-50 to-cream-100 px-6 py-6 dark:from-coffee-800 dark:to-coffee-900">
+          <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-clay-600 dark:text-clay-400">
+            {lang === "km" ? "កែវទាយជោគជតា" : "The Destiny Cup"} 🔮
+          </p>
+          <p className="mt-2 text-4xl">{fortune.emoji}</p>
+          <p className="mt-2 font-heading text-base leading-relaxed text-coffee-900 dark:text-cream-50">
+            {lang === "km" ? fortune.km : fortune.en}
+          </p>
+        </div>
+      )}
 
       <Link
         href="/menu"
-        className="mt-8 rounded-xl bg-gold-500 px-8 py-3 font-semibold text-coffee-900 transition-colors hover:bg-gold-600"
+        className="mt-8 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105"
       >
-        {t("success.orderSomethingElse")}
+        {t("success.orderSomethingElse")} 🧋
       </Link>
     </div>
   );

@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { customerName, customerPhone, orderType, items, address, note } =
+  const { customerName, customerPhone, orderType, items, address, note, fortune } =
     body;
 
   if (!customerName?.trim() || !customerPhone?.trim()) {
@@ -140,6 +140,10 @@ export async function POST(request: NextRequest) {
           orderType,
           address: address?.trim() || null,
           note: note?.trim() || null,
+          fortune:
+            typeof fortune === "string" && fortune.trim()
+              ? fortune.trim().slice(0, 300)
+              : null,
           totalAmount,
           orderStatus: "PENDING",
           items: {

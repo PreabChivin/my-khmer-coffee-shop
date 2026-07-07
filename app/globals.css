@@ -3,13 +3,14 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #fbf8f3;
-  --foreground: #3a1e05;
+  /* Soft Milk Tea Cream background + Rich Cocoa Brown text */
+  --background: #fffdf9;
+  --foreground: #4a2c11;
 }
 
 .dark {
-  --background: #1d0e02;
-  --foreground: #f5ede1;
+  --background: #2a180b;
+  --foreground: #fff6ee;
 }
 
 html[data-font-size="sm"] {
@@ -25,44 +26,69 @@ html[data-font-size="lg"] {
   --color-foreground: var(--foreground);
   --font-sans: var(--font-kantumruy);
   --font-khmer: var(--font-kantumruy);
-  --font-heading: var(--font-moul);
+  /* Friendly, rounded pop headings (Gen-Z kawaii) instead of temple Moul. */
+  --font-heading: var(--font-kantumruy);
+  --font-display: var(--font-moul);
 
-  /* Soft Silk Cream background */
-  --color-cream-50: #fbf8f3;
-  --color-cream-100: #f5ede1;
-  --color-cream-200: #ede0cb;
-  --color-cream-300: #d9c9ae;
-  --color-cream-400: #b8a284;
+  /* ☁️ Soft Milk Tea Cream — main backgrounds & soft surfaces */
+  --color-cream-50: #fffdf9;
+  --color-cream-100: #fff7ef;
+  --color-cream-200: #ffeee4;
+  --color-cream-300: #ffe0d4;
+  --color-cream-400: #f6c9ba;
 
-  /* Deep Rosewood / Ebony — primary brand & text */
-  --color-coffee-50: #faf4ec;
-  --color-coffee-100: #f0dfc8;
-  --color-coffee-200: #e0c39a;
-  --color-coffee-300: #c99b65;
-  --color-coffee-400: #8c5a2e;
-  --color-coffee-500: #6b3d1d;
-  --color-coffee-600: #522d14;
-  --color-coffee-700: #3a1e05;
-  --color-coffee-800: #2b1604;
-  --color-coffee-900: #1d0e02;
+  /* 🍫 Rich Cocoa Brown — readable typography & cozy dark surfaces */
+  --color-coffee-50: #fbefe7;
+  --color-coffee-100: #fbe3d8;
+  --color-coffee-200: #f3cebd;
+  --color-coffee-300: #e2ab8d;
+  --color-coffee-400: #bd8360;
+  --color-coffee-500: #8a5636;
+  --color-coffee-600: #663e22;
+  --color-coffee-700: #4a2c11;
+  --color-coffee-800: #3a2210;
+  --color-coffee-900: #2a180b;
 
-  /* Antique Khmer Gold — accents, borders, highlights */
-  --color-gold-50: #fbf3df;
-  --color-gold-100: #f5e4b3;
-  --color-gold-400: #e4c767;
-  --color-gold-500: #d4af37;
-  --color-gold-600: #b08f27;
-  --color-gold-700: #8c721f;
+  /* ✨ Honey Pop Gold — accents, neon frame, the golden cup */
+  --color-gold-50: #fff8e2;
+  --color-gold-100: #ffedb4;
+  --color-gold-400: #ffd45a;
+  --color-gold-500: #ffc32e;
+  --color-gold-600: #eca617;
+  --color-gold-700: #c4860d;
 
-  /* Warm Clay accent */
-  --color-clay-50: #fceee7;
-  --color-clay-100: #f5d3c0;
-  --color-clay-400: #c15a32;
-  --color-clay-500: #a43f1d;
-  --color-clay-600: #832f14;
-  --color-clay-700: #63220d;
+  /* 🌸 Sweet Palm Sugar Pink (repurposed clay scale) */
+  --color-clay-50: #fff1ef;
+  --color-clay-100: #ffdcd7;
+  --color-clay-400: #ffb7b2;
+  --color-clay-500: #f77b74;
+  --color-clay-600: #e85d5d;
+  --color-clay-700: #c94a4a;
 
-  /* Deep Temple Charcoal / Stone — ancient Angkorian sandstone accent */
+  /* 🍵 Matcha Pastel Green — fresh interactive accents */
+  --color-matcha-50: #eefbf4;
+  --color-matcha-100: #d6f5e6;
+  --color-matcha-200: #b5ead7;
+  --color-matcha-400: #7fd1ae;
+  --color-matcha-500: #4fb98c;
+  --color-matcha-600: #2e9970;
+  --color-matcha-700: #1f7757;
+
+  /* 🫐 Berry Raspberry (repurposed crimson) — playful pop accent */
+  --color-crimson-50: #ffeef2;
+  --color-crimson-100: #ffd2dc;
+  --color-crimson-400: #ff85a1;
+  --color-crimson-500: #f4638a;
+  --color-crimson-600: #e14b76;
+  --color-crimson-700: #c23a63;
+
+  /* 💜 Lavender Milk — soft supporting pastel */
+  --color-lavender-100: #efe9ff;
+  --color-lavender-200: #ddd2ff;
+  --color-lavender-400: #b9a5f5;
+  --color-lavender-500: #9a82ea;
+
+  /* 🪨 Kept sandstone/stone ramp for the photo-hero legibility gradient */
   --color-stone-100: #d8d3cc;
   --color-stone-400: #6b6459;
   --color-stone-500: #4e463f;
@@ -70,23 +96,15 @@ html[data-font-size="lg"] {
   --color-stone-700: #2b2621;
   --color-stone-800: #201c18;
   --color-stone-900: #16130f;
-
-  /* Rich Crimson Lacquer — royal ceremonial accent */
-  --color-crimson-50: #fbeceb;
-  --color-crimson-100: #f0cbc8;
-  --color-crimson-400: #b32424;
-  --color-crimson-500: #8b0000;
-  --color-crimson-600: #6f0000;
-  --color-crimson-700: #560000;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), "Segoe UI", system-ui, sans-serif;
 }
 
-/* Subtle traditional Khmer scrollwork (Kbach Chan-inspired) overlay */
+/* Playful confetti-dot backdrop for cute sections */
 .kbach-overlay {
   position: relative;
   isolation: isolate;
@@ -97,72 +115,227 @@ body {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background-image: url("/images/kbach-pattern.svg");
-  background-repeat: repeat;
-  background-size: 160px 160px;
-  opacity: 0.08;
+  background-image:
+    radial-gradient(circle, color-mix(in srgb, var(--color-clay-400) 60%, transparent) 3px, transparent 3px),
+    radial-gradient(circle, color-mix(in srgb, var(--color-matcha-200) 70%, transparent) 3px, transparent 3px);
+  background-size: 44px 44px, 44px 44px;
+  background-position: 0 0, 22px 22px;
+  opacity: 0.5;
   pointer-events: none;
 }
 
-/* Gold-embossed "silk box" card styling */
+/* 🧁 Ultra-cute pastel card — puffy border + soft candy shadow */
 .khmer-card {
-  border: 1px solid color-mix(in srgb, var(--color-gold-500) 45%, transparent);
+  border: 2px solid color-mix(in srgb, var(--color-clay-400) 55%, transparent);
   box-shadow:
-    0 1px 0 0 color-mix(in srgb, var(--color-gold-400) 60%, transparent) inset,
-    0 8px 20px -8px rgba(58, 30, 5, 0.25);
+    0 1px 0 0 color-mix(in srgb, #ffffff 70%, transparent) inset,
+    0 10px 24px -10px color-mix(in srgb, var(--color-clay-500) 55%, transparent);
 }
 
-/* Ornamental double gold border frame (payment modal, premium panels) */
+/* Candy neon frame (KHQR modal, premium panels) */
 .khmer-frame {
-  border: 3px double var(--color-gold-500);
+  border: 3px solid var(--color-gold-500);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--color-gold-600) 70%, transparent),
-    0 20px 45px -12px rgba(29, 14, 2, 0.45);
+    0 0 0 4px color-mix(in srgb, var(--color-clay-400) 60%, transparent),
+    0 0 18px 2px color-mix(in srgb, var(--color-gold-500) 65%, transparent),
+    0 20px 45px -12px color-mix(in srgb, var(--color-crimson-500) 45%, transparent);
 }
 
-@keyframes urgent-pulse {
+/* Neon-gold pulsing glow for the interactive KHQR frame */
+@keyframes neon-gold-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.55);
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--color-clay-400) 60%, transparent),
+      0 0 14px 2px color-mix(in srgb, var(--color-gold-500) 55%, transparent);
   }
   50% {
-    box-shadow: 0 0 0 8px rgba(217, 119, 6, 0);
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--color-matcha-200) 70%, transparent),
+      0 0 30px 8px color-mix(in srgb, var(--color-gold-500) 90%, transparent);
   }
 }
 
-.animate-urgent-pulse {
-  animation: urgent-pulse 1.8s ease-in-out infinite;
+.animate-neon-frame {
+  animation: neon-gold-pulse 1.8s ease-in-out infinite;
 }
 
-/* Blinking amber glow for orders awaiting staff verification */
-@keyframes amber-glow {
-  0%,
-  100% {
-    box-shadow: 0 0 6px 1px rgba(217, 119, 6, 0.35);
-    background-color: rgba(217, 119, 6, 0.06);
-  }
-  50% {
-    box-shadow: 0 0 22px 6px rgba(217, 119, 6, 0.75);
-    background-color: rgba(217, 119, 6, 0.16);
-  }
-}
-
-.animate-amber-glow {
-  animation: amber-glow 1.4s ease-in-out infinite;
-}
-
-/* Golden metallic-inscription text shadow for major headings */
+/* Soft candy text shadow for pop headings */
 .khmer-heading-glow {
   text-shadow:
-    0 1px 0 color-mix(in srgb, var(--color-gold-400) 70%, transparent),
-    0 2px 10px color-mix(in srgb, var(--color-gold-500) 55%, transparent);
+    0 2px 0 color-mix(in srgb, var(--color-clay-400) 55%, transparent),
+    0 3px 12px color-mix(in srgb, var(--color-gold-500) 45%, transparent);
+}
+
+/* ===== Kawaii mascot & interaction animations ===== */
+
+/* Gentle squishy bounce */
+@keyframes bounce-cute {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  30% {
+    transform: translateY(-14%) scale(0.96, 1.04);
+  }
+  60% {
+    transform: translateY(0) scale(1.04, 0.96);
+  }
+}
+
+.animate-bounce-cute {
+  animation: bounce-cute 1.4s ease-in-out infinite;
+}
+
+/* Happy head tilt wiggle */
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+.animate-wiggle {
+  animation: wiggle 1.1s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+/* Slow floating idle */
+@keyframes float-cute {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float-cute {
+  animation: float-cute 3s ease-in-out infinite;
+}
+
+/* Baby Apsara celebratory dance (spin-pop) */
+@keyframes apsara-dance {
+  0% {
+    transform: scale(0) rotate(-20deg);
+    opacity: 0;
+  }
+  35% {
+    transform: scale(1.25) rotate(12deg);
+    opacity: 1;
+  }
+  55% {
+    transform: scale(0.95) rotate(-8deg);
+  }
+  75% {
+    transform: scale(1.08) rotate(6deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.animate-apsara-dance {
+  animation: apsara-dance 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Pop-in for badges / reveals */
+@keyframes pop-in {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-pop-in {
+  animation: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Sleepy Zzz drift */
+@keyframes sleep-z {
+  0% {
+    transform: translate(0, 0) scale(0.6);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(14px, -26px) scale(1.1);
+    opacity: 0;
+  }
+}
+
+.animate-sleep-z {
+  animation: sleep-z 2.4s ease-in-out infinite;
+}
+
+/* Rising coffee steam */
+@keyframes steam-rise {
+  0% {
+    transform: translateY(4px) scaleX(0.9);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(-22px) scaleX(1.15);
+    opacity: 0;
+  }
+}
+
+.animate-steam {
+  animation: steam-rise 1.8s ease-in-out infinite;
+}
+
+/* Victory leap */
+@keyframes leap {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-22px) rotate(3deg);
+  }
+}
+
+.animate-leap {
+  animation: leap 0.8s ease-in-out infinite;
+}
+
+/* Twinkle sparkle */
+@keyframes twinkle {
+  0%,
+  100% {
+    transform: scale(0.7);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+.animate-twinkle {
+  animation: twinkle 1.5s ease-in-out infinite;
 }
 
 /*
- * Thermal receipt printing (80mm rolls). When the browser print dialog opens,
- * hide the entire app chrome and render only the receipt at an 80mm width so it
- * maps cleanly to a standard thermal printer. The `visibility` technique keeps
- * ancestors laid out while blanking everything except the receipt subtree.
+ * Thermal receipt printing (80mm rolls). Hide app chrome; render only the
+ * receipt at 80mm so it maps cleanly to a thermal printer.
  */
 @media print {
   body * {
@@ -196,7 +369,38 @@ body {
   }
 }
 
-/* Ancient sandstone block texture (Angkorian frame background) */
+/* Kitchen alert: blinking amber glow for orders awaiting verification */
+@keyframes amber-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 6px 1px rgba(244, 99, 138, 0.35);
+    background-color: rgba(244, 99, 138, 0.06);
+  }
+  50% {
+    box-shadow: 0 0 22px 6px rgba(244, 99, 138, 0.7);
+    background-color: rgba(244, 99, 138, 0.16);
+  }
+}
+
+.animate-amber-glow {
+  animation: amber-glow 1.4s ease-in-out infinite;
+}
+
+@keyframes urgent-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 195, 46, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 195, 46, 0);
+  }
+}
+
+.animate-urgent-pulse {
+  animation: urgent-pulse 1.8s ease-in-out infinite;
+}
+
+/* Photo-hero legibility gradient texture */
 .stone-texture {
   background-color: var(--color-stone-700);
   background-image:

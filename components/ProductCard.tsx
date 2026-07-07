@@ -7,6 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { localizedDescription, localizedName } from "@/lib/i18n";
 import { isCustomizable } from "@/lib/customization";
 import DrinkCustomizer from "@/components/DrinkCustomizer";
+import ApsaraChibi from "@/components/mascots/ApsaraChibi";
 import type { DrinkCustomization, ProductDTO } from "@/lib/types";
 
 /**
@@ -61,7 +62,13 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
   }
 
   return (
-    <div className="khmer-card group relative flex flex-col overflow-hidden rounded-2xl bg-cream-50 transition-shadow hover:shadow-lg dark:bg-coffee-800">
+    <div className="khmer-card group relative flex flex-col overflow-hidden rounded-3xl bg-cream-50 transition-shadow hover:shadow-lg dark:bg-coffee-800">
+      {/* 👶✨ Baby Apsara dances when an item is added */}
+      {justAdded && (
+        <div className="pointer-events-none absolute left-1/2 top-1/3 z-20 -translate-x-1/2">
+          <ApsaraChibi hearts size={96} className="animate-apsara-dance" />
+        </div>
+      )}
       <div className="relative aspect-square w-full overflow-hidden bg-coffee-100">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

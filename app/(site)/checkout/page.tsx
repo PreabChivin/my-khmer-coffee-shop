@@ -8,6 +8,7 @@ import { useFulfillment } from "@/contexts/FulfillmentContext";
 import StaticPaymentModal from "@/components/StaticPaymentModal";
 import OrderSuccess from "@/components/OrderSuccess";
 import { describeCustomization } from "@/lib/customization";
+import { randomFortune, type Fortune } from "@/lib/fortunes";
 import type { CheckoutResponseBody, OrderType } from "@/lib/types";
 
 interface CheckoutState {
@@ -28,11 +29,16 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [checkout, setCheckout] = useState<CheckoutState | null>(null);
   const [isApproved, setIsApproved] = useState(false);
+  // 🔮 Destiny Cup fortune assigned to this order at checkout.
+  const [fortune, setFortune] = useState<Fortune | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
+
+    const chosenFortune = randomFortune();
+    setFortune(chosenFortune);
 
     try {
       const res = await fetch("/api/checkout", {
@@ -44,6 +50,7 @@ export default function CheckoutPage() {
           orderType,
           address: orderType === "Delivery" ? address : undefined,
           note: note || undefined,
+          fortune: chosenFortune.km,
           items: items.map((item) => ({
             productId: item.productId,
             quantity: item.quantity,
@@ -73,7 +80,13 @@ export default function CheckoutPage() {
   }
 
   if (isApproved && checkout) {
-    return <OrderSuccess orderId={checkout.orderId} orderType={orderType} />;
+    return (
+      <OrderSuccess
+        orderId={checkout.orderId}
+        orderType={orderType}
+        fortune={fortune}
+      />
+    );
   }
 
   if (items.length === 0) {

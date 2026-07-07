@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import KhmerDivider from "@/components/KhmerDivider";
 import FulfillmentBar from "@/components/FulfillmentBar";
+import BongBear from "@/components/mascots/BongBear";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const SLIDES = [
@@ -77,6 +78,11 @@ export default function HeroSlideshow() {
         </p>
 
         <FulfillmentBar />
+      </div>
+
+      {/* 🐻 Bong Bear greets guests from the corner */}
+      <div className="pointer-events-none absolute bottom-3 left-3 z-10 hidden animate-float-cute drop-shadow-lg sm:block">
+        <BongBear pose="wave" size={120} />
       </div>
 
       {/* Slide navigation */}

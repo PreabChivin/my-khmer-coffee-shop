@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BadgeCheck, ImageOff, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import BongBear from "@/components/mascots/BongBear";
 import type { OrderStatusResponseBody } from "@/lib/types";
 
 interface StaticPaymentModalProps {
@@ -15,29 +16,6 @@ interface StaticPaymentModalProps {
 const POLL_INTERVAL_MS = 3000;
 const ACCOUNT_NAME =
   process.env.NEXT_PUBLIC_KHQR_ACCOUNT_NAME ?? "[បញ្ចូលឈ្មោះពិតរបស់អ្នក]";
-
-function TempleCornerOrnament({ className }: { className: string }) {
-  return (
-    <svg
-      viewBox="0 0 40 40"
-      aria-hidden="true"
-      className={`pointer-events-none absolute h-8 w-8 text-gold-500 ${className}`}
-    >
-      <path
-        d="M20 2 L26 12 L20 10 L14 12 Z"
-        fill="currentColor"
-      />
-      <rect x="17" y="10" width="6" height="5" fill="currentColor" />
-      <path
-        d="M2 20 C2 10 10 2 20 2 M20 2 C30 2 38 10 38 20"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
-      <circle cx="20" cy="2" r="2" fill="currentColor" />
-    </svg>
-  );
-}
 
 export default function StaticPaymentModal({
   orderId,
@@ -91,13 +69,8 @@ export default function StaticPaymentModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-coffee-900/70 p-4 backdrop-blur-sm">
-      <div className="khmer-frame stone-texture relative w-full max-w-sm rounded-2xl p-2">
-        <TempleCornerOrnament className="-left-1 -top-1" />
-        <TempleCornerOrnament className="-right-1 -top-1 -scale-x-100" />
-        <TempleCornerOrnament className="-bottom-1 -left-1 -scale-y-100" />
-        <TempleCornerOrnament className="-bottom-1 -right-1 -scale-x-100 -scale-y-100" />
-
-        <div className="relative rounded-xl bg-cream-50 px-6 py-7 dark:bg-coffee-800">
+      <div className="khmer-frame animate-neon-frame relative w-full max-w-sm rounded-3xl bg-cream-100 p-2 dark:bg-coffee-900">
+        <div className="relative rounded-[1.35rem] bg-cream-50 px-6 py-7 dark:bg-coffee-800">
           <button
             type="button"
             onClick={onClose}
@@ -153,17 +126,26 @@ export default function StaticPaymentModal({
             </p>
           </div>
 
-          <p className="mt-5 rounded-xl border border-gold-500/40 bg-gold-50 px-4 py-3 text-center text-xs leading-relaxed text-coffee-700 dark:bg-coffee-900 dark:text-cream-200">
-            សូមមេត្តាពិនិត្យផ្ទៀងផ្ទាត់ឈ្មោះគណនី{" "}
-            <span className="font-semibold">{ACCOUNT_NAME}</span>{" "}
-            ជាមុនសិន មុននឹងធ្វើការបញ្ជូនបច្ច័យ។
-            <br />
-            <span className="text-coffee-500 dark:text-cream-300">
-              Note: The receiving account is registered under{" "}
-              <span className="font-semibold">{ACCOUNT_NAME}</span>. Please
-              kindly verify this name before completing your transfer.
-            </span>
-          </p>
+          {/* 🐻 Bong Bear reminds you to verify the account name */}
+          <div className="mt-5 flex items-end gap-2">
+            <div className="shrink-0 animate-float-cute">
+              <BongBear pose="wave" size={72} />
+            </div>
+            <div className="relative flex-1 rounded-2xl rounded-bl-none border-2 border-clay-400 bg-clay-50 px-3 py-2.5 text-left dark:bg-coffee-900">
+              <p className="text-xs font-semibold leading-relaxed text-coffee-800 dark:text-cream-100">
+                ផ្ទៀងឈ្មោះពិត{" "}
+                <span className="text-clay-600 dark:text-clay-400">
+                  {ACCOUNT_NAME}
+                </span>{" "}
+                មុននឹងបាញ់បច្ច័យណា៎ប្រូ/ស៊ីស! 😘
+              </p>
+              <p className="mt-1 text-[11px] leading-snug text-coffee-500 dark:text-cream-300">
+                Double-check the name{" "}
+                <span className="font-semibold">{ACCOUNT_NAME}</span> before you
+                send — okayy bestie! ✨
+              </p>
+            </div>
+          </div>
 
           {hasConfirmed ? (
             <div className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-gold-100 px-4 py-3 text-sm font-medium text-gold-700 dark:bg-coffee-900 dark:text-gold-400">

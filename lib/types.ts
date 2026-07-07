@@ -67,6 +67,8 @@ export interface CheckoutRequestBody {
   orderType: OrderType;
   address?: string;
   note?: string;
+  /** "Destiny Cup" fortune revealed to the customer, stored with the order. */
+  fortune?: string | null;
   items: CheckoutRequestItem[];
 }
 

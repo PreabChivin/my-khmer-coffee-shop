@@ -3,12 +3,15 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+// Ultra-cute, playful naming (Gen-Z Khmer pop). nameEn is kept stable as the
+// upsert key so re-seeding updates existing rows in place instead of creating
+// duplicates; the cuteness lives in the Khmer names + bilingual descriptions.
 const PRODUCTS = [
   {
     nameEn: "Espresso",
-    nameKh: "កាហ្វេអេស្ព្រេសសូ",
-    descriptionEn: "A concentrated shot of our signature dark roast blend.",
-    descriptionKh: "កាហ្វេចម្រាញ់ ដុតខ្មៅចាស់ រសជាតិខ្លាំង។",
+    nameKh: "អេស្ព្រេសសូ ដាស់ខួរ ⚡",
+    descriptionEn: "One tiny but mighty shot to wake up your inner genius! ⚡",
+    descriptionKh: "កាហ្វេមួយ Shot តូចតែខ្លាំង ដាស់ខួរក្បាលឱ្យភ្ញាក់ភ្លាម! ⚡",
     price: 2.5,
     category: "Coffee",
     image: "/images/espresso.jpg",
@@ -16,9 +19,9 @@ const PRODUCTS = [
   },
   {
     nameEn: "Americano",
-    nameKh: "កាហ្វេអាមេរិកាណូ",
-    descriptionEn: "Espresso diluted with hot water for a smooth, bold cup.",
-    descriptionKh: "កាហ្វេអេស្ព្រេសលាយជាមួយទឹកក្តៅ រសជាតិសុភាព។",
+    nameKh: "អាមេរិកាណូ ស្រាលចិត្ត 😎",
+    descriptionEn: "Smooth, bold, and easy-going — your chill daily buddy. 😎",
+    descriptionKh: "ស្រាល ស្រួលផឹក ជាមិត្តភក្តិរាល់ថ្ងៃរបស់អ្នក 😎",
     price: 2.75,
     category: "Coffee",
     image: "/images/americano.jpg",
@@ -26,10 +29,9 @@ const PRODUCTS = [
   },
   {
     nameEn: "Cappuccino",
-    nameKh: "កាហ្វេកាពូឈីណូ",
-    descriptionEn:
-      "Espresso topped with steamed milk and a thick layer of foam.",
-    descriptionKh: "កាហ្វេអេស្ព្រេសជាមួយទឹកដោះគោក្តៅ និងបពុរដ៏ក្រាស់។",
+    nameKh: "កាពូឈីណូ ពពុះ ☁️",
+    descriptionEn: "A fluffy cloud of milk foam hugging your espresso. ☁️💗",
+    descriptionKh: "ពពុះទឹកដោះគោទន់ ដូចពពកកំពុងឱបកាហ្វេ ☁️💗",
     price: 3.5,
     category: "Coffee",
     image: "/images/cappuccino.jpg",
@@ -37,9 +39,9 @@ const PRODUCTS = [
   },
   {
     nameEn: "Iced Latte",
-    nameKh: "កាហ្វេឡាតេទឹកកក",
-    descriptionEn: "Chilled espresso and milk over ice — smooth and refreshing.",
-    descriptionKh: "កាហ្វេឡាតេជាមួយទឹកកក ស្រស់ស្រាយបំផុត។",
+    nameKh: "ឡាតេ ត្រជាក់ចិត្ត 🧊",
+    descriptionEn: "Cool, creamy, and oh-so-refreshing over ice. 🧊🥛",
+    descriptionKh: "ត្រជាក់ ក្រែម ស្រស់ស្រាយបំផុតលើទឹកកក 🧊🥛",
     price: 3.75,
     category: "Coffee",
     image: "/images/iced-latte.jpg",
@@ -47,11 +49,11 @@ const PRODUCTS = [
   },
   {
     nameEn: "Angkor Palm Sugar Latte",
-    nameKh: "កាហ្វេត្នោតអង្គរ",
+    nameKh: "ឡាតេស្ករត្នោតអង្គរ 🌴💛",
     descriptionEn:
-      "Our signature latte sweetened with rich, smoky palm sugar — a tribute to the sugar palms surrounding Angkor.",
+      "Our superstar! Smoky-sweet palm sugar straight from the sugar palms of Angkor. 🌴✨",
     descriptionKh:
-      "កាហ្វេឡាតេពិសេស លាយជាមួយស្ករត្នោតដុតក្រអូប ជាកិត្តិយសដល់ដើមត្នោតជុំវិញប្រាសាទអង្គរ។",
+      "តារាហាងរបស់យើង! ផ្អែមស្ករត្នោតដុតក្រអូប ពីដើមត្នោតជុំវិញអង្គរ 🌴✨",
     price: 3.95,
     category: "Coffee",
     image: "/images/palm-sugar-latte.jpg",
@@ -59,9 +61,11 @@ const PRODUCTS = [
   },
   {
     nameEn: "Mocha",
-    nameKh: "កាហ្វេម៉ូកា",
-    descriptionEn: "Espresso, steamed milk, and rich chocolate syrup.",
-    descriptionKh: "កាហ្វេអេស្ព្រេស ទឹកដោះគោក្តៅ និងសុីរ៉ូសូកូឡាខ្លាញ់។",
+    nameKh: "ម៉ូកា សូកូឡា 🍫",
+    descriptionEn:
+      "Chocolate + espresso = the cutest power couple. 🍫💕 (Restocking soon!)",
+    descriptionKh:
+      "សូកូឡា + កាហ្វេ = គូស្នេហ៍ដ៏ស្រស់ស្អាត 🍫💕 (ជិតមកវិញហើយ!)",
     price: 4.0,
     category: "Coffee",
     image: "/images/mocha.jpg",
@@ -69,10 +73,9 @@ const PRODUCTS = [
   },
   {
     nameEn: "Khmer Forest Green Tea",
-    nameKh: "តែបៃតងព្រៃនគរ",
-    descriptionEn:
-      "Delicately steeped green tea leaves, echoing the ancient forests surrounding Angkor.",
-    descriptionKh: "ស្លឹកតែបៃតងជ្រលក់យ៉ាងម៉ត់ចត់ ដូចព្រៃបុរាណជុំវិញអង្គរវត្ត។",
+    nameKh: "តែបៃតងព្រៃនគរ 🍵🌿",
+    descriptionEn: "Fresh, leafy, and calming — a little green hug in a cup. 🍵🌿",
+    descriptionKh: "ស្រស់ ក្រអូបស្លឹកតែ ស្ងប់ចិត្ត ដូចការឱបពីធម្មជាតិ 🍵🌿",
     price: 2.25,
     category: "Tea",
     image: "/images/green-tea.jpg",
@@ -80,9 +83,9 @@ const PRODUCTS = [
   },
   {
     nameEn: "Milk Tea",
-    nameKh: "តែទឹកដោះគោ",
-    descriptionEn: "Classic milk tea with chewy tapioca pearls.",
-    descriptionKh: "តែទឹកដោះគោបុរាណ ជាមួយពែងម៉្សៅដាប់ដួច។",
+    nameKh: "តែទឹកដោះគោ បុកបា 🧋",
+    descriptionEn: "Classic milk tea with bouncy boba pearls — chew chew! 🧋💗",
+    descriptionKh: "តែទឹកដោះគោ ជាមួយពែងបុកបាទន់ៗ ទំពាសប្បាយចិត្ត! 🧋💗",
     price: 3.25,
     category: "Tea",
     image: "/images/milk-tea.jpg",
@@ -90,9 +93,9 @@ const PRODUCTS = [
   },
   {
     nameEn: "Butter Croissant",
-    nameKh: "នំក្រូអាសង់ប៊ឺ",
-    descriptionEn: "Flaky, buttery croissant baked fresh every morning.",
-    descriptionKh: "នំក្រូអាសង់ប៊ឺ ដុតថ្មីរាល់ព្រឹក ក្រែមរលាយក្នុងមាត់។",
+    nameKh: "នំគ្រ័រសាំង ប៊ឺ 🥐",
+    descriptionEn: "Flaky, buttery, fresh from the oven every morning. 🥐☀️",
+    descriptionKh: "ស្រួយ ក្រអូបប៊ឺ ដុតស្រស់ថ្មីរាល់ព្រឹក 🥐☀️",
     price: 2.0,
     category: "Bakery",
     image: "/images/croissant.jpg",
@@ -100,9 +103,9 @@ const PRODUCTS = [
   },
   {
     nameEn: "Blueberry Muffin",
-    nameKh: "នំម័ហ្វិនប៊្លូបឺរី",
-    descriptionEn: "Moist muffin loaded with real blueberries.",
-    descriptionKh: "នំម័ហ្វិនទន់ជាមួយផ្លែប៊្លូបឺរីពិតប្រាកដ។",
+    nameKh: "នំម៉ាហ្វិន ប៊្លូបឺរី 🫐",
+    descriptionEn: "Soft, fluffy muffin bursting with real blueberries. 🫐🧁",
+    descriptionKh: "នំទន់ ពោរពេញដោយផ្លែប៊្លូបឺរីពិតៗ 🫐🧁",
     price: 2.5,
     category: "Bakery",
     image: "/images/muffin.jpg",
@@ -110,9 +113,9 @@ const PRODUCTS = [
   },
   {
     nameEn: "Classic Cheesecake",
-    nameKh: "នំឈីសខេកបុរាណ",
-    descriptionEn: "Rich and creamy cheesecake on a buttery graham crust.",
-    descriptionKh: "នំឈីសខេកក្រែមទន់ លើសំបកនំក្រូបុរាណ។",
+    nameKh: "នំឈីសខេក ក្រែម 🍰",
+    descriptionEn: "Rich, creamy, dreamy cheesecake on a buttery crust. 🍰💛",
+    descriptionKh: "ក្រែមឈីសទន់ស្រទន់ ដ៏ឆ្ងាញ់ លើសំបកនំប៊ឺ 🍰💛",
     price: 3.95,
     category: "Bakery",
     image: "/images/cheesecake.jpg",
@@ -120,11 +123,11 @@ const PRODUCTS = [
   },
   {
     nameEn: "Traditional Khmer Layer Cake",
-    nameKh: "នំស្លឹកចាកបុរាណ",
+    nameKh: "នំស្លឹកចាក បុរាណ 💚",
     descriptionEn:
-      "A steamed pandan and coconut layer cake, chewy and lightly sweet — a beloved Khmer heirloom recipe.",
+      "Pandan-coconut steamed layers — chewy, dreamy, a Khmer heirloom treat. 💚🥥",
     descriptionKh:
-      "នំចំណិតបៃតង-សធ្វើពីទឹកដូង និងស្លឹកតើយ ជាបន្តបន្ទាប់ស្រទាប់ រសជាតិផ្អែមស្រទន់ តាមរូបមន្តបុរាណខ្មែរ។",
+      "នំចំណិតបៃតង-ស ធ្វើពីទឹកដូង និងស្លឹកតើយ ទន់ស្អិត តាមរូបមន្តបុរាណខ្មែរ 💚🥥",
     price: 2.75,
     category: "Bakery",
     image: "/images/khmer-layer-cake.svg",

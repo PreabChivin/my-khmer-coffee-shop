@@ -32,9 +32,11 @@ model Order {
   customerPhone String
   orderType     String // 'PickUp' | 'Delivery'
   totalAmount   Float
-  orderStatus   String      @default("PENDING") // 'PENDING' | 'AWAITING_VERIFICATION' | 'PREPARING' | 'COMPLETED' | 'CANCELLED'
+  orderStatus   String      @default("PENDING") // 'PENDING' | 'AWAITING_VERIFICATION' | 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED'
   note          String?
   address       String?
+  fortune       String? // "Destiny Cup" coffee fortune assigned at checkout
+
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   items         OrderItem[]

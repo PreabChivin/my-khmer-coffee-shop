@@ -13,6 +13,7 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { localizedName, type TranslationKey } from "@/lib/i18n";
 import { describeCustomization } from "@/lib/customization";
+import Confetti from "@/components/Confetti";
 import ReceiptModal, {
   type ReceiptOrder,
 } from "@/components/admin/ReceiptModal";
@@ -119,6 +120,7 @@ export default function OrdersBoard() {
   const [isLoading, setIsLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [receiptOrder, setReceiptOrder] = useState<ReceiptOrder | null>(null);
+  const [confettiKey, setConfettiKey] = useState(0);
   const knownAwaitingIds = useRef<Set<string> | null>(null);
 
   useEffect(() => {
@@ -170,6 +172,8 @@ export default function OrdersBoard() {
         setOrders((prev) =>
           prev.map((o) => (o.id === orderId ? updated : o))
         );
+        // 🎉 Celebrate the moment an order is approved into the kitchen.
+        if (orderStatus === "PREPARING") setConfettiKey(Date.now());
       }
     } finally {
       setUpdatingId(null);
@@ -426,6 +430,8 @@ export default function OrdersBoard() {
           onClose={() => setReceiptOrder(null)}
         />
       )}
+
+      {confettiKey > 0 && <Confetti key={confettiKey} />}
     </div>
   );
 }
