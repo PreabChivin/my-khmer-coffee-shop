@@ -42,14 +42,17 @@ model Order {
 }
 
 model OrderItem {
-  id        String   @id @default(uuid())
-  orderId   String
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id])
-  quantity  Int
-  price     Float
-  createdAt DateTime @default(now())
+  id             String   @id @default(uuid())
+  orderId        String
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id])
+  quantity       Int
+  price          Float // unit price INCLUDING customization surcharge
+  // Per-line drink customization (sweetness / ice / extra shots). Null for
+  // non-customizable items such as bakery. Stored as JSONB.
+  customizations Json?
+  createdAt      DateTime @default(now())
 }
 
 model Payment {

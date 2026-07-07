@@ -158,6 +158,44 @@ body {
     0 2px 10px color-mix(in srgb, var(--color-gold-500) 55%, transparent);
 }
 
+/*
+ * Thermal receipt printing (80mm rolls). When the browser print dialog opens,
+ * hide the entire app chrome and render only the receipt at an 80mm width so it
+ * maps cleanly to a standard thermal printer. The `visibility` technique keeps
+ * ancestors laid out while blanking everything except the receipt subtree.
+ */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .receipt-print-area,
+  .receipt-print-area * {
+    visibility: visible;
+  }
+
+  .receipt-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    padding: 4mm;
+    margin: 0;
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+}
+
 /* Ancient sandstone block texture (Angkorian frame background) */
 .stone-texture {
   background-color: var(--color-stone-700);

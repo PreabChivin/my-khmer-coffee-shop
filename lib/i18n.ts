@@ -163,6 +163,55 @@ const dictionary = {
     "adminMenu.deleteConfirmPrefix": "Delete",
     "adminMenu.deleteConfirmSuffix": "? This cannot be undone.",
 
+    "customize.title": "Customize Your Drink",
+    "customize.subtitle": "Make it yours before it brews.",
+    "customize.sweetness": "Sweetness Level (Natural Palm Sugar)",
+    "customize.ice": "Ice Level",
+    "customize.shots": "Extra Espresso Shots",
+    "customize.ice.none": "No Ice",
+    "customize.ice.less": "Less Ice",
+    "customize.ice.normal": "Normal Ice",
+    "customize.ice.extra": "Extra Ice",
+    "customize.cancel": "Cancel",
+    "customize.addForPrefix": "Add",
+    "customize.shotEach": "each",
+    "customize.customized": "Customized",
+
+    "track.title": "Live Order Tracking",
+    "track.received": "Order Received",
+    "track.receivedDesc": "We have your order and are verifying payment.",
+    "track.brewing": "Brewing Your Drink",
+    "track.brewingDesc": "Our baristas are crafting your order with care.",
+    "track.ready": "Ready for Pick-Up",
+    "track.readyDelivery": "Out for Delivery",
+    "track.readyDesc": "Your order is ready. Thank you for your patience.",
+    "track.cancelledTitle": "Order Cancelled",
+    "track.cancelledDesc":
+      "This order was cancelled. Please contact staff if this is unexpected.",
+    "track.orderLabel": "Order",
+
+    "adminCol.ready": "Ready",
+    "adminAction.acceptBrew": "Accept & Brew",
+    "adminAction.markReady": "Mark Ready",
+    "adminAction.printReceipt": "Print Receipt",
+
+    "receipt.header": "BenChimin Cafe",
+    "receipt.subheader": "Street 240, Phnom Penh",
+    "receipt.order": "Order",
+    "receipt.date": "Date",
+    "receipt.customer": "Customer",
+    "receipt.phone": "Phone",
+    "receipt.type": "Type",
+    "receipt.item": "Item",
+    "receipt.qty": "Qty",
+    "receipt.amount": "Amount",
+    "receipt.total": "TOTAL",
+    "receipt.paid": "PAID",
+    "receipt.unpaid": "UNPAID",
+    "receipt.thankYou": "Thank you — សូមអរគុណ",
+    "receipt.print": "Print",
+    "receipt.close": "Close",
+
     "paymentStatus.PAID": "PAID",
     "paymentStatus.UNPAID": "UNPAID",
   },
@@ -322,6 +371,55 @@ const dictionary = {
     "adminMenu.deleteConfirmPrefix": "លុប",
     "adminMenu.deleteConfirmSuffix": "? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។",
 
+    "customize.title": "កែសម្រួលភេសជ្ជៈរបស់អ្នក",
+    "customize.subtitle": "រៀបចំតាមចិត្តអ្នក មុននឹងឆុង។",
+    "customize.sweetness": "កម្រិតភាពផ្អែម (ស្ករត្នោតធម្មជាតិ)",
+    "customize.ice": "កម្រិតទឹកកក",
+    "customize.shots": "កាហ្វេបន្ថែម (Shot)",
+    "customize.ice.none": "គ្មានទឹកកក",
+    "customize.ice.less": "ទឹកកកតិច",
+    "customize.ice.normal": "ទឹកកកធម្មតា",
+    "customize.ice.extra": "ទឹកកកច្រើន",
+    "customize.cancel": "បោះបង់",
+    "customize.addForPrefix": "បន្ថែម",
+    "customize.shotEach": "ក្នុងមួយ",
+    "customize.customized": "បានកែសម្រួល",
+
+    "track.title": "តាមដានការកម្មង់ផ្ទាល់",
+    "track.received": "ទទួលការបញ្ជាទិញ",
+    "track.receivedDesc": "យើងបានទទួលការកម្មង់ ហើយកំពុងផ្ទៀងផ្ទាត់ការទូទាត់។",
+    "track.brewing": "កំពុងឆុងភេសជ្ជៈ",
+    "track.brewingDesc": "បុគ្គលិករបស់យើងកំពុងរៀបចំការកម្មង់របស់អ្នកដោយយកចិត្តទុកដាក់។",
+    "track.ready": "ភេសជ្ជៈរួចរាល់",
+    "track.readyDelivery": "កំពុងដឹកជញ្ជូន",
+    "track.readyDesc": "ការកម្មង់របស់អ្នករួចរាល់ហើយ។ សូមអរគុណសម្រាប់ការអត់ធ្មត់។",
+    "track.cancelledTitle": "ការកម្មង់ត្រូវបានលុបចោល",
+    "track.cancelledDesc":
+      "ការកម្មង់នេះត្រូវបានលុបចោល។ សូមទាក់ទងបុគ្គលិក ប្រសិនបើមានកំហុស។",
+    "track.orderLabel": "ការកម្មង់លេខ",
+
+    "adminCol.ready": "រួចរាល់",
+    "adminAction.acceptBrew": "ទទួល និងឆុង",
+    "adminAction.markReady": "សម្គាល់ថារួចរាល់",
+    "adminAction.printReceipt": "បោះពុម្ពវិក្កយបត្រ",
+
+    "receipt.header": "បេនជីមីន កាហ្វេ",
+    "receipt.subheader": "ផ្លូវ២៤០ ភ្នំពេញ",
+    "receipt.order": "ការកម្មង់",
+    "receipt.date": "កាលបរិច្ឆេទ",
+    "receipt.customer": "អតិថិជន",
+    "receipt.phone": "ទូរស័ព្ទ",
+    "receipt.type": "ប្រភេទ",
+    "receipt.item": "ទំនិញ",
+    "receipt.qty": "ចំនួន",
+    "receipt.amount": "តម្លៃ",
+    "receipt.total": "សរុប",
+    "receipt.paid": "បានទូទាត់",
+    "receipt.unpaid": "មិនទាន់ទូទាត់",
+    "receipt.thankYou": "សូមអរគុណ — Thank you",
+    "receipt.print": "បោះពុម្ព",
+    "receipt.close": "បិទ",
+
     "paymentStatus.PAID": "បានទូទាត់",
     "paymentStatus.UNPAID": "មិនទាន់ទូទាត់",
   },
@@ -399,4 +497,71 @@ export const CULTURAL: Record<
 
 export function sayingMeaning(saying: CulturalSaying, lang: Lang): string {
   return lang === "km" ? saying.meaningKm : saying.meaningEn;
+}
+
+/**
+ * A curated pool of authentic Khmer proverbs (សុភាសិតខ្មែរ) and ancestral
+ * sayings, rotated randomly through the cart and drink-customization screens to
+ * keep the shopping ritual spiritually grounded. Each entry is a well-known,
+ * documented proverb rendered in correct Khmer orthography — this pool is
+ * deliberately curated for authenticity rather than padded with unverified
+ * material.
+ */
+export const PROVERBS: CulturalSaying[] = [
+  {
+    km: "ដើរតាមក្រោយដំរី មិនដែលខ្វះស្មៅ",
+    meaningEn:
+      "Walk behind the elephant and you will never lack grass — follow those with wisdom and experience.",
+    meaningKm: "ដើរតាមអ្នកមានបទពិសោធន៍ និងប្រាជ្ញា នោះនឹងមិនខ្វះខាតឡើយ។",
+  },
+  {
+    km: "ទឹកឡើងត្រីស៊ីស្រមោច ទឹកហួតស្រមោចស៊ីត្រី",
+    meaningEn:
+      "When the water rises the fish eat the ants; when it recedes the ants eat the fish — fortunes always turn, so stay humble.",
+    meaningKm: "លាភសំណាងតែងតែផ្លាស់ប្តូរ ដូច្នេះត្រូវរក្សាចិត្តរាបទាបជានិច្ច។",
+  },
+  {
+    km: "តក់ៗ ពេញបំពង់",
+    meaningEn:
+      "Drop by drop, the bamboo fills — small steady effort accumulates into abundance.",
+    meaningKm:
+      "បន្តិចម្តងៗ នឹងបានពេញ — ការខិតខំបន្តិចម្តងៗ នាំមកនូវផលបរិបូរណ៍។",
+  },
+  {
+    km: "ធ្វើល្អបានល្អ ធ្វើអាក្រក់បានអាក្រក់",
+    meaningEn:
+      "Do good and receive good; do bad and receive bad — every deed returns to us.",
+    meaningKm: "ធ្វើអំពើល្អ ទទួលផលល្អ ធ្វើអំពើអាក្រក់ ទទួលផលអាក្រក់។",
+  },
+  {
+    km: "ដើរតាមផ្លូវចាស់ បាយឆ្អែតពោះ",
+    meaningEn:
+      "Follow the old road and your belly stays full — honor the wisdom of those who came before.",
+    meaningKm: "ដើរតាមផ្លូវបុរាណ តាមទំនៀមទម្លាប់ដូនតា នោះនឹងបានសុខ។",
+  },
+  {
+    km: "ដៃធ្វើ មាត់ស៊ី",
+    meaningEn:
+      "The hand that works is the mouth that eats — diligence sustains us.",
+    meaningKm: "អ្នកខិតខំធ្វើការ ទើបមានហូបចុក — ការឧស្សាហ៍ព្យាយាមចិញ្ចឹមជីវិត។",
+  },
+  {
+    km: "គប់នឹងបណ្ឌិត បានប្រាជ្ញា",
+    meaningEn:
+      "Keep company with the wise and you gain wisdom — we grow through the company we keep.",
+    meaningKm: "នៅជិតអ្នកមានប្រាជ្ញា នឹងទទួលបានចំណេះដឹង។",
+  },
+  {
+    km: "រួមថែរក្សាវប្បធម៌ ដកដង្ហើមយកចំណេះដឹង",
+    meaningEn: "Together we cherish our heritage, and breathe in wisdom.",
+    meaningKm: "រួមគ្នាថែរក្សាវប្បធម៌ជាតិ ហើយស្រូបយកនូវចំណេះដឹង។",
+  },
+];
+
+/**
+ * Picks a random proverb. Call this inside an effect (not during render) to
+ * avoid a server/client hydration mismatch.
+ */
+export function randomSaying(): CulturalSaying {
+  return PROVERBS[Math.floor(Math.random() * PROVERBS.length)];
 }

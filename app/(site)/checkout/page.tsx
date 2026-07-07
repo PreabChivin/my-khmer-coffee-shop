@@ -7,6 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useFulfillment } from "@/contexts/FulfillmentContext";
 import StaticPaymentModal from "@/components/StaticPaymentModal";
 import OrderSuccess from "@/components/OrderSuccess";
+import { describeCustomization } from "@/lib/customization";
 import type { CheckoutResponseBody, OrderType } from "@/lib/types";
 
 interface CheckoutState {
@@ -46,6 +47,7 @@ export default function CheckoutPage() {
           items: items.map((item) => ({
             productId: item.productId,
             quantity: item.quantity,
+            customization: item.customization,
           })),
         }),
       });
@@ -71,7 +73,7 @@ export default function CheckoutPage() {
   }
 
   if (isApproved && checkout) {
-    return <OrderSuccess orderId={checkout.orderId} />;
+    return <OrderSuccess orderId={checkout.orderId} orderType={orderType} />;
   }
 
   if (items.length === 0) {
@@ -202,17 +204,22 @@ export default function CheckoutPage() {
           <ul className="space-y-3">
             {items.map((item) => {
               const name = lang === "km" ? item.nameKh : item.nameEn;
+              const mods = describeCustomization(item.customization, lang);
               return (
-                <li
-                  key={item.productId}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <span className="text-coffee-700 dark:text-cream-200">
-                    {name} × {item.quantity}
-                  </span>
-                  <span className="font-medium text-coffee-900 dark:text-cream-50">
-                    ${(item.price * item.quantity).toFixed(2)}
-                  </span>
+                <li key={item.lineId} className="text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-coffee-700 dark:text-cream-200">
+                      {name} × {item.quantity}
+                    </span>
+                    <span className="font-medium text-coffee-900 dark:text-cream-50">
+                      ${(item.price * item.quantity).toFixed(2)}
+                    </span>
+                  </div>
+                  {mods.length > 0 && (
+                    <p className="mt-0.5 text-xs text-coffee-400 dark:text-cream-400">
+                      {mods.join(" · ")}
+                    </p>
+                  )}
                 </li>
               );
             })}

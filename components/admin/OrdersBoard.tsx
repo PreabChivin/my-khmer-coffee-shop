@@ -7,11 +7,20 @@ import {
   Clock,
   DollarSign,
   ListOrdered,
+  Printer,
   Store,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { localizedName, type TranslationKey } from "@/lib/i18n";
-import type { OrderStatus, PaymentStatus } from "@/lib/types";
+import { describeCustomization } from "@/lib/customization";
+import ReceiptModal, {
+  type ReceiptOrder,
+} from "@/components/admin/ReceiptModal";
+import type {
+  DrinkCustomization,
+  OrderStatus,
+  PaymentStatus,
+} from "@/lib/types";
 
 // Short two-tone chime generated with the Web Audio API — no external audio
 // asset needed, and it works the moment a new order needs staff attention.
@@ -48,6 +57,7 @@ interface AdminOrderItem {
   quantity: number;
   price: number;
   product: { nameEn: string; nameKh: string };
+  customizations?: DrinkCustomization | null;
 }
 
 interface AdminOrder {
@@ -70,20 +80,31 @@ const COLUMNS: { key: OrderStatus; titleKey: TranslationKey }[] = [
   { key: "PENDING", titleKey: "adminCol.pending" },
   { key: "AWAITING_VERIFICATION", titleKey: "adminCol.awaitingVerification" },
   { key: "PREPARING", titleKey: "adminCol.preparing" },
+  { key: "READY", titleKey: "adminCol.ready" },
   { key: "COMPLETED", titleKey: "adminCol.completed" },
   { key: "CANCELLED", titleKey: "adminCol.cancelled" },
 ];
 
+// Kitchen lifecycle: Accept & Brew advances the customer's live tracker to
+// phase 2 (Brewing); Mark Ready advances it to phase 3 (Ready for Pick-Up).
 const NEXT_STATUS: Partial<
   Record<OrderStatus, { labelKey: TranslationKey; next: OrderStatus }>
 > = {
-  PENDING: { labelKey: "adminAction.approveOrder", next: "PREPARING" },
+  PENDING: { labelKey: "adminAction.acceptBrew", next: "PREPARING" },
   AWAITING_VERIFICATION: {
-    labelKey: "adminAction.approveOrder",
+    labelKey: "adminAction.acceptBrew",
     next: "PREPARING",
   },
-  PREPARING: { labelKey: "adminAction.markCompleted", next: "COMPLETED" },
+  PREPARING: { labelKey: "adminAction.markReady", next: "READY" },
+  READY: { labelKey: "adminAction.markCompleted", next: "COMPLETED" },
 };
+
+const ACTIVE_STATUSES: OrderStatus[] = [
+  "PENDING",
+  "AWAITING_VERIFICATION",
+  "PREPARING",
+  "READY",
+];
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString([], {
@@ -97,6 +118,7 @@ export default function OrdersBoard() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [receiptOrder, setReceiptOrder] = useState<ReceiptOrder | null>(null);
   const knownAwaitingIds = useRef<Set<string> | null>(null);
 
   useEffect(() => {
@@ -158,7 +180,7 @@ export default function OrdersBoard() {
     .filter((o) => o.payment?.paymentStatus === "PAID")
     .reduce((sum, o) => sum + o.totalAmount, 0);
   const activeOrders = orders.filter((o) =>
-    ["PENDING", "AWAITING_VERIFICATION", "PREPARING"].includes(o.orderStatus)
+    ACTIVE_STATUSES.includes(o.orderStatus)
   ).length;
   const completedOrders = orders.filter(
     (o) => o.orderStatus === "COMPLETED"
@@ -230,7 +252,7 @@ export default function OrdersBoard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {COLUMNS.map((column) => {
           const columnOrders = orders.filter(
             (o) => o.orderStatus === column.key
@@ -308,12 +330,26 @@ export default function OrdersBoard() {
                         {order.address ? ` · ${order.address}` : ""}
                       </div>
 
-                      <ul className="mt-2 space-y-0.5 text-xs text-coffee-600 dark:text-cream-300">
-                        {order.items.map((item) => (
-                          <li key={item.id}>
-                            {item.quantity}× {localizedName(item.product, lang)}
-                          </li>
-                        ))}
+                      <ul className="mt-2 space-y-1 text-xs text-coffee-600 dark:text-cream-300">
+                        {order.items.map((item) => {
+                          const mods = describeCustomization(
+                            item.customizations ?? null,
+                            lang
+                          );
+                          return (
+                            <li key={item.id}>
+                              <span>
+                                {item.quantity}×{" "}
+                                {localizedName(item.product, lang)}
+                              </span>
+                              {mods.length > 0 && (
+                                <span className="block pl-4 text-[11px] text-clay-500 dark:text-clay-400">
+                                  {mods.join(" · ")}
+                                </span>
+                              )}
+                            </li>
+                          );
+                        })}
                       </ul>
 
                       {order.note && (
@@ -356,9 +392,16 @@ export default function OrdersBoard() {
                         </button>
                       )}
 
-                      {["PENDING", "AWAITING_VERIFICATION", "PREPARING"].includes(
-                        order.orderStatus
-                      ) && (
+                      <button
+                        type="button"
+                        onClick={() => setReceiptOrder(order)}
+                        className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-gold-500/60 py-1.5 text-xs font-semibold text-gold-700 transition-colors hover:bg-gold-50 dark:text-gold-400 dark:hover:bg-coffee-800"
+                      >
+                        <Printer size={13} />
+                        {t("adminAction.printReceipt")}
+                      </button>
+
+                      {ACTIVE_STATUSES.includes(order.orderStatus) && (
                         <button
                           type="button"
                           disabled={updatingId === order.id}
@@ -376,6 +419,13 @@ export default function OrdersBoard() {
           );
         })}
       </div>
+
+      {receiptOrder && (
+        <ReceiptModal
+          order={receiptOrder}
+          onClose={() => setReceiptOrder(null)}
+        />
+      )}
     </div>
   );
 }

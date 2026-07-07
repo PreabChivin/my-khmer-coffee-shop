@@ -8,24 +8,78 @@ import {
   useMemo,
   useState,
 } from "react";
-import type { CartItem, ProductDTO } from "@/lib/types";
+import type { CartItem, DrinkCustomization, ProductDTO } from "@/lib/types";
+import {
+  customizationKey,
+  customizationSurcharge,
+} from "@/lib/customization";
 
 const STORAGE_KEY = "cafe-cart";
+
+interface AddItemOptions {
+  quantity?: number;
+  customization?: DrinkCustomization | null;
+}
 
 interface CartContextValue {
   items: CartItem[];
   isCartOpen: boolean;
   totalItems: number;
   subtotal: number;
-  addItem: (product: ProductDTO, quantity?: number) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  addItem: (product: ProductDTO, options?: AddItemOptions) => void;
+  removeItem: (lineId: string) => void;
+  updateQuantity: (lineId: string, quantity: number) => void;
   clearCart: () => void;
   openCart: () => void;
   closeCart: () => void;
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
+
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+/** Composite identity so identical products with identical customization merge. */
+function lineKey(productId: string, customization: DrinkCustomization | null) {
+  return `${productId}:${customizationKey(customization)}`;
+}
+
+/**
+ * Normalizes a persisted cart back into the current CartItem shape. Older carts
+ * (pre-customization) lacked lineId/basePrice/category — we backfill those so a
+ * returning customer's saved cart doesn't crash the new UI.
+ */
+function normalizeStoredCart(raw: unknown): CartItem[] {
+  if (!Array.isArray(raw)) return [];
+  const items: CartItem[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== "object") continue;
+    const it = entry as Record<string, unknown>;
+    if (typeof it.productId !== "string") continue;
+    const price = typeof it.price === "number" ? it.price : 0;
+    const basePrice = typeof it.basePrice === "number" ? it.basePrice : price;
+    const quantity =
+      typeof it.quantity === "number" && it.quantity > 0
+        ? Math.floor(it.quantity)
+        : 1;
+    items.push({
+      lineId:
+        typeof it.lineId === "string" ? it.lineId : crypto.randomUUID(),
+      productId: it.productId,
+      nameEn: typeof it.nameEn === "string" ? it.nameEn : "",
+      nameKh: typeof it.nameKh === "string" ? it.nameKh : "",
+      price,
+      basePrice,
+      image: typeof it.image === "string" ? it.image : "",
+      quantity,
+      category: typeof it.category === "string" ? it.category : "",
+      customization:
+        (it.customization as DrinkCustomization | null | undefined) ?? null,
+    });
+  }
+  return items;
+}
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -39,7 +93,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (stored) setItems(JSON.parse(stored));
+      if (stored) setItems(normalizeStoredCart(JSON.parse(stored)));
     } catch {
       // ignore corrupted local storage
     }
@@ -51,41 +105,57 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items, hasHydrated]);
 
-  const addItem = useCallback((product: ProductDTO, quantity = 1) => {
-    setItems((prev) => {
-      const existing = prev.find((item) => item.productId === product.id);
-      if (existing) {
-        return prev.map((item) =>
-          item.productId === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
+  const addItem = useCallback(
+    (product: ProductDTO, options?: AddItemOptions) => {
+      const quantity = options?.quantity ?? 1;
+      const customization = options?.customization ?? null;
+      const unitPrice = round2(
+        product.price + customizationSurcharge(customization)
+      );
+      const key = lineKey(product.id, customization);
+
+      setItems((prev) => {
+        const existing = prev.find(
+          (item) => lineKey(item.productId, item.customization) === key
         );
-      }
-      return [
-        ...prev,
-        {
-          productId: product.id,
-          nameEn: product.nameEn,
-          nameKh: product.nameKh,
-          price: product.price,
-          image: product.image,
-          quantity,
-        },
-      ];
-    });
+        if (existing) {
+          return prev.map((item) =>
+            item.lineId === existing.lineId
+              ? { ...item, quantity: item.quantity + quantity }
+              : item
+          );
+        }
+        return [
+          ...prev,
+          {
+            lineId: crypto.randomUUID(),
+            productId: product.id,
+            nameEn: product.nameEn,
+            nameKh: product.nameKh,
+            price: unitPrice,
+            basePrice: product.price,
+            image: product.image,
+            quantity,
+            category: product.category,
+            customization,
+          },
+        ];
+      });
+    },
+    []
+  );
+
+  const removeItem = useCallback((lineId: string) => {
+    setItems((prev) => prev.filter((item) => item.lineId !== lineId));
   }, []);
 
-  const removeItem = useCallback((productId: string) => {
-    setItems((prev) => prev.filter((item) => item.productId !== productId));
-  }, []);
-
-  const updateQuantity = useCallback((productId: string, quantity: number) => {
+  const updateQuantity = useCallback((lineId: string, quantity: number) => {
     setItems((prev) => {
       if (quantity <= 0) {
-        return prev.filter((item) => item.productId !== productId);
+        return prev.filter((item) => item.lineId !== lineId);
       }
       return prev.map((item) =>
-        item.productId === productId ? { ...item, quantity } : item
+        item.lineId === lineId ? { ...item, quantity } : item
       );
     });
   }, []);

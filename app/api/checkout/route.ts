@@ -1,9 +1,18 @@
 import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import {
+  customizationSurcharge,
+  sanitizeCustomization,
+} from "@/lib/customization";
 import type { CheckoutRequestBody, CheckoutResponseBody } from "@/lib/types";
 
 const VALID_ORDER_TYPES = ["PickUp", "Delivery"];
+
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}
 
 export async function POST(request: NextRequest) {
   let body: CheckoutRequestBody;
@@ -81,12 +90,44 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const totalAmount = items.reduce((sum, item) => {
+  // Build line items with server-authoritative pricing: the customization is
+  // re-sanitized against the product category here so a client can never inject
+  // arbitrary modifiers or a discounted surcharge. Unit price = base + shots.
+  const lineItems = items.map((item) => {
     const product = productMap.get(item.productId)!;
-    return sum + product.price * item.quantity;
-  }, 0);
+    const customization = sanitizeCustomization(
+      product.category,
+      item.customization
+    );
+    const unitPrice = round2(
+      product.price + customizationSurcharge(customization)
+    );
+    return {
+      productId: product.id,
+      quantity: item.quantity,
+      price: unitPrice,
+      customization,
+    };
+  });
 
-  const roundedTotal = Math.round(totalAmount * 100) / 100;
+  const totalAmount = round2(
+    lineItems.reduce((sum, line) => sum + line.price * line.quantity, 0)
+  );
+
+  // Typed explicitly as the unchecked-create variant so Prisma accepts the
+  // JSONB customizations column. Prisma.DbNull writes a true SQL NULL for
+  // non-customizable items; a typed interface must be cast to InputJsonValue.
+  const itemsCreate: Prisma.OrderItemUncheckedCreateWithoutOrderInput[] =
+    lineItems.map((line) => ({
+      productId: line.productId,
+      quantity: line.quantity,
+      price: line.price,
+      customizations:
+        line.customization === null
+          ? Prisma.DbNull
+          : (line.customization as unknown as Prisma.InputJsonValue),
+    }));
+
   const orderId = randomUUID();
 
   try {
@@ -99,17 +140,10 @@ export async function POST(request: NextRequest) {
           orderType,
           address: address?.trim() || null,
           note: note?.trim() || null,
-          totalAmount: roundedTotal,
+          totalAmount,
           orderStatus: "PENDING",
           items: {
-            create: items.map((item) => {
-              const product = productMap.get(item.productId)!;
-              return {
-                productId: product.id,
-                quantity: item.quantity,
-                price: product.price,
-              };
-            }),
+            create: itemsCreate,
           },
         },
       });
@@ -127,7 +161,7 @@ export async function POST(request: NextRequest) {
 
     const responseBody: CheckoutResponseBody = {
       orderId: order.id,
-      totalAmount: roundedTotal,
+      totalAmount,
     };
 
     return NextResponse.json(responseBody, { status: 201 });
