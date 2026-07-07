@@ -17,6 +17,7 @@ export default function CartSidebar() {
     updateQuantity,
     removeItem,
     subtotal,
+    vibe,
   } = useCart();
   const { lang, t } = useLanguage();
 
@@ -71,6 +72,19 @@ export default function CartSidebar() {
             </div>
           ) : (
             <>
+              {/* 🔮 Daily Vibe Check injected from the configurator */}
+              {vibe && (
+                <div className="animate-pop-in mb-4 rounded-2xl border-2 border-dashed border-clay-400 bg-gradient-to-r from-clay-50 to-cream-100 px-4 py-3 text-center dark:from-coffee-800 dark:to-coffee-900">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-clay-600 dark:text-clay-400">
+                    {lang === "km" ? "ជតារាសីថ្ងៃនេះ" : "Today's Vibe Check"} 🔮
+                  </p>
+                  <p className="mt-1 text-2xl">{vibe.emoji}</p>
+                  <p className="text-xs font-medium leading-relaxed text-coffee-800 dark:text-cream-100">
+                    {lang === "km" ? vibe.km : vibe.en}
+                  </p>
+                </div>
+              )}
+
               <ul className="space-y-4">
                 {items.map((item) => {
                   const name = lang === "km" ? item.nameKh : item.nameEn;

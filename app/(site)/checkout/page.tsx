@@ -17,7 +17,7 @@ interface CheckoutState {
 }
 
 export default function CheckoutPage() {
-  const { items, subtotal, clearCart } = useCart();
+  const { items, subtotal, clearCart, vibe } = useCart();
   const { lang, t } = useLanguage();
   // Fulfillment choice (Delivery/Pick-up + address) carries over from the
   // homepage fulfillment bar so the customer doesn't re-enter it here.
@@ -37,7 +37,8 @@ export default function CheckoutPage() {
     setError(null);
     setIsSubmitting(true);
 
-    const chosenFortune = randomFortune();
+    // Prefer the "Daily Vibe Check" the customer already shook in the cart.
+    const chosenFortune = vibe ?? randomFortune();
     setFortune(chosenFortune);
 
     try {

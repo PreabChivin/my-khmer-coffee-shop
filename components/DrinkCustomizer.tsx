@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Coffee, Minus, Plus, Snowflake, Sparkles, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCart } from "@/contexts/CartContext";
 import { localizedName } from "@/lib/i18n";
 import { randomSaying, type CulturalSaying } from "@/lib/i18n";
 import { randomFortune, type Fortune } from "@/lib/fortunes";
@@ -48,10 +49,13 @@ export default function DrinkCustomizer({
     setSaying(randomSaying());
   }, []);
 
-  // 🔮 Destiny Cup fortune teller
+  // 🔮 Daily Vibe Check — reveals a fortune AND injects it into the cart.
+  const { setVibe } = useCart();
   const [fortune, setFortune] = useState<Fortune | null>(null);
   function shakeFortune() {
-    setFortune(randomFortune());
+    const f = randomFortune();
+    setFortune(f);
+    setVibe(f);
   }
 
   const canAddShots = allowsShots(product.category);
@@ -195,8 +199,8 @@ export default function DrinkCustomizer({
             >
               <Sparkles size={16} />
               {lang === "km"
-                ? "ទាយឆ្នោតកែវកាហ្វេ 🔮"
-                : "Shake for Coffee Fortune 🔮"}
+                ? "គ្រវីកែវទាយជតារាសី 🔮"
+                : "Shake for Daily Vibe Check! 🔮"}
             </button>
             {fortune && (
               <div

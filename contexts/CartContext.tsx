@@ -13,6 +13,7 @@ import {
   customizationKey,
   customizationSurcharge,
 } from "@/lib/customization";
+import type { Fortune } from "@/lib/fortunes";
 
 const STORAGE_KEY = "cafe-cart";
 
@@ -26,6 +27,9 @@ interface CartContextValue {
   isCartOpen: boolean;
   totalItems: number;
   subtotal: number;
+  /** 🔮 "Daily Vibe Check" fortune injected from the drink configurator. */
+  vibe: Fortune | null;
+  setVibe: (fortune: Fortune | null) => void;
   addItem: (product: ProductDTO, options?: AddItemOptions) => void;
   removeItem: (lineId: string) => void;
   updateQuantity: (lineId: string, quantity: number) => void;
@@ -85,6 +89,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [hasHydrated, setHasHydrated] = useState(false);
+  const [vibe, setVibe] = useState<Fortune | null>(null);
 
   useEffect(() => {
     // Deliberately deferred to an effect: localStorage is unavailable during
@@ -160,7 +165,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const clearCart = useCallback(() => setItems([]), []);
+  const clearCart = useCallback(() => {
+    setItems([]);
+    setVibe(null);
+  }, []);
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
 
@@ -179,6 +187,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     isCartOpen,
     totalItems,
     subtotal,
+    vibe,
+    setVibe,
     addItem,
     removeItem,
     updateQuantity,

@@ -104,36 +104,31 @@ export default function OrderSuccess({
     { emoji: "🎉", label: isDelivery ? t("track.readyDelivery") : t("track.ready") },
   ];
 
-  const phaseTitle =
+  const phaseNote =
     phase === 2
       ? lang === "km"
         ? "កាហ្វេឆ្ងាញ់រួចរាល់ហើយ មកទទួលយកក្តីស្រឡាញ់ទៅ! 🎉"
         : "Your yummy coffee is ready — come collect all the love! 🎉"
-      : phase === 1
-        ? t("track.brewing")
-        : lang === "km"
-          ? "Bong Bear កំពុងសម្រាកបន្តិច 😴"
-          : "Bong Bear is taking a little nap 😴";
-
-  const phaseDesc =
-    phase === 2
-      ? t("track.readyDesc")
       : phase === 1
         ? t("track.brewingDesc")
         : t("track.receivedDesc");
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center px-4 py-10 text-center">
-      <span className="rounded-full bg-matcha-200 px-4 py-1 text-xs font-bold uppercase tracking-widest text-matcha-700">
-        {t("track.title")} · {shortId}
-      </span>
-      <h1 className="mt-4 font-heading text-2xl font-bold leading-snug text-coffee-900 dark:text-cream-50 sm:text-3xl">
-        {phaseTitle}
+      {/* 🎉 Celebratory headline */}
+      <div className="animate-pop-in text-6xl">🎉</div>
+      <h1 className="mt-3 font-heading text-2xl font-extrabold leading-snug text-coffee-900 dark:text-cream-50 sm:text-3xl">
+        {t("success.headline")}
       </h1>
+      <span className="mt-3 rounded-full bg-matcha-200 px-4 py-1 text-xs font-bold uppercase tracking-widest text-matcha-700">
+        {t("track.orderLabel")} {shortId}
+      </span>
+      <p className="mt-4 max-w-md text-sm leading-relaxed text-coffee-600 dark:text-cream-200">
+        {t("success.gratitude")}
+      </p>
 
       {/* 🎲 Mini board-game timeline */}
       <div className="relative mt-8 w-full rounded-3xl border-2 border-clay-400 bg-gradient-to-b from-cream-100 to-clay-50 px-4 pb-6 pt-24 dark:from-coffee-800 dark:to-coffee-900">
-        {/* Walking mascot */}
         <div
           className="absolute top-2 z-10 -translate-x-1/2 transition-all duration-700 ease-out"
           style={{ left: MASCOT_LEFT[phase] }}
@@ -143,7 +138,6 @@ export default function OrderSuccess({
           </div>
         </div>
 
-        {/* Dotted path */}
         <div className="relative mt-2">
           <div className="absolute left-[12%] right-[12%] top-5 border-t-4 border-dotted border-clay-400" />
           <div className="relative flex justify-between">
@@ -179,14 +173,14 @@ export default function OrderSuccess({
 
       <p className="mt-5 flex items-center gap-2 rounded-2xl bg-matcha-100 px-5 py-3 text-sm font-medium text-coffee-800 dark:bg-coffee-800 dark:text-cream-100">
         {phase === 2 && <Sparkles size={18} className="text-gold-600" />}
-        {phaseDesc}
+        {phaseNote}
       </p>
 
-      {/* 🔮 Destiny Cup fortune */}
+      {/* 🔮 Daily Vibe Check reveal */}
       {fortune && (
         <div className="animate-pop-in mt-6 w-full rounded-3xl border-2 border-dashed border-clay-400 bg-gradient-to-b from-clay-50 to-cream-100 px-6 py-6 dark:from-coffee-800 dark:to-coffee-900">
           <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-clay-600 dark:text-clay-400">
-            {lang === "km" ? "កែវទាយជោគជតា" : "The Destiny Cup"} 🔮
+            {lang === "km" ? "ជតារាសីថ្ងៃនេះ" : "Today's Vibe Check"} 🔮
           </p>
           <p className="mt-2 text-4xl">{fortune.emoji}</p>
           <p className="mt-2 font-heading text-base leading-relaxed text-coffee-900 dark:text-cream-50">
@@ -195,11 +189,25 @@ export default function OrderSuccess({
         </div>
       )}
 
+      {/* 💖 Golden Words of Closure — giant pink heart container */}
+      <div className="relative mt-8 w-full overflow-hidden rounded-[2rem] bg-gradient-to-br from-clay-400 via-crimson-400 to-clay-500 px-6 py-9 text-white shadow-xl">
+        <span className="pointer-events-none absolute -right-4 -top-4 text-7xl opacity-20">
+          💖
+        </span>
+        <span className="pointer-events-none absolute -bottom-5 -left-3 text-6xl opacity-20">
+          🧸
+        </span>
+        <div className="animate-bounce-cute text-5xl">💖</div>
+        <p className="mx-auto mt-4 max-w-md font-heading text-base font-bold leading-relaxed drop-shadow-sm">
+          {t("success.closure")}
+        </p>
+      </div>
+
       <Link
         href="/menu"
-        className="mt-8 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105"
+        className="mt-8 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
       >
-        {t("success.orderSomethingElse")} 🧋
+        {t("success.orderSomethingElse")}
       </Link>
     </div>
   );

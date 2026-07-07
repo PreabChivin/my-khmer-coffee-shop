@@ -31,6 +31,21 @@ function AngkorSilhouette() {
   );
 }
 
+// Playful Gen-Z slang tags sprinkled onto menu cards. Picked deterministically
+// per product (by id) so the server and client always render the same one — no
+// hydration mismatch.
+const SLANGS: { km: string; en: string }[] = [
+  { km: "ពេញចិត្តស្តូក ⭐", en: "total fave ⭐" },
+  { km: "ឆ្ងាញ់ម៉ៅដាច់ 🔥", en: "slaps hard 🔥" },
+  { km: "ប្រូ/ស៊ីស ត្រូវសាក 💖", en: "bestie must-try 💖" },
+];
+
+function slangFor(id: string) {
+  let sum = 0;
+  for (let i = 0; i < id.length; i++) sum += id.charCodeAt(i);
+  return SLANGS[sum % SLANGS.length];
+}
+
 export default function ProductCard({ product }: { product: ProductDTO }) {
   const { addItem } = useCart();
   const { lang, t } = useLanguage();
@@ -40,6 +55,7 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
   const name = localizedName(product, lang);
   const description = localizedDescription(product, lang);
   const customizable = isCustomizable(product.category);
+  const slang = slangFor(product.id);
 
   function flashAdded() {
     setJustAdded(true);
@@ -76,6 +92,12 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
           alt={name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
+        {/* 💖 Playful slang badge */}
+        {product.isAvailable && (
+          <span className="absolute left-2 top-2 rounded-full bg-clay-400/95 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
+            {lang === "km" ? slang.km : slang.en}
+          </span>
+        )}
         {!product.isAvailable && (
           <div className="absolute inset-0 flex items-center justify-center bg-coffee-900/60">
             <span className="rounded-full bg-cream-50 px-4 py-1.5 text-sm font-semibold text-coffee-900">
@@ -105,7 +127,7 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
           type="button"
           onClick={handleAdd}
           disabled={!product.isAvailable}
-          className="relative mt-4 flex items-center justify-center gap-2 rounded-xl bg-gold-500 py-2.5 text-sm font-semibold text-coffee-900 transition-colors hover:bg-gold-600 disabled:cursor-not-allowed disabled:bg-coffee-200 disabled:text-coffee-400"
+          className="relative mt-4 flex items-center justify-center gap-2 rounded-full bg-gold-500 py-2.5 text-sm font-bold text-coffee-900 shadow-sm transition-transform hover:-translate-y-0.5 hover:scale-[1.03] hover:bg-gold-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-coffee-200 disabled:text-coffee-400 disabled:hover:translate-y-0 disabled:hover:scale-100"
         >
           {customizable ? <SlidersHorizontal size={16} /> : <Plus size={16} />}
           {justAdded ? t("menu.added") : t("menu.addToCart")}
