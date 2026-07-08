@@ -1,23 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Gift, Sparkles } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useGroupCart } from "@/contexts/GroupCartContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useFulfillment } from "@/contexts/FulfillmentContext";
 import StaticPaymentModal from "@/components/StaticPaymentModal";
 import OrderSuccess from "@/components/OrderSuccess";
-import { describeCustomization } from "@/lib/customization";
+import StampCard from "@/components/StampCard";
+import { customizationSurcharge, describeCustomization } from "@/lib/customization";
 import { randomFortune, type Fortune } from "@/lib/fortunes";
-import type { CheckoutResponseBody, OrderType } from "@/lib/types";
+import { normalizePhone } from "@/lib/loyalty";
+import { localizedName } from "@/lib/i18n";
+import type {
+  CheckoutResponseBody,
+  DrinkCustomization,
+  LoyaltyStatusResponseBody,
+  OrderType,
+} from "@/lib/types";
 
 interface CheckoutState {
   orderId: string;
   totalAmount: number;
+  isGift: boolean;
+}
+
+/** Unified checkout line, sourced from either the personal cart or a shared
+ *  Bestie Cart — lets the rest of the page not care which one is active. */
+interface CheckoutLine {
+  key: string;
+  name: string;
+  unitPrice: number;
+  quantity: number;
+  customization: DrinkCustomization | null;
+  contributorName: string | null;
+  productId: string;
 }
 
 export default function CheckoutPage() {
-  const { items, subtotal, clearCart, vibe } = useCart();
+  const { items, clearCart, vibe } = useCart();
+  const {
+    isGroupMode,
+    groupId,
+    state: groupState,
+    leaveGroupSession,
+  } = useGroupCart();
   const { lang, t } = useLanguage();
   // Fulfillment choice (Delivery/Pick-up + address) carries over from the
   // homepage fulfillment bar so the customer doesn't re-enter it here.
@@ -31,6 +60,67 @@ export default function CheckoutPage() {
   const [isApproved, setIsApproved] = useState(false);
   // 🔮 Destiny Cup fortune assigned to this order at checkout.
   const [fortune, setFortune] = useState<Fortune | null>(null);
+
+  // 🐻 Loyalty status, fetched (debounced) as the phone number is typed —
+  // not available for Bestie Cart group orders (ambiguous whose stamps).
+  const [loyaltyStatus, setLoyaltyStatus] = useState<LoyaltyStatusResponseBody | null>(
+    null
+  );
+  const [wantRedeem, setWantRedeem] = useState(false);
+  const [redeemIndex, setRedeemIndex] = useState(0);
+  const normalizedPhone = normalizePhone(customerPhone);
+
+  useEffect(() => {
+    if (isGroupMode || normalizedPhone.length < 6) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLoyaltyStatus(null);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/loyalty/${normalizedPhone}`);
+        if (!res.ok || cancelled) return;
+        setLoyaltyStatus(await res.json());
+      } catch {
+        // transient network hiccup — the user can still check out
+      }
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [normalizedPhone, isGroupMode]);
+
+  // 💖 Gift a Drink
+  const [isGift, setIsGift] = useState(false);
+  const [giftRecipientName, setGiftRecipientName] = useState("");
+  const [giftMessage, setGiftMessage] = useState("");
+
+  const lines: CheckoutLine[] = isGroupMode
+    ? (groupState?.items ?? []).map((item) => ({
+        key: item.id,
+        name: localizedName(
+          { nameEn: item.product.nameEn, nameKh: item.product.nameKh },
+          lang
+        ),
+        unitPrice: item.product.price + customizationSurcharge(item.customization),
+        quantity: item.quantity,
+        customization: item.customization,
+        contributorName: item.contributorName,
+        productId: item.productId,
+      }))
+    : items.map((item) => ({
+        key: item.lineId,
+        name: lang === "km" ? item.nameKh : item.nameEn,
+        unitPrice: item.price,
+        quantity: item.quantity,
+        customization: item.customization,
+        contributorName: null,
+        productId: item.productId,
+      }));
+
+  const total = lines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -52,10 +142,16 @@ export default function CheckoutPage() {
           address: orderType === "Delivery" ? address : undefined,
           note: note || undefined,
           fortune: chosenFortune.km,
-          items: items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            customization: item.customization,
+          redeemFreeDrinkIndex: !isGroupMode && wantRedeem ? redeemIndex : null,
+          isGift,
+          giftRecipientName: isGift ? giftRecipientName : undefined,
+          giftMessage: isGift ? giftMessage : undefined,
+          groupCartId: isGroupMode ? groupId : undefined,
+          items: lines.map((line) => ({
+            productId: line.productId,
+            quantity: line.quantity,
+            customization: line.customization,
+            contributorName: line.contributorName,
           })),
         }),
       });
@@ -77,7 +173,8 @@ export default function CheckoutPage() {
 
   function handleApproved() {
     setIsApproved(true);
-    clearCart();
+    if (isGroupMode) leaveGroupSession();
+    else clearCart();
   }
 
   if (isApproved && checkout) {
@@ -86,21 +183,22 @@ export default function CheckoutPage() {
         orderId={checkout.orderId}
         orderType={orderType}
         fortune={fortune}
+        isGift={checkout.isGift}
       />
     );
   }
 
-  if (items.length === 0) {
+  if (lines.length === 0) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-4 text-center">
         <h1 className="font-heading text-2xl text-coffee-900 dark:text-cream-50">
-          {t("checkout.emptyCartTitle")}
+          {isGroupMode ? t("group.bannerTitle") : t("checkout.emptyCartTitle")}
         </h1>
         <p className="mt-2 text-coffee-500 dark:text-cream-300">
-          {t("checkout.emptyCartHint")}
+          {isGroupMode ? t("group.empty") : t("checkout.emptyCartHint")}
         </p>
         <Link
-          href="/menu"
+          href={isGroupMode ? `/menu?group=${groupId}` : "/menu"}
           className="mt-6 rounded-xl bg-gold-500 px-6 py-3 font-semibold text-coffee-900 hover:bg-gold-600"
         >
           {t("checkout.browseMenu")}
@@ -120,6 +218,12 @@ export default function CheckoutPage() {
           onSubmit={handleSubmit}
           className="khmer-card space-y-5 rounded-2xl bg-cream-50 p-6 dark:bg-coffee-800 md:col-span-3"
         >
+          {isGroupMode && (
+            <p className="rounded-xl bg-clay-50 px-4 py-2.5 text-xs font-medium text-clay-600 dark:bg-coffee-900 dark:text-clay-400">
+              {t("group.checkoutNote")}
+            </p>
+          )}
+
           <div>
             <label className="mb-1 block text-sm font-medium text-coffee-700 dark:text-cream-200">
               {t("checkout.fullName")}
@@ -145,6 +249,46 @@ export default function CheckoutPage() {
               placeholder={t("checkout.phonePlaceholder")}
             />
           </div>
+
+          {/* 🐻 Cute Bear Stamps — hidden for Bestie Cart group orders */}
+          {!isGroupMode && loyaltyStatus && (
+            <div className="space-y-2">
+              <StampCard
+                stampsTowardNext={loyaltyStatus.stampsTowardNext}
+                availableFreeDrinks={loyaltyStatus.availableFreeDrinks}
+              />
+              {loyaltyStatus.availableFreeDrinks > 0 && (
+                <div className="rounded-xl border border-gold-500/40 bg-gold-50 px-4 py-3 dark:bg-coffee-900">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-coffee-800 dark:text-cream-100">
+                    <input
+                      type="checkbox"
+                      checked={wantRedeem}
+                      onChange={(e) => setWantRedeem(e.target.checked)}
+                    />
+                    {t("loyalty.redeemToggle")}
+                  </label>
+                  {wantRedeem && (
+                    <div className="mt-2">
+                      <label className="mb-1 block text-xs text-coffee-500 dark:text-cream-300">
+                        {t("loyalty.redeemOn")}
+                      </label>
+                      <select
+                        value={redeemIndex}
+                        onChange={(e) => setRedeemIndex(Number(e.target.value))}
+                        className="w-full rounded-lg border border-coffee-300 bg-cream-50 px-3 py-2 text-sm text-coffee-900 outline-none dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
+                      >
+                        {lines.map((line, i) => (
+                          <option key={line.key} value={i}>
+                            {line.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <div>
             <span className="mb-1 block text-sm font-medium text-coffee-700 dark:text-cream-200">
@@ -196,6 +340,37 @@ export default function CheckoutPage() {
             />
           </div>
 
+          {/* 💖 Gift a Drink */}
+          <div className="rounded-xl border-2 border-dashed border-crimson-400/60 bg-crimson-50/50 px-4 py-3 dark:bg-coffee-900/40">
+            <label className="flex items-center gap-2 text-sm font-semibold text-coffee-800 dark:text-cream-100">
+              <input
+                type="checkbox"
+                checked={isGift}
+                onChange={(e) => setIsGift(e.target.checked)}
+              />
+              <Gift size={15} className="text-crimson-500" />
+              {t("gift.checkboxLabel")}
+            </label>
+            {isGift && (
+              <div className="mt-3 space-y-3">
+                <input
+                  required
+                  value={giftRecipientName}
+                  onChange={(e) => setGiftRecipientName(e.target.value)}
+                  placeholder={t("gift.recipientPlaceholder")}
+                  className="w-full rounded-xl border border-coffee-300 bg-cream-50 px-4 py-2.5 text-coffee-900 outline-none focus:border-crimson-400 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
+                />
+                <textarea
+                  value={giftMessage}
+                  onChange={(e) => setGiftMessage(e.target.value)}
+                  rows={2}
+                  placeholder={t("gift.messagePlaceholder")}
+                  className="w-full rounded-xl border border-coffee-300 bg-cream-50 px-4 py-2.5 text-coffee-900 outline-none focus:border-crimson-400 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
+                />
+              </div>
+            )}
+          </div>
+
           {error && (
             <p className="rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-600">
               {error}
@@ -205,9 +380,16 @@ export default function CheckoutPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-xl bg-gold-500 py-3 font-semibold text-coffee-900 transition-colors hover:bg-gold-600 disabled:cursor-not-allowed disabled:bg-coffee-300"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 py-3 font-bold text-white shadow-md transition-transform hover:scale-[1.01] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? t("checkout.processing") : t("checkout.payButton")}
+            {isSubmitting ? (
+              t("checkout.processing")
+            ) : (
+              <>
+                <Sparkles size={16} />
+                {t("checkout.payButton")}
+              </>
+            )}
           </button>
         </form>
 
@@ -216,22 +398,32 @@ export default function CheckoutPage() {
             {t("checkout.orderSummary")}
           </h2>
           <ul className="space-y-3">
-            {items.map((item) => {
-              const name = lang === "km" ? item.nameKh : item.nameEn;
-              const mods = describeCustomization(item.customization, lang);
+            {lines.map((line, i) => {
+              const mods = describeCustomization(line.customization, lang);
+              const isRedeemed = !isGroupMode && wantRedeem && redeemIndex === i;
               return (
-                <li key={item.lineId} className="text-sm">
+                <li key={line.key} className="text-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-coffee-700 dark:text-cream-200">
-                      {name} × {item.quantity}
+                      {line.contributorName && (
+                        <strong className="text-clay-600 dark:text-clay-400">
+                          {line.contributorName}:{" "}
+                        </strong>
+                      )}
+                      {line.name} × {line.quantity}
                     </span>
                     <span className="font-medium text-coffee-900 dark:text-cream-50">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      ${(line.unitPrice * line.quantity).toFixed(2)}
                     </span>
                   </div>
                   {mods.length > 0 && (
                     <p className="mt-0.5 text-xs text-coffee-400 dark:text-cream-400">
                       {mods.join(" · ")}
+                    </p>
+                  )}
+                  {isRedeemed && (
+                    <p className="mt-0.5 text-xs font-bold text-crimson-500">
+                      🎁 -${line.unitPrice.toFixed(2)} {t("loyalty.freeDrinkUnlocked")}
                     </p>
                   )}
                 </li>
@@ -240,7 +432,13 @@ export default function CheckoutPage() {
           </ul>
           <div className="mt-4 flex items-center justify-between border-t border-gold-500/40 pt-4 text-base font-bold text-coffee-900 dark:text-cream-50">
             <span>{t("checkout.total")}</span>
-            <span>${subtotal.toFixed(2)}</span>
+            <span>
+              $
+              {(!isGroupMode && wantRedeem
+                ? Math.max(0, total - lines[redeemIndex].unitPrice)
+                : total
+              ).toFixed(2)}
+            </span>
           </div>
         </div>
       </div>

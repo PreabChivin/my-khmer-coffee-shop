@@ -3,14 +3,19 @@
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Coffee, Menu, ShoppingCart, X } from "lucide-react";
+import { Coffee, Menu, ShoppingCart, Users, X } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useGroupCart } from "@/contexts/GroupCartContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import AppearanceSettings from "@/components/AppearanceSettings";
 
 export default function Header() {
   const { totalItems, openCart } = useCart();
+  const { isGroupMode, state: groupState } = useGroupCart();
+  const groupItemCount =
+    groupState?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+  const badgeCount = isGroupMode ? groupItemCount : totalItems;
   const { t } = useLanguage();
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -61,10 +66,10 @@ export default function Header() {
             aria-label={t("cart.openAria")}
             className="relative flex h-10 w-10 items-center justify-center rounded-full text-coffee-800 transition-colors hover:bg-coffee-100 dark:text-cream-100 dark:hover:bg-coffee-800"
           >
-            <ShoppingCart size={20} />
-            {totalItems > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-gold-500 text-[11px] font-bold text-coffee-900">
-                {totalItems}
+            {isGroupMode ? <Users size={20} /> : <ShoppingCart size={20} />}
+            {badgeCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-clay-400 text-[11px] font-bold text-white">
+                {badgeCount}
               </span>
             )}
           </button>

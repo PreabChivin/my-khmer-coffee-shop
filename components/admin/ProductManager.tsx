@@ -199,15 +199,31 @@ export default function ProductManager() {
                     <button
                       type="button"
                       onClick={() => toggleAvailability(product)}
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        product.isAvailable
-                          ? "bg-gold-100 text-gold-700 dark:bg-coffee-900 dark:text-gold-400"
-                          : "bg-coffee-200 text-coffee-500 dark:bg-coffee-700 dark:text-cream-300"
-                      }`}
+                      aria-pressed={product.isAvailable}
+                      className="flex items-center gap-2"
                     >
-                      {product.isAvailable
-                        ? t("adminMenu.available")
-                        : t("adminMenu.outOfStock")}
+                      <span
+                        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+                          product.isAvailable ? "bg-matcha-400" : "bg-coffee-300 dark:bg-coffee-600"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                            product.isAvailable ? "translate-x-5" : "translate-x-0.5"
+                          }`}
+                        />
+                      </span>
+                      <span
+                        className={`text-xs font-semibold ${
+                          product.isAvailable
+                            ? "text-matcha-700 dark:text-matcha-400"
+                            : "text-coffee-500 dark:text-cream-300"
+                        }`}
+                      >
+                        {product.isAvailable
+                          ? t("adminMenu.available")
+                          : t("adminMenu.outOfStock")}
+                      </span>
                     </button>
                   </td>
                   <td className="px-4 py-3">

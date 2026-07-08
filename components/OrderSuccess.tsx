@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Sparkles, XCircle } from "lucide-react";
+import { Gift, Sparkles, XCircle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import BongBear, { type BongBearPose } from "@/components/mascots/BongBear";
 import type { Fortune } from "@/lib/fortunes";
@@ -37,10 +37,12 @@ export default function OrderSuccess({
   orderId,
   orderType,
   fortune,
+  isGift,
 }: {
   orderId: string;
   orderType: OrderType;
   fortune?: Fortune | null;
+  isGift?: boolean;
 }) {
   const { lang, t } = useLanguage();
   const [status, setStatus] = useState<OrderStatus>("PREPARING");
@@ -175,6 +177,24 @@ export default function OrderSuccess({
         {phase === 2 && <Sparkles size={18} className="text-gold-600" />}
         {phaseNote}
       </p>
+
+      {/* 🐻 Loyalty stamp earned once the kitchen has accepted the order */}
+      {phase >= 1 && (
+        <p className="mt-3 text-xs font-semibold text-clay-600 dark:text-clay-400">
+          {t("loyalty.earnedNote")}
+        </p>
+      )}
+
+      {/* 💖 Gift voucher CTA */}
+      {isGift && (
+        <Link
+          href={`/gift/${orderId}`}
+          className="animate-pop-in mt-6 flex w-full items-center justify-center gap-2 rounded-full border-2 border-crimson-400 bg-crimson-50 py-3 font-bold text-crimson-600 transition-transform hover:scale-[1.02] active:scale-95 dark:bg-coffee-800 dark:text-crimson-400"
+        >
+          <Gift size={17} />
+          {t("gift.viewVoucher")}
+        </Link>
+      )}
 
       {/* 🔮 Daily Vibe Check reveal */}
       {fortune && (

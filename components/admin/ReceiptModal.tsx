@@ -19,8 +19,11 @@ export interface ReceiptOrder {
     price: number;
     product: { nameEn: string; nameKh: string };
     customizations?: DrinkCustomization | null;
+    contributorName?: string | null;
   }[];
   payment: { paymentStatus: PaymentStatus } | null;
+  isGift?: boolean;
+  giftRecipientName?: string | null;
 }
 
 export default function ReceiptModal({
@@ -72,6 +75,15 @@ export default function ReceiptModal({
             </div>
           </div>
 
+          {order.isGift && order.giftRecipientName && (
+            <>
+              <div className="my-2 border-t border-dashed border-black" />
+              <p className="text-center font-bold">
+                🎁 {t("gift.to")}: {order.giftRecipientName}
+              </p>
+            </>
+          )}
+
           <div className="my-2 border-t border-dashed border-black" />
 
           <div className="space-y-1.5">
@@ -84,6 +96,7 @@ export default function ReceiptModal({
                 <div key={item.id}>
                   <div className="flex justify-between gap-2">
                     <span className="flex-1">
+                      {item.contributorName ? `${item.contributorName}: ` : ""}
                       {item.quantity}× {localizedName(item.product, lang)}
                     </span>
                     <span>${(item.price * item.quantity).toFixed(2)}</span>

@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { Plus, SlidersHorizontal } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useGroupCart } from "@/contexts/GroupCartContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { localizedDescription, localizedName } from "@/lib/i18n";
 import { isCustomizable } from "@/lib/customization";
 import DrinkCustomizer from "@/components/DrinkCustomizer";
+import GroupNamePromptModal from "@/components/GroupNamePromptModal";
 import ApsaraChibi from "@/components/mascots/ApsaraChibi";
 import type { DrinkCustomization, ProductDTO } from "@/lib/types";
 
@@ -48,9 +50,15 @@ function slangFor(id: string) {
 
 export default function ProductCard({ product }: { product: ProductDTO }) {
   const { addItem } = useCart();
+  const { isGroupMode, contributorName, setContributorName, addGroupItem } =
+    useGroupCart();
   const { lang, t } = useLanguage();
   const [justAdded, setJustAdded] = useState(false);
   const [showCustomizer, setShowCustomizer] = useState(false);
+  const [showNamePrompt, setShowNamePrompt] = useState(false);
+  const [pendingCustomization, setPendingCustomization] = useState<
+    DrinkCustomization | null | undefined
+  >(undefined);
 
   const name = localizedName(product, lang);
   const description = localizedDescription(product, lang);
@@ -62,19 +70,39 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
     setTimeout(() => setJustAdded(false), 1200);
   }
 
+  async function commitAdd(customization: DrinkCustomization | null) {
+    if (isGroupMode) {
+      if (!contributorName.trim()) {
+        setPendingCustomization(customization);
+        setShowNamePrompt(true);
+        return;
+      }
+      const ok = await addGroupItem(product, 1, customization);
+      if (ok) flashAdded();
+      return;
+    }
+    addItem(product, customization ? { customization } : undefined);
+    flashAdded();
+  }
+
   function handleAdd() {
     if (customizable) {
       setShowCustomizer(true);
       return;
     }
-    addItem(product);
-    flashAdded();
+    void commitAdd(null);
   }
 
   function handleConfirmCustomization(customization: DrinkCustomization) {
-    addItem(product, { customization });
     setShowCustomizer(false);
-    flashAdded();
+    void commitAdd(customization);
+  }
+
+  function handleNameConfirmed(confirmedName: string) {
+    setContributorName(confirmedName);
+    setShowNamePrompt(false);
+    void commitAdd(pendingCustomization ?? null);
+    setPendingCustomization(undefined);
   }
 
   return (
@@ -139,6 +167,16 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
           product={product}
           onConfirm={handleConfirmCustomization}
           onClose={() => setShowCustomizer(false)}
+        />
+      )}
+
+      {showNamePrompt && (
+        <GroupNamePromptModal
+          onConfirm={handleNameConfirmed}
+          onClose={() => {
+            setShowNamePrompt(false);
+            setPendingCustomization(undefined);
+          }}
         />
       )}
     </div>

@@ -6,14 +6,17 @@ import {
   Bike,
   Clock,
   DollarSign,
+  Gift,
   ListOrdered,
   Printer,
   Store,
+  Users,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { localizedName, type TranslationKey } from "@/lib/i18n";
 import { describeCustomization } from "@/lib/customization";
 import Confetti from "@/components/Confetti";
+import AdminStats from "@/components/admin/AdminStats";
 import ReceiptModal, {
   type ReceiptOrder,
 } from "@/components/admin/ReceiptModal";
@@ -59,6 +62,7 @@ interface AdminOrderItem {
   price: number;
   product: { nameEn: string; nameKh: string };
   customizations?: DrinkCustomization | null;
+  contributorName?: string | null;
 }
 
 interface AdminOrder {
@@ -73,6 +77,10 @@ interface AdminOrder {
   createdAt: string;
   items: AdminOrderItem[];
   payment: { paymentStatus: PaymentStatus } | null;
+  isGift: boolean;
+  giftRecipientName: string | null;
+  giftRedeemed: boolean;
+  isGroupOrder: boolean;
 }
 
 const POLL_INTERVAL_MS = 3000;
@@ -159,13 +167,16 @@ export default function OrdersBoard() {
     };
   }, []);
 
-  async function updateStatus(orderId: string, orderStatus: OrderStatus) {
+  async function patchOrder(
+    orderId: string,
+    body: { orderStatus?: OrderStatus; giftRedeemed?: boolean }
+  ) {
     setUpdatingId(orderId);
     try {
       const res = await fetch(`/api/admin/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderStatus }),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
         const updated = await res.json();
@@ -173,11 +184,19 @@ export default function OrdersBoard() {
           prev.map((o) => (o.id === orderId ? updated : o))
         );
         // 🎉 Celebrate the moment an order is approved into the kitchen.
-        if (orderStatus === "PREPARING") setConfettiKey(Date.now());
+        if (body.orderStatus === "PREPARING") setConfettiKey(Date.now());
       }
     } finally {
       setUpdatingId(null);
     }
+  }
+
+  function updateStatus(orderId: string, orderStatus: OrderStatus) {
+    return patchOrder(orderId, { orderStatus });
+  }
+
+  function markGiftRedeemed(orderId: string) {
+    return patchOrder(orderId, { giftRedeemed: true });
   }
 
   const totalRevenue = orders
@@ -211,6 +230,8 @@ export default function OrdersBoard() {
           </p>
         </div>
       )}
+
+      <AdminStats />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="khmer-card flex items-center gap-3 rounded-2xl bg-cream-50 p-4 dark:bg-coffee-800">
@@ -315,9 +336,31 @@ export default function OrdersBoard() {
                         </span>
                       </div>
 
+                      {(order.isGift || order.isGroupOrder) && (
+                        <div className="mb-1.5 flex flex-wrap gap-1">
+                          {order.isGift && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-crimson-100 px-2 py-0.5 text-[10px] font-bold text-crimson-600 dark:bg-coffee-800 dark:text-crimson-400">
+                              <Gift size={10} />
+                              {t("adminOrder.giftBadge")}
+                            </span>
+                          )}
+                          {order.isGroupOrder && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-matcha-100 px-2 py-0.5 text-[10px] font-bold text-matcha-700">
+                              <Users size={10} />
+                              {t("adminOrder.groupBadge")}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
                       <p className="text-sm font-medium text-coffee-800 dark:text-cream-100">
                         {order.customerName}
                       </p>
+                      {order.isGift && order.giftRecipientName && (
+                        <p className="text-xs text-crimson-500 dark:text-crimson-400">
+                          → {order.giftRecipientName}
+                        </p>
+                      )}
                       <p className="text-xs text-coffee-500 dark:text-cream-300">
                         {order.customerPhone}
                       </p>
@@ -343,6 +386,11 @@ export default function OrdersBoard() {
                           return (
                             <li key={item.id}>
                               <span>
+                                {item.contributorName && (
+                                  <strong className="text-clay-600 dark:text-clay-400">
+                                    {item.contributorName}:{" "}
+                                  </strong>
+                                )}
                                 {item.quantity}×{" "}
                                 {localizedName(item.product, lang)}
                               </span>
@@ -404,6 +452,18 @@ export default function OrdersBoard() {
                         <Printer size={13} />
                         {t("adminAction.printReceipt")}
                       </button>
+
+                      {order.isGift && !order.giftRedeemed && (
+                        <button
+                          type="button"
+                          disabled={updatingId === order.id}
+                          onClick={() => markGiftRedeemed(order.id)}
+                          className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg bg-crimson-500 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-crimson-600 disabled:opacity-60"
+                        >
+                          <Gift size={13} />
+                          {t("adminAction.markGiftRedeemed")}
+                        </button>
+                      )}
 
                       {ACTIVE_STATUSES.includes(order.orderStatus) && (
                         <button

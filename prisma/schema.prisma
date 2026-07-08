@@ -12,18 +12,19 @@ datasource db {
 }
 
 model Product {
-  id            String      @id @default(uuid())
-  nameEn        String      @unique
-  nameKh        String
-  descriptionEn String?
-  descriptionKh String?
-  price         Float
-  category      String
-  image         String
-  isAvailable   Boolean     @default(true)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  orderItems    OrderItem[]
+  id             String          @id @default(uuid())
+  nameEn         String          @unique
+  nameKh         String
+  descriptionEn  String?
+  descriptionKh  String?
+  price          Float
+  category       String
+  image          String
+  isAvailable    Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  orderItems     OrderItem[]
+  groupCartItems GroupCartItem[]
 }
 
 model Order {
@@ -36,6 +37,18 @@ model Order {
   note          String?
   address       String?
   fortune       String? // "Destiny Cup" coffee fortune assigned at checkout
+
+  // 🐻 Loyalty: number of free-drink rewards redeemed against this order (0 or 1).
+  redeemedFreeDrinks Int     @default(0)
+
+  // 💖 Gift a Drink ("Send Love to Crush")
+  isGift            Boolean @default(false)
+  giftRecipientName String?
+  giftMessage       String?
+  giftRedeemed      Boolean @default(false)
+
+  // 👯 Bestie Cart: true when this order was checked out from a shared GroupCart.
+  isGroupOrder Boolean @default(false)
 
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -54,7 +67,43 @@ model OrderItem {
   // Per-line drink customization (sweetness / ice / extra shots). Null for
   // non-customizable items such as bakery. Stored as JSONB.
   customizations Json?
+  // 👯 Bestie Cart: whose drink this is, e.g. "ប្រូ វីត" — null for solo orders.
+  contributorName String?
   createdAt      DateTime @default(now())
+}
+
+// 🐻 Cute Bear Stamps loyalty program, keyed by customer phone number (no
+// account system exists yet, so phone is the lightweight identifier).
+model LoyaltyAccount {
+  id                 String   @id @default(uuid())
+  phone              String   @unique
+  stampCount         Int      @default(0)
+  freeDrinksRedeemed Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+// 👯 Bestie Cart: a shared, unauthenticated cart that anyone with the link
+// (?group=ID) can add items to before one person checks it out together.
+model GroupCart {
+  id        String          @id @default(uuid())
+  status    String          @default("OPEN") // 'OPEN' | 'CHECKED_OUT'
+  orderId   String?         @unique
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  items     GroupCartItem[]
+}
+
+model GroupCartItem {
+  id              String    @id @default(uuid())
+  groupCartId     String
+  groupCart       GroupCart @relation(fields: [groupCartId], references: [id], onDelete: Cascade)
+  contributorName String
+  productId       String
+  product         Product   @relation(fields: [productId], references: [id])
+  quantity        Int
+  customizations  Json?
+  createdAt       DateTime  @default(now())
 }
 
 model Payment {
