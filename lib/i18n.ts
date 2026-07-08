@@ -7,7 +7,7 @@ export const LANGUAGES: { code: Lang; label: string }[] = [
 
 const dictionary = {
   en: {
-    "nav.home": "Home",
+    "nav.home": "Sweet Home 🏠",
     "nav.menu": "Menu",
     "cart.openAria": "Open cart",
 
@@ -25,7 +25,9 @@ const dictionary = {
     "hero.tagline": "Modern Taste, Ancient Soul",
 
     "cultural.label": "Ancestral Wisdom",
-    "welcome.greeting": "Welcome, honoured guest",
+    "welcome.greeting": "Heyyy bestie, welcome! 🧸",
+    "welcome.subtitle":
+      "Grab a cute drink, catch a good vibe, and stay a while. We're so happy you're here! 💖",
 
     "home.badge": "Now Open Daily",
     "home.title": "Your Daily Ritual, Freshly Brewed",
@@ -61,7 +63,7 @@ const dictionary = {
       "Freshly made coffee, tea, and bakery — order ahead, pay with KHQR.",
     "menu.categoryAll": "All",
     "menu.noItems": "No items available in this category right now.",
-    "menu.addToCart": "Add to Cart 🛒✨",
+    "menu.addToCart": "Order Now ✨",
     "menu.added": "Yay, added! 💖",
     "menu.outOfStock": "Out of Stock",
     "menu.searchPlaceholder": "Search our menu…",
@@ -103,7 +105,7 @@ const dictionary = {
     "checkout.addressPlaceholder": "House 12, Street 240, Phnom Penh",
 
     "payment.orderLabel": "Order",
-    "payment.awaitingVerification": "Waiting for staff to verify your payment…",
+    "payment.awaitingVerification": "Batting our eyes at admin to check your payment real quick... 🥺",
 
     "success.title": "Payment Confirmed!",
     "success.message": "is now brewing. We'll have it ready shortly.",
@@ -182,12 +184,12 @@ const dictionary = {
     "customize.shotEach": "each",
     "customize.customized": "Customized",
 
-    "track.title": "Live Order Tracking",
+    "track.title": "Vibe Status ⏳",
     "track.received": "Order Received",
-    "track.receivedDesc": "We have your order and are verifying payment.",
-    "track.brewing": "Brewing Your Drink",
-    "track.brewingDesc": "Our baristas are crafting your order with care.",
-    "track.ready": "Ready for Pick-Up",
+    "track.receivedDesc": "We got your order and are checking the payment 🥺",
+    "track.brewing": "Brewing ☕",
+    "track.brewingDesc": "Our cutie baristas are brewing it with love... ☕✨",
+    "track.ready": "Come grab it, bestie! 🎉",
     "track.readyDelivery": "Out for Delivery",
     "track.readyDesc": "Your order is ready. Thank you for your patience.",
     "track.cancelledTitle": "Order Cancelled",
@@ -273,7 +275,7 @@ const dictionary = {
     "adminAction.markGiftRedeemed": "Mark Gift Redeemed 🎁",
   },
   km: {
-    "nav.home": "ទំព័រដើម",
+    "nav.home": "ផ្ទះកណ្ដាល 🏠",
     "nav.menu": "មីនុយ",
     "cart.openAria": "បើកកន្ត្រក",
 
@@ -291,7 +293,9 @@ const dictionary = {
     "hero.tagline": "រសជាតិសម័យថ្មី ព្រលឹងសម័យបុរាណ",
 
     "cultural.label": "ពាក្យពេជន៍បុរាណ",
-    "welcome.greeting": "សូមស្វាគមន៍ ភ្ញៀវកិត្តិយស",
+    "welcome.greeting": "សួស្តីប្រូ/ស៊ីស ចូលមកលេងណា៎! 🧸",
+    "welcome.subtitle":
+      "រើសកែវ Cute មួយ ទទួល Vibe ល្អៗ ហើយនៅលេងបន្តិចណា៎។ យើងសប្បាយចិត្តណាស់ដែលប្រូ/ស៊ីសមកដល់! 💖",
 
     "home.badge": "បើកប្រចាំថ្ងៃ",
     "home.title": "ទម្លាប់ប្រចាំថ្ងៃរបស់អ្នក ស្រស់ថ្មីជានិច្ច",
@@ -326,7 +330,7 @@ const dictionary = {
     "menu.subtitle": "កាហ្វេ តែ និងនំដុតធ្វើថ្មីៗ — កម្មង់ជាមុន ទូទាត់ជាមួយ KHQR។",
     "menu.categoryAll": "ទាំងអស់",
     "menu.noItems": "មិនមានទំនិញនៅក្នុងប្រភេទនេះទេពេលនេះ។",
-    "menu.addToCart": "ដាក់ចូលថង់ 🛒✨",
+    "menu.addToCart": "ចុចថែថ្នមចូលថង់ ✨",
     "menu.added": "ដាក់ហើយ! 💖",
     "menu.outOfStock": "អស់ស្តុក",
     "menu.searchPlaceholder": "ស្វែងរកមីនុយ...",
@@ -368,7 +372,7 @@ const dictionary = {
     "checkout.addressPlaceholder": "ផ្ទះលេខ១២ ផ្លូវ២៤០ ភ្នំពេញ",
 
     "payment.orderLabel": "ការកម្មង់លេខ",
-    "payment.awaitingVerification": "កំពុងរង់ចាំបុគ្គលិកផ្ទៀងផ្ទាត់ការទូទាត់របស់អ្នក...",
+    "payment.awaitingVerification": "កំពុងញ៉ាក់ភ្នែកឱ្យ Admin ឆែកលុយមួយភ្លែត... 🥺",
 
     "success.title": "ការទូទាត់បានជោគជ័យ!",
     "success.message": "កំពុងត្រូវបានរៀបចំ។ យើងខ្ញុំនឹងធ្វើឱ្យរួចរាល់ក្នុងពេលឆាប់ៗនេះ។",
@@ -377,7 +381,7 @@ const dictionary = {
     "success.gratitude":
       "អរគុណច្រើនស្តូកសម្រាប់ការគាំទ្រហាងកាហ្វេតូចមួយនេះ! ពួកយើងនឹងឆុងភេសជ្ជៈនេះឡើងដោយក្តីស្រឡាញ់ និងការផ្ចិតផ្ចង់បំផុតសម្រាប់ប្រូ/ស៊ីស។",
     "success.closure":
-      "សូមឱ្យថ្ងៃនេះជាថ្ងៃដ៏ស្រស់បំព្រង និងពោរពេញដោយស្នាមញញឹម។ ទោះហត់នឿយប៉ុណ្ណា កុំភ្លេចថាកាហ្វេកែវនេះ និងពួកយើងតែងតែនៅទីនេះចាំផ្ដល់កម្លាំងចិត្ត និងក្តីស្រឡាញ់ជូនអ្នកជានិច្ច! See You Again, Bestie! 🧸✨",
+      "សូមឱ្យថ្ងៃនេះជាថ្ងៃដ៏ស្រស់បំព្រង និងពោរពេញដោយស្នាមញញឹម។ ទោះបីជាហត់នឿយ ឬជួបរឿងហត់ចិត្តប៉ុណ្ណាក៏ដោយ កុំភ្លេចថាកាហ្វេកែវនេះ និងពួកយើងតែងតែនៅទីនេះចាំផ្ដល់កម្លាំងចិត្ត និងក្តីស្រឡាញ់ជូនអ្នកជានិច្ចណា៎! See You Again, Bestie! 🧸✨",
     "success.orderSomethingElse": "កុម្ម៉ង់បន្ថែម 🧋",
 
     "adminLogin.title": "ចូលប្រើសម្រាប់បុគ្គលិក",
@@ -447,12 +451,12 @@ const dictionary = {
     "customize.shotEach": "ក្នុងមួយ",
     "customize.customized": "បានកែសម្រួល",
 
-    "track.title": "តាមដានការកម្មង់ផ្ទាល់",
+    "track.title": "សកម្មភាពកែវកាហ្វេ ⏳",
     "track.received": "ទទួលការបញ្ជាទិញ",
-    "track.receivedDesc": "យើងបានទទួលការកម្មង់ ហើយកំពុងផ្ទៀងផ្ទាត់ការទូទាត់។",
-    "track.brewing": "កំពុងឆុងភេសជ្ជៈ",
-    "track.brewingDesc": "បុគ្គលិករបស់យើងកំពុងរៀបចំការកម្មង់របស់អ្នកដោយយកចិត្តទុកដាក់។",
-    "track.ready": "ភេសជ្ជៈរួចរាល់",
+    "track.receivedDesc": "យើងទទួលការកម្មង់ហើយ កំពុងឆែកលុយ 🥺",
+    "track.brewing": "កំពុងឆុង ☕",
+    "track.brewingDesc": "បុគ្គលិក Cute Cute កំពុងឆុងយ៉ាងផ្ចិតផ្ចង់... ☕️✨",
+    "track.ready": "ហោះមកយកទៅប្រូ/ស៊ីស! 🎉",
     "track.readyDelivery": "កំពុងដឹកជញ្ជូន",
     "track.readyDesc": "ការកម្មង់របស់អ្នករួចរាល់ហើយ។ សូមអរគុណសម្រាប់ការអត់ធ្មត់។",
     "track.cancelledTitle": "ការកម្មង់ត្រូវបានលុបចោល",
@@ -572,109 +576,5 @@ export function localizedCategory(category: string, lang: Lang): string {
   return (value as string | undefined) ?? category;
 }
 
-/**
- * Authentic Khmer proverbs and ancestral blessings (ពាក្យពេជន៍បុព្វបុរស).
- * The Khmer text is a fixed cultural artifact and is always shown in Khmer;
- * the meaning line adapts to the active language.
- */
-export interface CulturalSaying {
-  km: string;
-  meaningEn: string;
-  meaningKm: string;
-}
-
-export const CULTURAL: Record<
-  "welcome" | "cartEmpty" | "blessing",
-  CulturalSaying
-> = {
-  // User-provided welcome quote on cultural stewardship.
-  welcome: {
-    km: "រួមថែរក្សាវប្បធម៌ ដកដង្ហើមយកចំណេះដឹង",
-    meaningEn: "Together we cherish our heritage, and breathe in wisdom.",
-    meaningKm: "រួមគ្នាថែរក្សាវប្បធម៌ជាតិ ហើយស្រូបយកនូវចំណេះដឹង។",
-  },
-  // Classic Khmer proverb: small steady effort accumulates.
-  cartEmpty: {
-    km: "តក់ៗ ពេញបំពង់",
-    meaningEn: "Drop by drop, the bamboo fills — begin with a single choice.",
-    meaningKm: "បន្តិចម្តងៗ នឹងបានពេញ — សូមចាប់ផ្តើមជ្រើសរើសម្ហូបដំបូង។",
-  },
-  // Traditional Buddhist four-fold blessing offered to a departing guest.
-  blessing: {
-    km: "សូមទទួលបាននូវពុទ្ធពរទាំងបួនប្រការ គឺ អាយុ វណ្ណៈ សុខៈ ពលៈ",
-    meaningEn:
-      "May you receive the four blessings: long life, grace, happiness, and strength.",
-    meaningKm: "សូមឲ្យលោកអ្នកបានសិរីសួស្តី ជ័យមង្គល គ្រប់ប្រការ។",
-  },
-};
-
-export function sayingMeaning(saying: CulturalSaying, lang: Lang): string {
-  return lang === "km" ? saying.meaningKm : saying.meaningEn;
-}
-
-/**
- * A curated pool of authentic Khmer proverbs (សុភាសិតខ្មែរ) and ancestral
- * sayings, rotated randomly through the cart and drink-customization screens to
- * keep the shopping ritual spiritually grounded. Each entry is a well-known,
- * documented proverb rendered in correct Khmer orthography — this pool is
- * deliberately curated for authenticity rather than padded with unverified
- * material.
- */
-export const PROVERBS: CulturalSaying[] = [
-  {
-    km: "ដើរតាមក្រោយដំរី មិនដែលខ្វះស្មៅ",
-    meaningEn:
-      "Walk behind the elephant and you will never lack grass — follow those with wisdom and experience.",
-    meaningKm: "ដើរតាមអ្នកមានបទពិសោធន៍ និងប្រាជ្ញា នោះនឹងមិនខ្វះខាតឡើយ។",
-  },
-  {
-    km: "ទឹកឡើងត្រីស៊ីស្រមោច ទឹកហួតស្រមោចស៊ីត្រី",
-    meaningEn:
-      "When the water rises the fish eat the ants; when it recedes the ants eat the fish — fortunes always turn, so stay humble.",
-    meaningKm: "លាភសំណាងតែងតែផ្លាស់ប្តូរ ដូច្នេះត្រូវរក្សាចិត្តរាបទាបជានិច្ច។",
-  },
-  {
-    km: "តក់ៗ ពេញបំពង់",
-    meaningEn:
-      "Drop by drop, the bamboo fills — small steady effort accumulates into abundance.",
-    meaningKm:
-      "បន្តិចម្តងៗ នឹងបានពេញ — ការខិតខំបន្តិចម្តងៗ នាំមកនូវផលបរិបូរណ៍។",
-  },
-  {
-    km: "ធ្វើល្អបានល្អ ធ្វើអាក្រក់បានអាក្រក់",
-    meaningEn:
-      "Do good and receive good; do bad and receive bad — every deed returns to us.",
-    meaningKm: "ធ្វើអំពើល្អ ទទួលផលល្អ ធ្វើអំពើអាក្រក់ ទទួលផលអាក្រក់។",
-  },
-  {
-    km: "ដើរតាមផ្លូវចាស់ បាយឆ្អែតពោះ",
-    meaningEn:
-      "Follow the old road and your belly stays full — honor the wisdom of those who came before.",
-    meaningKm: "ដើរតាមផ្លូវបុរាណ តាមទំនៀមទម្លាប់ដូនតា នោះនឹងបានសុខ។",
-  },
-  {
-    km: "ដៃធ្វើ មាត់ស៊ី",
-    meaningEn:
-      "The hand that works is the mouth that eats — diligence sustains us.",
-    meaningKm: "អ្នកខិតខំធ្វើការ ទើបមានហូបចុក — ការឧស្សាហ៍ព្យាយាមចិញ្ចឹមជីវិត។",
-  },
-  {
-    km: "គប់នឹងបណ្ឌិត បានប្រាជ្ញា",
-    meaningEn:
-      "Keep company with the wise and you gain wisdom — we grow through the company we keep.",
-    meaningKm: "នៅជិតអ្នកមានប្រាជ្ញា នឹងទទួលបានចំណេះដឹង។",
-  },
-  {
-    km: "រួមថែរក្សាវប្បធម៌ ដកដង្ហើមយកចំណេះដឹង",
-    meaningEn: "Together we cherish our heritage, and breathe in wisdom.",
-    meaningKm: "រួមគ្នាថែរក្សាវប្បធម៌ជាតិ ហើយស្រូបយកនូវចំណេះដឹង។",
-  },
-];
-
-/**
- * Picks a random proverb. Call this inside an effect (not during render) to
- * avoid a server/client hydration mismatch.
- */
-export function randomSaying(): CulturalSaying {
-  return PROVERBS[Math.floor(Math.random() * PROVERBS.length)];
-}
+// (Ancestral proverbs / Buddhist blessings removed — the app is now fully
+// Gen-Z. Playful "Daily Vibe Check" fortunes live in lib/fortunes.ts.)

@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Coffee, Minus, Plus, Snowflake, Sparkles, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCart } from "@/contexts/CartContext";
 import { localizedName } from "@/lib/i18n";
-import { randomSaying, type CulturalSaying } from "@/lib/i18n";
 import { randomFortune, type Fortune } from "@/lib/fortunes";
-import SayingBlock from "@/components/SayingBlock";
 import {
   EXTRA_SHOT_PRICE,
   MAX_SHOTS,
@@ -41,13 +39,6 @@ export default function DrinkCustomizer({
   const [customization, setCustomization] = useState<DrinkCustomization>(
     () => defaultCustomization(product.category) ?? { sweetness: 100, ice: "normal", shots: 0 }
   );
-  // Picked in an effect to avoid an SSR/client hydration mismatch.
-  const [saying, setSaying] = useState<CulturalSaying | null>(null);
-  useEffect(() => {
-    // Deferred to an effect (random pick) to avoid an SSR/client mismatch.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSaying(randomSaying());
-  }, []);
 
   // 🔮 Daily Vibe Check — reveals a fortune AND injects it into the cart.
   const { setVibe } = useCart();
@@ -221,13 +212,6 @@ export default function DrinkCustomizer({
               </div>
             )}
           </section>
-
-          {/* Ancestral proverb */}
-          {saying && (
-            <div className="rounded-2xl border border-gold-500/30 bg-gold-50/60 px-4 py-5 dark:bg-coffee-900/50">
-              <SayingBlock saying={saying} variant="dark" size="sm" />
-            </div>
-          )}
         </div>
 
         {/* Footer add button */}

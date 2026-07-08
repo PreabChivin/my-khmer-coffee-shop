@@ -1,13 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Minus, Plus, ShoppingBag, Trash2, Users, X } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useGroupCart } from "@/contexts/GroupCartContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import SayingBlock from "@/components/SayingBlock";
-import { CULTURAL, randomSaying, type CulturalSaying } from "@/lib/i18n";
 import { customizationSurcharge, describeCustomization } from "@/lib/customization";
 import { localizedName } from "@/lib/i18n";
 
@@ -24,15 +21,6 @@ export default function CartSidebar() {
   const { isGroupMode, state: groupState, updateGroupItemQuantity, removeGroupItem } =
     useGroupCart();
   const { lang, t } = useLanguage();
-
-  // Rotate a random ancestral proverb each time the cart opens. Picked in an
-  // effect to avoid a server/client hydration mismatch.
-  const [saying, setSaying] = useState<CulturalSaying | null>(null);
-  useEffect(() => {
-    // Deferred to an effect (random pick) to avoid an SSR/client mismatch.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (isCartOpen) setSaying(randomSaying());
-  }, [isCartOpen]);
 
   if (!isCartOpen) return null;
 
@@ -186,8 +174,11 @@ export default function CartSidebar() {
                 <p className="text-coffee-400 dark:text-cream-400">
                   {t("cart.empty")}
                 </p>
-                <div className="w-full rounded-2xl border border-gold-500/40 bg-gold-50/60 px-4 py-6 dark:bg-coffee-800/60">
-                  <SayingBlock saying={CULTURAL.cartEmpty} variant="dark" size="sm" />
+                <div className="w-full rounded-2xl border-2 border-dashed border-clay-400 bg-clay-50 px-4 py-6 dark:bg-coffee-800/60">
+                  <p className="text-3xl">🧸🧋</p>
+                  <p className="mt-2 text-sm font-medium text-coffee-600 dark:text-cream-200">
+                    {t("cart.emptyHint")}
+                  </p>
                 </div>
               </div>
             ) : (
@@ -275,13 +266,6 @@ export default function CartSidebar() {
                     );
                   })}
                 </ul>
-
-                {/* Rotating ancestral proverb */}
-                {saying && (
-                  <div className="mt-6 rounded-2xl border border-gold-500/30 bg-gold-50/50 px-4 py-5 dark:bg-coffee-800/50">
-                    <SayingBlock saying={saying} variant="dark" size="sm" />
-                  </div>
-                )}
               </>
             )}
           </div>

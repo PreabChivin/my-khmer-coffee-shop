@@ -17,9 +17,14 @@ export const FORTUNES: Fortune[] = [
     emoji: "💸",
   },
   {
-    km: "ញ៉ាំកែវនេះហើយ នឹងមានអ្នក Crush មកសារភាពស្នេហ៍ភ្លាម! 💖",
+    km: "ញ៉ាំកែវនេះហើយ នឹងមានអ្នក Crush មកសារភាពស្នេហ៍ភ្លាម លង់ស្តូក! 💖",
     en: "Sip this cup and your crush will slide into your DMs fr fr! 💖",
     emoji: "💖",
+  },
+  {
+    km: "ហុងស៊ុយល្អណាស់ថ្ងៃនេះ ធ្វើអ្វីក៏សមប្រកប មុខឡើង Bright ហ្មងហា៎! 🌟",
+    en: "Feng shui is immaculate today — everything goes your way and your face is glowing! 🌟",
+    emoji: "🌟",
   },
   {
     km: "Vibe ថ្ងៃនេះ = ពេញ ១០០! ធ្វើអ្វីក៏ម៉ៅដាច់ អ្នកគឺ main character ស្តូក! 🌟",

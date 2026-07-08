@@ -5,9 +5,7 @@ import { Bike, Clock, QrCode, Sprout, Store } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import KhmerDivider from "@/components/KhmerDivider";
 import HeroSlideshow from "@/components/HeroSlideshow";
-import SayingBlock from "@/components/SayingBlock";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { CULTURAL } from "@/lib/i18n";
 import type { ProductDTO } from "@/lib/types";
 import type { TranslationKey } from "@/lib/i18n";
 
@@ -64,16 +62,17 @@ export default function HomeContent({
         </div>
       </section>
 
-      {/* Ancestral welcome — Royal Crimson Lacquer band */}
-      <section className="kbach-overlay relative overflow-hidden bg-gradient-to-b from-crimson-600 to-crimson-700 text-cream-50">
-        <div className="pointer-events-none absolute left-1/2 top-0 h-40 w-40 -translate-x-1/2 rounded-full bg-gold-500/20 blur-3xl" />
-        <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 py-16 sm:px-6">
-          <KhmerDivider className="text-gold-500" />
-          <p className="font-heading text-lg text-gold-400">
+      {/* Cutie welcome — pastel vibe band */}
+      <section className="kbach-overlay relative overflow-hidden bg-gradient-to-br from-clay-400 via-crimson-400 to-clay-500 text-white">
+        <div className="pointer-events-none absolute left-1/2 top-0 h-40 w-40 -translate-x-1/2 rounded-full bg-white/20 blur-3xl" />
+        <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-4 px-4 py-16 text-center sm:px-6">
+          <div className="animate-bounce-cute text-5xl">🧋💖</div>
+          <p className="font-heading text-2xl font-extrabold drop-shadow-sm sm:text-3xl">
             {t("welcome.greeting")}
           </p>
-          <SayingBlock saying={CULTURAL.welcome} variant="light" size="lg" />
-          <KhmerDivider className="text-gold-500" />
+          <p className="max-w-md text-sm font-medium text-white/90">
+            {t("welcome.subtitle")}
+          </p>
         </div>
       </section>
 

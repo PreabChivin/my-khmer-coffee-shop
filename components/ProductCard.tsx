@@ -12,27 +12,6 @@ import GroupNamePromptModal from "@/components/GroupNamePromptModal";
 import ApsaraChibi from "@/components/mascots/ApsaraChibi";
 import type { DrinkCustomization, ProductDTO } from "@/lib/types";
 
-/**
- * Faint five-tower Angkor Wat silhouette that fades in along the lower edge of
- * a product card on hover — a subtle nod to Khmer heritage without competing
- * with the product photo.
- */
-function AngkorSilhouette() {
-  return (
-    <svg
-      viewBox="0 0 240 60"
-      aria-hidden="true"
-      preserveAspectRatio="xMidYMax meet"
-      className="pointer-events-none absolute inset-x-0 bottom-0 h-12 w-full text-gold-500 opacity-0 transition-opacity duration-500 group-hover:opacity-15"
-    >
-      <path
-        fill="currentColor"
-        d="M0 60 V52 H12 L18 40 L22 30 L26 40 L32 52 H44 L50 34 L56 20 L62 34 L68 52 H84 L92 24 L104 6 L110 0 L116 6 L128 24 L136 52 H152 L158 34 L164 20 L170 34 L176 52 H188 L194 40 L198 30 L202 40 L208 52 H240 V60 Z"
-      />
-    </svg>
-  );
-}
-
 // Playful Gen-Z slang tags sprinkled onto menu cards. Picked deterministically
 // per product (by id) so the server and client always render the same one — no
 // hydration mismatch.
@@ -127,8 +106,9 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
           </span>
         )}
         {!product.isAvailable && (
-          <div className="absolute inset-0 flex items-center justify-center bg-coffee-900/60">
-            <span className="rounded-full bg-cream-50 px-4 py-1.5 text-sm font-semibold text-coffee-900">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-clay-400/70 backdrop-blur-[2px]">
+            <span className="text-3xl">🧸</span>
+            <span className="rounded-full bg-white px-4 py-1.5 text-center text-xs font-bold text-clay-600 shadow-sm">
               {t("menu.outOfStock")}
             </span>
           </div>
@@ -136,7 +116,6 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
       </div>
 
       <div className="relative flex flex-1 flex-col p-4">
-        <AngkorSilhouette />
         <div className="relative flex items-start justify-between gap-2">
           <h3 className="font-heading text-base text-coffee-900 dark:text-cream-50">
             {name}

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Gift, Sparkles, XCircle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import Confetti from "@/components/Confetti";
 import BongBear, { type BongBearPose } from "@/components/mascots/BongBear";
 import type { Fortune } from "@/lib/fortunes";
 import type {
@@ -109,14 +110,17 @@ export default function OrderSuccess({
   const phaseNote =
     phase === 2
       ? lang === "km"
-        ? "កាហ្វេឆ្ងាញ់រួចរាល់ហើយ មកទទួលយកក្តីស្រឡាញ់ទៅ! 🎉"
-        : "Your yummy coffee is ready — come collect all the love! 🎉"
+        ? "ហោះមកយកទៅប្រូ/ស៊ីស ឆ្ងាញ់ម៉ៅដាច់! 🎉"
+        : "Come grab it, bestie — it's soooo yummy! 🎉"
       : phase === 1
         ? t("track.brewingDesc")
         : t("track.receivedDesc");
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center px-4 py-10 text-center">
+      {/* 🎉 Screen-wide confetti fires the instant the success view mounts */}
+      <Confetti />
+
       {/* 🎉 Celebratory headline */}
       <div className="animate-pop-in text-6xl">🎉</div>
       <h1 className="mt-3 font-heading text-2xl font-extrabold leading-snug text-coffee-900 dark:text-cream-50 sm:text-3xl">

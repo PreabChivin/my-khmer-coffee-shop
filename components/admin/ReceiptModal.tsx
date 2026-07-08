@@ -123,7 +123,7 @@ export default function ReceiptModal({
 
           <p className="text-center">{t("receipt.thankYou")}</p>
           <p className="mt-1 text-center text-[10px]">
-            សូមទទួលបាននូវពុទ្ធពរទាំងបួនប្រការ
+            See you again, bestie! 🧸✨
           </p>
         </div>
 

@@ -87,9 +87,9 @@ export default function StaticPaymentModal({
             <p className="text-xs uppercase tracking-[0.2em] text-coffee-500 dark:text-cream-300">
               BenChimin Cafe
             </p>
-            <span className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-gold-500 bg-gold-50 px-3 py-1 text-[11px] font-semibold text-gold-700 dark:bg-coffee-900 dark:text-gold-400">
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-clay-400 bg-clay-50 px-3 py-1 text-[11px] font-bold text-clay-600 dark:bg-coffee-900 dark:text-clay-400">
               <BadgeCheck size={13} />
-              គណនីផ្លូវការរបស់ហាង / Official Shop Account
+              បាញ់លុយមកប្រូ/ស៊ីស 💖 Send Love via QR
             </span>
           </div>
 
@@ -157,9 +157,9 @@ export default function StaticPaymentModal({
               type="button"
               onClick={handleConfirmPaid}
               disabled={isConfirming}
-              className="mt-5 w-full rounded-xl bg-clay-500 py-3 text-sm font-bold text-cream-50 shadow-md transition-colors hover:bg-clay-600 disabled:opacity-60"
+              className="mt-5 w-full rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 py-3 text-sm font-bold text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
             >
-              ខ្ញុំបានផ្ទេរប្រាក់រួចហើយ / I Have Paid
+              បាញ់លុយរួចហើយម៉ាយដំឡូង ចុចលិប! 👆
             </button>
           )}
         </div>
