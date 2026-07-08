@@ -3,6 +3,8 @@ import type { Lang } from "./i18n";
 
 /** Server-authoritative surcharge per extra espresso shot (USD). */
 export const EXTRA_SHOT_PRICE = 0.75;
+/** Server-authoritative surcharge for a boba topping (USD). */
+export const BOBA_PRICE = 0.5;
 export const MAX_SHOTS = 3;
 export const SWEETNESS_LEVELS = [0, 25, 50, 100] as const;
 export const ICE_LEVELS: IceLevel[] = ["none", "less", "normal", "extra"];
@@ -16,11 +18,16 @@ export function allowsShots(category: string): boolean {
   return category === "Coffee";
 }
 
+/** 🧋 Boba can top any customizable drink. */
+export function allowsBoba(category: string): boolean {
+  return isCustomizable(category);
+}
+
 export function defaultCustomization(
   category: string
 ): DrinkCustomization | null {
   if (!isCustomizable(category)) return null;
-  return { sweetness: 100, ice: "normal", shots: 0 };
+  return { sweetness: 100, ice: "normal", shots: 0, boba: false };
 }
 
 /**
@@ -52,15 +59,18 @@ export function sanitizeCustomization(
     Number.isInteger(rawShots) && rawShots >= 0
       ? Math.min(rawShots, MAX_SHOTS)
       : 0;
+  const boba = allowsBoba(category) ? Boolean(input.boba) : false;
 
-  return { sweetness, ice, shots };
+  return { sweetness, ice, shots, boba };
 }
 
 export function customizationSurcharge(
   customization: DrinkCustomization | null
 ): number {
   if (!customization) return 0;
-  return Math.round(customization.shots * EXTRA_SHOT_PRICE * 100) / 100;
+  const shotCost = customization.shots * EXTRA_SHOT_PRICE;
+  const bobaCost = customization.boba ? BOBA_PRICE : 0;
+  return Math.round((shotCost + bobaCost) * 100) / 100;
 }
 
 /** Stable string key so identical customizations collapse to one cart line. */
@@ -68,7 +78,8 @@ export function customizationKey(
   customization: DrinkCustomization | null
 ): string {
   if (!customization) return "plain";
-  return `s${customization.sweetness}-i${customization.ice}-x${customization.shots}`;
+  const { sweetness, ice, shots, boba } = customization;
+  return `s${sweetness}-i${ice}-x${shots}-b${boba ? 1 : 0}`;
 }
 
 const ICE_LABELS: Record<IceLevel, { en: string; km: string }> = {
@@ -105,6 +116,9 @@ export function describeCustomization(
         ? `បន្ថែមកាហ្វេ ${customization.shots} កែវ`
         : `+${customization.shots} Espresso Shot${customization.shots > 1 ? "s" : ""}`
     );
+  }
+  if (customization.boba) {
+    parts.push(lang === "km" ? "បន្ថែមបុកបា 🧋" : "+ Boba 🧋");
   }
   return parts;
 }

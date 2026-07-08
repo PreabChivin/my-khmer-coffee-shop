@@ -10,6 +10,7 @@ import { isCustomizable } from "@/lib/customization";
 import DrinkCustomizer from "@/components/DrinkCustomizer";
 import GroupNamePromptModal from "@/components/GroupNamePromptModal";
 import ApsaraChibi from "@/components/mascots/ApsaraChibi";
+import { playPop } from "@/lib/sfx";
 import type { DrinkCustomization, ProductDTO } from "@/lib/types";
 
 // Playful Gen-Z slang tags sprinkled onto menu cards. Picked deterministically
@@ -69,6 +70,7 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
       setShowCustomizer(true);
       return;
     }
+    playPop();
     void commitAdd(null);
   }
 
@@ -85,7 +87,7 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
   }
 
   return (
-    <div className="khmer-card group relative flex flex-col overflow-hidden rounded-3xl bg-cream-50 transition-shadow hover:shadow-lg dark:bg-coffee-800">
+    <div className="khmer-card card-neon group relative flex flex-col overflow-hidden rounded-3xl bg-cream-50 dark:bg-coffee-800">
       {/* 👶✨ Baby Apsara dances when an item is added */}
       {justAdded && (
         <div className="pointer-events-none absolute left-1/2 top-1/3 z-20 -translate-x-1/2">

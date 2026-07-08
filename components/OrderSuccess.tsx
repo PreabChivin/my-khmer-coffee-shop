@@ -6,6 +6,7 @@ import { Gift, Sparkles, XCircle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Confetti from "@/components/Confetti";
 import BongBear, { type BongBearPose } from "@/components/mascots/BongBear";
+import { prizeById } from "@/lib/wheel";
 import type { Fortune } from "@/lib/fortunes";
 import type {
   OrderStatus,
@@ -39,13 +40,16 @@ export default function OrderSuccess({
   orderType,
   fortune,
   isGift,
+  spinPrize,
 }: {
   orderId: string;
   orderType: OrderType;
   fortune?: Fortune | null;
   isGift?: boolean;
+  spinPrize?: string | null;
 }) {
   const { lang, t } = useLanguage();
+  const wonPrize = prizeById(spinPrize);
   const [status, setStatus] = useState<OrderStatus>("PREPARING");
   const statusRef = useRef<OrderStatus>("PREPARING");
 
@@ -198,6 +202,22 @@ export default function OrderSuccess({
           <Gift size={17} />
           {t("gift.viewVoucher")}
         </Link>
+      )}
+
+      {/* 🎡 Wheel of Coffee prize won */}
+      {wonPrize && (
+        <div className="animate-pop-in mt-6 w-full rounded-3xl border-2 border-gold-500 bg-gradient-to-r from-gold-100 to-clay-50 px-6 py-5 text-center dark:from-coffee-800 dark:to-coffee-900">
+          <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-gold-700 dark:text-gold-400">
+            {t("wheel.prizeLabel")}
+          </p>
+          <p className="mt-1 text-4xl">{wonPrize.emoji}</p>
+          <p className="mt-1 font-heading text-base font-extrabold text-coffee-900 dark:text-cream-50">
+            {lang === "km" ? wonPrize.km : wonPrize.en}
+          </p>
+          <p className="mt-1 text-xs text-coffee-500 dark:text-cream-300">
+            {t("wheel.prizeSaved")}
+          </p>
+        </div>
       )}
 
       {/* 🔮 Daily Vibe Check reveal */}

@@ -40,7 +40,7 @@ interface CheckoutLine {
 }
 
 export default function CheckoutPage() {
-  const { items, clearCart, vibe } = useCart();
+  const { items, clearCart, vibe, spinPrize } = useCart();
   const {
     isGroupMode,
     groupId,
@@ -60,6 +60,8 @@ export default function CheckoutPage() {
   const [isApproved, setIsApproved] = useState(false);
   // 🔮 Destiny Cup fortune assigned to this order at checkout.
   const [fortune, setFortune] = useState<Fortune | null>(null);
+  // 🎡 Wheel prize captured at submit (cart clears on approval).
+  const [submittedPrize, setSubmittedPrize] = useState<string | null>(null);
 
   // 🐻 Loyalty status, fetched (debounced) as the phone number is typed —
   // not available for Bestie Cart group orders (ambiguous whose stamps).
@@ -130,6 +132,7 @@ export default function CheckoutPage() {
     // Prefer the "Daily Vibe Check" the customer already shook in the cart.
     const chosenFortune = vibe ?? randomFortune();
     setFortune(chosenFortune);
+    setSubmittedPrize(!isGroupMode ? spinPrize : null);
 
     try {
       const res = await fetch("/api/checkout", {
@@ -142,6 +145,7 @@ export default function CheckoutPage() {
           address: orderType === "Delivery" ? address : undefined,
           note: note || undefined,
           fortune: chosenFortune.km,
+          spinPrize: !isGroupMode ? spinPrize : null,
           redeemFreeDrinkIndex: !isGroupMode && wantRedeem ? redeemIndex : null,
           isGift,
           giftRecipientName: isGift ? giftRecipientName : undefined,
@@ -184,6 +188,7 @@ export default function CheckoutPage() {
         orderType={orderType}
         fortune={fortune}
         isGift={checkout.isGift}
+        spinPrize={submittedPrize}
       />
     );
   }

@@ -36,6 +36,8 @@ export interface DrinkCustomization {
   ice: IceLevel;
   /** Extra espresso shots (0–3); each adds a server-authoritative surcharge. */
   shots: number;
+  /** 🧋 Boba pearls topping — adds a server-authoritative surcharge. */
+  boba: boolean;
 }
 
 export interface CartItem {
@@ -71,6 +73,8 @@ export interface CheckoutRequestBody {
   note?: string;
   /** "Destiny Cup" fortune revealed to the customer, stored with the order. */
   fortune?: string | null;
+  /** 🎡 Wheel of Coffee prize label won at checkout. */
+  spinPrize?: string | null;
   /** 🐻 Index into `items` whose single unit should be redeemed free. */
   redeemFreeDrinkIndex?: number | null;
   /** 💖 Gift a Drink */

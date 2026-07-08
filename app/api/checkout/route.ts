@@ -7,6 +7,7 @@ import {
   sanitizeCustomization,
 } from "@/lib/customization";
 import { computeAvailableFreeDrinks, normalizePhone } from "@/lib/loyalty";
+import { prizeById } from "@/lib/wheel";
 import type { CheckoutRequestBody, CheckoutResponseBody } from "@/lib/types";
 
 const VALID_ORDER_TYPES = ["PickUp", "Delivery"];
@@ -32,12 +33,17 @@ export async function POST(request: NextRequest) {
     address,
     note,
     fortune,
+    spinPrize,
     redeemFreeDrinkIndex,
     isGift,
     giftRecipientName,
     giftMessage,
     groupCartId,
   } = body;
+
+  // 🎡 Only accept a spin prize that maps to a real wheel segment.
+  const validSpinPrize =
+    typeof spinPrize === "string" && prizeById(spinPrize) ? spinPrize : null;
 
   if (!customerName?.trim() || !customerPhone?.trim()) {
     return NextResponse.json(
@@ -216,6 +222,7 @@ export async function POST(request: NextRequest) {
             typeof fortune === "string" && fortune.trim()
               ? fortune.trim().slice(0, 300)
               : null,
+          spinPrize: validSpinPrize,
           totalAmount,
           orderStatus: "PENDING",
           redeemedFreeDrinks,

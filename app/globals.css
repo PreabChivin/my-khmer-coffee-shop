@@ -132,6 +132,22 @@ body {
     0 10px 24px -10px color-mix(in srgb, var(--color-clay-500) 55%, transparent);
 }
 
+/* 🌈 Neon glassmorphism lift for menu cards on hover/touch */
+.card-neon {
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.card-neon:hover,
+.card-neon:focus-within {
+  transform: translateY(-6px);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--color-clay-400) 80%, transparent),
+    0 14px 34px -8px color-mix(in srgb, var(--color-clay-500) 55%, transparent),
+    0 0 26px 2px color-mix(in srgb, var(--color-matcha-200) 70%, transparent);
+}
+
 /* Candy neon frame (KHQR modal, premium panels) */
 .khmer-frame {
   border: 3px solid var(--color-gold-500);

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Coins, Trophy, Users } from "lucide-react";
+import { Coins, Ticket, Trophy, Users } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { localizedName } from "@/lib/i18n";
+import { prizeById } from "@/lib/wheel";
 import type { AdminStatsResponseBody } from "@/app/api/admin/stats/route";
 
 const POLL_INTERVAL_MS = 15000;
@@ -40,7 +41,7 @@ export default function AdminStats() {
         {t("adminStats.title")}
       </p>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="flex items-center gap-3 rounded-2xl bg-white/70 p-3 dark:bg-coffee-800/70">
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gold-100 text-gold-700 dark:bg-coffee-900 dark:text-gold-400">
             <Coins size={18} />
@@ -97,6 +98,35 @@ export default function AdminStats() {
                   </span>
                 </li>
               ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="rounded-2xl bg-white/70 p-3 dark:bg-coffee-800/70">
+          <p className="mb-1.5 flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-coffee-400 dark:text-cream-400">
+            <Ticket size={13} />
+            {t("adminStats.mostSpun")}
+          </p>
+          {!stats || stats.topSpins.length === 0 ? (
+            <p className="text-xs text-coffee-400 dark:text-cream-400">
+              {t("adminStats.noSpins")}
+            </p>
+          ) : (
+            <ul className="space-y-1.5">
+              {stats.topSpins.map((row, i) => {
+                const prize = prizeById(row.prizeId);
+                return (
+                  <li key={row.prizeId} className="flex items-center gap-2">
+                    <span className="w-4 text-xs">{MEDALS[i]}</span>
+                    <span className="flex-1 truncate text-xs font-medium text-coffee-800 dark:text-cream-100">
+                      {prize ? `${prize.emoji} ${lang === "km" ? prize.km : prize.en}` : row.prizeId}
+                    </span>
+                    <span className="w-6 text-right text-[11px] text-coffee-500 dark:text-cream-300">
+                      {row.count}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

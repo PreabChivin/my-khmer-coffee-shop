@@ -30,6 +30,9 @@ interface CartContextValue {
   /** 🔮 "Daily Vibe Check" fortune injected from the drink configurator. */
   vibe: Fortune | null;
   setVibe: (fortune: Fortune | null) => void;
+  /** 🎡 Wheel of Coffee prize id won for this cart (one spin per cart). */
+  spinPrize: string | null;
+  setSpinPrize: (prizeId: string | null) => void;
   addItem: (product: ProductDTO, options?: AddItemOptions) => void;
   removeItem: (lineId: string) => void;
   updateQuantity: (lineId: string, quantity: number) => void;
@@ -90,6 +93,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [hasHydrated, setHasHydrated] = useState(false);
   const [vibe, setVibe] = useState<Fortune | null>(null);
+  const [spinPrize, setSpinPrize] = useState<string | null>(null);
 
   useEffect(() => {
     // Deliberately deferred to an effect: localStorage is unavailable during
@@ -168,6 +172,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = useCallback(() => {
     setItems([]);
     setVibe(null);
+    setSpinPrize(null);
   }, []);
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
@@ -189,6 +194,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     subtotal,
     vibe,
     setVibe,
+    spinPrize,
+    setSpinPrize,
     addItem,
     removeItem,
     updateQuantity,

@@ -38,6 +38,9 @@ model Order {
   address       String?
   fortune       String? // "Destiny Cup" coffee fortune assigned at checkout
 
+  // 🎡 Wheel of Coffee prize won at checkout (label, redeemed at counter).
+  spinPrize     String?
+
   // 🐻 Loyalty: number of free-drink rewards redeemed against this order (0 or 1).
   redeemedFreeDrinks Int     @default(0)
 

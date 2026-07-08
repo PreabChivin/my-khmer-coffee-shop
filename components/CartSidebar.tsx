@@ -7,6 +7,8 @@ import { useGroupCart } from "@/contexts/GroupCartContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { customizationSurcharge, describeCustomization } from "@/lib/customization";
 import { localizedName } from "@/lib/i18n";
+import { SPIN_UNLOCK_THRESHOLD } from "@/lib/wheel";
+import WheelOfCoffee from "@/components/WheelOfCoffee";
 
 export default function CartSidebar() {
   const {
@@ -17,6 +19,8 @@ export default function CartSidebar() {
     removeItem,
     subtotal,
     vibe,
+    spinPrize,
+    setSpinPrize,
   } = useCart();
   const { isGroupMode, state: groupState, updateGroupItemQuantity, removeGroupItem } =
     useGroupCart();
@@ -183,6 +187,21 @@ export default function CartSidebar() {
               </div>
             ) : (
               <>
+                {/* 🎡 Wheel of Coffee — unlocked once the cart passes the tier */}
+                {subtotal >= SPIN_UNLOCK_THRESHOLD && (
+                  <div className="mb-4 rounded-3xl border-2 border-dashed border-gold-500/60 bg-gradient-to-b from-gold-50 to-clay-50 px-4 py-5 dark:from-coffee-800 dark:to-coffee-900">
+                    <p className="mb-3 text-center font-heading text-base font-extrabold text-coffee-900 dark:text-cream-50">
+                      {t("wheel.title")}
+                    </p>
+                    <WheelOfCoffee wonPrize={spinPrize} onWin={setSpinPrize} />
+                    {spinPrize && (
+                      <p className="mt-3 text-center text-xs font-medium text-matcha-700">
+                        {t("wheel.prizeSaved")}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {/* 🔮 Daily Vibe Check injected from the configurator */}
                 {vibe && (
                   <div className="animate-pop-in mb-4 rounded-2xl border-2 border-dashed border-clay-400 bg-gradient-to-r from-clay-50 to-cream-100 px-4 py-3 text-center dark:from-coffee-800 dark:to-coffee-900">
