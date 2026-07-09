@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
+import { clampDiscountPercent } from "@/lib/pricing";
 
 export async function GET(request: NextRequest) {
   if (!getAdminFromRequest(request)) {
@@ -24,6 +25,7 @@ interface ProductPayload {
   isAvailable?: boolean;
   isPartner?: boolean;
   partnerName?: string | null;
+  discountPercent?: number;
 }
 
 export async function POST(request: NextRequest) {
@@ -49,6 +51,7 @@ export async function POST(request: NextRequest) {
     isAvailable,
     isPartner,
     partnerName,
+    discountPercent,
   } = body;
 
   if (
@@ -80,6 +83,7 @@ export async function POST(request: NextRequest) {
       isAvailable: isAvailable ?? true,
       isPartner: isPartner ?? false,
       partnerName: isPartner ? partnerName?.trim() || null : null,
+      discountPercent: clampDiscountPercent(discountPercent),
     },
   });
 

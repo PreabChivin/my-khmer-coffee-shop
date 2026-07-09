@@ -18,6 +18,7 @@ import {
   defaultCustomization,
 } from "@/lib/customization";
 import { playBubble, playPop, playTick } from "@/lib/sfx";
+import { computeDiscountedPrice } from "@/lib/pricing";
 import CupMixer from "@/components/CupMixer";
 import type { DrinkCustomization, IceLevel, ProductDTO } from "@/lib/types";
 
@@ -63,7 +64,8 @@ export default function DrinkCustomizer({
   const canAddShots = allowsShots(product.category);
   const canAddBoba = allowsBoba(product.category);
   const surcharge = customizationSurcharge(customization);
-  const unitPrice = product.price + surcharge;
+  const discountedBase = computeDiscountedPrice(product.price, product.discountPercent);
+  const unitPrice = discountedBase + surcharge;
   const name = localizedName(product, lang);
 
   return (

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
+import { clampDiscountPercent } from "@/lib/pricing";
 
 interface ProductPayload {
   nameEn?: string;
@@ -13,6 +14,7 @@ interface ProductPayload {
   isAvailable?: boolean;
   isPartner?: boolean;
   partnerName?: string | null;
+  discountPercent?: number;
 }
 
 export async function PUT(
@@ -60,6 +62,10 @@ export async function PUT(
       isPartner: body.isPartner ?? undefined,
       partnerName:
         "partnerName" in body ? body.partnerName?.trim() || null : undefined,
+      discountPercent:
+        "discountPercent" in body
+          ? clampDiscountPercent(body.discountPercent)
+          : undefined,
     },
   });
 

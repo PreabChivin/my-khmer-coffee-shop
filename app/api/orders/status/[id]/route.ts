@@ -23,6 +23,7 @@ export async function GET(
     paymentStatus:
       (order.payment?.paymentStatus as OrderStatusResponseBody["paymentStatus"]) ??
       null,
+    customerRating: order.customerRating,
   };
 
   return NextResponse.json(body);

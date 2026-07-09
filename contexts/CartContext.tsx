@@ -13,6 +13,7 @@ import {
   customizationKey,
   customizationSurcharge,
 } from "@/lib/customization";
+import { computeDiscountedPrice } from "@/lib/pricing";
 import type { Fortune } from "@/lib/fortunes";
 
 const STORAGE_KEY = "cafe-cart";
@@ -118,8 +119,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     (product: ProductDTO, options?: AddItemOptions) => {
       const quantity = options?.quantity ?? 1;
       const customization = options?.customization ?? null;
+      // 🔥 Discount is applied here (base price the customer actually pays,
+      // before customization add-ons) — server re-verifies at checkout.
+      const discountedBase = computeDiscountedPrice(
+        product.price,
+        product.discountPercent
+      );
       const unitPrice = round2(
-        product.price + customizationSurcharge(customization)
+        discountedBase + customizationSurcharge(customization)
       );
       const key = lineKey(product.id, customization);
 
@@ -142,7 +149,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             nameEn: product.nameEn,
             nameKh: product.nameKh,
             price: unitPrice,
-            basePrice: product.price,
+            basePrice: discountedBase,
             image: product.image,
             quantity,
             category: product.category,

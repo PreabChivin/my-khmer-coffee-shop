@@ -24,6 +24,11 @@ model Product {
   // 🤝 Partner Integration: co-branded / partner-exclusive items.
   isPartner      Boolean         @default(false)
   partnerName    String?
+  // 🔥 Dynamic Discount System
+  discountPercent Int            @default(0)
+  // ⭐ Rating aggregate — average = ratingSum / ratingCount (guard div-by-0).
+  ratingCount    Int             @default(0)
+  ratingSum      Float           @default(0)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   orderItems     OrderItem[]
@@ -55,6 +60,10 @@ model Order {
 
   // 👯 Bestie Cart: true when this order was checked out from a shared GroupCart.
   isGroupOrder Boolean @default(false)
+
+  // ⭐ 1–5 star review the customer leaves once this order is COMPLETED.
+  // Null until rated; also doubles as the "already rated" guard.
+  customerRating Int?
 
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt

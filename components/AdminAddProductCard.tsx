@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { localizedCategory } from "@/lib/i18n";
+import { computeDiscountedPrice } from "@/lib/pricing";
 import type { ProductDTO } from "@/lib/types";
 
 const CATEGORIES = ["Coffee", "Tea", "Bakery"];
@@ -18,6 +19,7 @@ const EMPTY_FORM = {
   image: "/images/espresso.jpg",
   isPartner: false,
   partnerName: "",
+  discountPercent: "",
 };
 
 /** 👑 "➕ Add a new cute drink" — sits at the front of the homepage grid,
@@ -51,6 +53,7 @@ export default function AdminAddProductCard({
           image: form.image,
           isPartner: form.isPartner,
           partnerName: form.isPartner ? form.partnerName || null : null,
+          discountPercent: Number(form.discountPercent) || 0,
         }),
       });
       const data = await res.json();
@@ -157,6 +160,33 @@ export default function AdminAddProductCard({
                 onChange={(e) => setForm({ ...form, image: e.target.value })}
                 className="w-full rounded-xl border border-coffee-300 px-4 py-2.5 text-coffee-900 outline-none focus:border-clay-400 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
               />
+
+              <div className="rounded-xl border-2 border-dashed border-crimson-400 bg-crimson-50/60 px-3 py-2.5 dark:bg-coffee-900/40">
+                <label className="mb-1 block text-sm font-semibold text-coffee-800 dark:text-cream-100">
+                  🔥 ភាគរយបញ្ចុះតម្លៃ (%) / Discount Percentage
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder="0"
+                  value={form.discountPercent}
+                  onChange={(e) => setForm({ ...form, discountPercent: e.target.value })}
+                  className="w-full rounded-xl border border-coffee-300 px-4 py-2.5 text-coffee-900 outline-none focus:border-crimson-400 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
+                />
+                {Number(form.discountPercent) > 0 && !Number.isNaN(parseFloat(form.price)) && (
+                  <p className="mt-2 text-xs font-semibold text-crimson-600 dark:text-crimson-400">
+                    <span className="line-through opacity-60">
+                      ${parseFloat(form.price || "0").toFixed(2)}
+                    </span>{" "}
+                    → $
+                    {computeDiscountedPrice(
+                      parseFloat(form.price || "0"),
+                      Number(form.discountPercent)
+                    ).toFixed(2)}
+                  </p>
+                )}
+              </div>
 
               <div className="rounded-xl border-2 border-dashed border-matcha-400 bg-matcha-50 px-3 py-2.5 dark:bg-coffee-900/40">
                 <label className="flex items-center gap-2 text-sm font-semibold text-coffee-800 dark:text-cream-100">

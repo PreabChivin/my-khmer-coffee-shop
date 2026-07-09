@@ -6,6 +6,7 @@ import {
   customizationSurcharge,
   sanitizeCustomization,
 } from "@/lib/customization";
+import { computeDiscountedPrice } from "@/lib/pricing";
 import { computeAvailableFreeDrinks, normalizePhone } from "@/lib/loyalty";
 import { prizeById } from "@/lib/wheel";
 import type { CheckoutRequestBody, CheckoutResponseBody } from "@/lib/types";
@@ -119,15 +120,21 @@ export async function POST(request: NextRequest) {
 
   // Build line items with server-authoritative pricing: the customization is
   // re-sanitized against the product category here so a client can never inject
-  // arbitrary modifiers or a discounted surcharge. Unit price = base + shots.
+  // arbitrary modifiers or a discounted surcharge. Unit price = discounted
+  // base + shots — the discount percent is read from the DB, never trusted
+  // from the client.
   const lineItems = items.map((item) => {
     const product = productMap.get(item.productId)!;
     const customization = sanitizeCustomization(
       product.category,
       item.customization
     );
+    const discountedBase = computeDiscountedPrice(
+      product.price,
+      product.discountPercent
+    );
     const unitPrice = round2(
-      product.price + customizationSurcharge(customization)
+      discountedBase + customizationSurcharge(customization)
     );
     return {
       productId: product.id,

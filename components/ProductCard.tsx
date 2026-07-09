@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, SlidersHorizontal } from "lucide-react";
+import { Plus, SlidersHorizontal, Star } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useGroupCart } from "@/contexts/GroupCartContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { localizedDescription, localizedName } from "@/lib/i18n";
 import { isCustomizable } from "@/lib/customization";
+import { computeAverageRating, computeDiscountedPrice } from "@/lib/pricing";
 import DrinkCustomizer from "@/components/DrinkCustomizer";
 import GroupNamePromptModal from "@/components/GroupNamePromptModal";
 import AdminEditPopover from "@/components/AdminEditPopover";
@@ -74,6 +75,18 @@ export default function ProductCard({
   const description = localizedDescription(localProduct, lang);
   const customizable = isCustomizable(localProduct.category);
   const slang = slangFor(localProduct.id);
+
+  // 🔥 Dynamic Discount System
+  const hasDiscount = localProduct.discountPercent > 0;
+  const discountedPrice = computeDiscountedPrice(
+    localProduct.price,
+    localProduct.discountPercent
+  );
+
+  // ⭐ Rating aggregate — guarded against division by zero.
+  const avgRating = computeAverageRating(localProduct.ratingSum, localProduct.ratingCount);
+  const hasRatings = localProduct.ratingCount > 0;
+  const isPerfectScore = hasRatings && avgRating >= 4.995;
 
   if (isDeleted) return null;
 
@@ -173,8 +186,14 @@ export default function ProductCard({
           alt={name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
+        {/* 🔥 Discount badge takes priority over the generic slang badge */}
+        {localProduct.isAvailable && hasDiscount && (
+          <span className="animate-pop-in absolute left-2 top-2 rounded-full bg-gradient-to-r from-crimson-500 to-crimson-400 px-2.5 py-1 text-[11px] font-extrabold text-white shadow-md">
+            🔥 បញ្ចុះតម្លៃដល់ {localProduct.discountPercent}%
+          </span>
+        )}
         {/* 💖 Playful slang badge */}
-        {localProduct.isAvailable && (
+        {localProduct.isAvailable && !hasDiscount && (
           <span className="absolute left-2 top-2 rounded-full bg-clay-400/95 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
             {lang === "km" ? slang.km : slang.en}
           </span>
@@ -232,10 +251,38 @@ export default function ProductCard({
           <h3 className="font-heading text-base text-coffee-900 dark:text-cream-50">
             {name}
           </h3>
-          <span className="whitespace-nowrap font-semibold text-clay-500 dark:text-clay-400">
-            ${localProduct.price.toFixed(2)}
-          </span>
+          {hasDiscount ? (
+            <span className="flex shrink-0 flex-col items-end whitespace-nowrap">
+              <span className="text-xs text-coffee-400 line-through dark:text-cream-400">
+                ${localProduct.price.toFixed(2)}
+              </span>
+              <span className="font-bold text-crimson-500 dark:text-crimson-400">
+                ${discountedPrice.toFixed(2)}
+              </span>
+            </span>
+          ) : (
+            <span className="whitespace-nowrap font-semibold text-clay-500 dark:text-clay-400">
+              ${localProduct.price.toFixed(2)}
+            </span>
+          )}
         </div>
+
+        {/* ⭐ Live rating — hidden until the product has at least one rating */}
+        {hasRatings && (
+          <div className="mt-0.5 flex items-center gap-1 text-xs font-bold text-coffee-700 dark:text-cream-200">
+            <Star size={13} className="fill-gold-500 text-gold-500 drop-shadow-[0_0_3px_rgba(255,195,46,0.6)]" />
+            {avgRating.toFixed(1)}
+            <span className="font-medium text-coffee-400 dark:text-cream-400">
+              ({localProduct.ratingCount}+)
+            </span>
+            {isPerfectScore && (
+              <span className="ml-1 rounded-full bg-gold-100 px-1.5 py-0.5 text-[10px] font-extrabold text-gold-700 dark:bg-coffee-900 dark:text-gold-400">
+                ឆ្ងាញ់ដាច់អាកាស 💯
+              </span>
+            )}
+          </div>
+        )}
+
         {description && (
           <p className="relative mt-1 flex-1 text-sm text-coffee-500 dark:text-cream-300">
             {description}

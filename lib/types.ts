@@ -11,6 +11,11 @@ export interface ProductDTO {
   /** 🤝 Partner Integration: co-branded / partner-exclusive items. */
   isPartner: boolean;
   partnerName: string | null;
+  /** 🔥 Dynamic Discount System: 0 = no discount. */
+  discountPercent: number;
+  /** ⭐ Rating aggregate — compute average with computeAverageRating(). */
+  ratingCount: number;
+  ratingSum: number;
 }
 
 export type OrderType = "PickUp" | "Delivery";
@@ -99,6 +104,8 @@ export interface OrderStatusResponseBody {
   orderId: string;
   orderStatus: OrderStatus;
   paymentStatus: PaymentStatus | null;
+  /** ⭐ Null until the customer rates this order (also the "already rated" guard). */
+  customerRating: number | null;
 }
 
 /** 🐻 Cute Bear Stamps loyalty status for a phone number. */

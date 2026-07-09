@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { computeDiscountedPrice } from "@/lib/pricing";
 import type {
   DrinkCustomization,
   GroupCartStateDTO,
@@ -35,7 +36,9 @@ export async function GET(
       product: {
         nameEn: item.product.nameEn,
         nameKh: item.product.nameKh,
-        price: item.product.price,
+        // Pre-discounted so every downstream consumer (banner, sidebar,
+        // checkout) shows correct totals without duplicating the discount math.
+        price: computeDiscountedPrice(item.product.price, item.product.discountPercent),
         image: item.product.image,
         category: item.product.category,
       },

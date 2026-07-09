@@ -6,6 +6,7 @@ import { Gift, Sparkles } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Confetti from "@/components/Confetti";
 import BongBear, { type BongBearPose } from "@/components/mascots/BongBear";
+import RatingPicker from "@/components/RatingPicker";
 import { prizeById } from "@/lib/wheel";
 import type { Fortune } from "@/lib/fortunes";
 import type {
@@ -52,6 +53,7 @@ export default function OrderSuccess({
   const wonPrize = prizeById(spinPrize);
   const [status, setStatus] = useState<OrderStatus>("PREPARING");
   const statusRef = useRef<OrderStatus>("PREPARING");
+  const [customerRating, setCustomerRating] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,6 +67,7 @@ export default function OrderSuccess({
           statusRef.current = data.orderStatus;
           setStatus(data.orderStatus);
         }
+        setCustomerRating(data.customerRating);
       } catch {
         // transient network hiccup — next tick retries
       }
@@ -116,6 +119,10 @@ export default function OrderSuccess({
           កាហ្វេឆ្ងាញ់ដល់ដៃ Bestie រួចរាល់ហើយ! ញ៉ាំឱ្យឆ្ងាញ់ និងមានក្ដីសុខពេញមួយថ្ងៃណា៎ប្រូ/ស៊ីស
           លង់ស្តូក! ☕️ឡូវហ្នឹង! 🎉
         </p>
+
+        {/* ⭐ Dynamic Customer Rating Calculator */}
+        <RatingPicker orderId={orderId} initialRating={customerRating} />
+
         <Link
           href="/menu"
           className="mt-8 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
