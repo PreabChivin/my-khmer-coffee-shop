@@ -121,6 +121,7 @@ export default function AdminEditPopover({
               placeholder={t("adminMenu.price")}
               value={form.price}
               onChange={(e) => setForm({ ...form, price: e.target.value })}
+              onWheel={(e) => e.currentTarget.blur()}
               className="w-full rounded-xl border border-coffee-300 px-4 py-2.5 text-coffee-900 outline-none focus:border-clay-400 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
             />
             <select
@@ -155,6 +156,7 @@ export default function AdminEditPopover({
               placeholder="0"
               value={form.discountPercent}
               onChange={(e) => setForm({ ...form, discountPercent: e.target.value })}
+              onWheel={(e) => e.currentTarget.blur()}
               className="w-full rounded-xl border border-coffee-300 px-4 py-2.5 text-coffee-900 outline-none focus:border-crimson-400 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
             />
             {Number(form.discountPercent) > 0 && !Number.isNaN(parseFloat(form.price)) && (
