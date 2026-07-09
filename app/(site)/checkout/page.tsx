@@ -168,6 +168,13 @@ export default function CheckoutPage() {
 
       const result = data as CheckoutResponseBody;
       setCheckout(result);
+      // Remember the phone (device-local only) so the homepage sidebar can
+      // show this customer's loyalty stamps on their next visit.
+      try {
+        window.localStorage.setItem("cafe-last-phone", customerPhone.trim());
+      } catch {
+        // ignore
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {

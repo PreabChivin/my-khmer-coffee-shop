@@ -3,16 +3,18 @@
 import { useRouter } from "next/navigation";
 import { Coffee, LogOut } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAdminSession } from "@/contexts/AdminSessionContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import AppearanceSettings from "@/components/AppearanceSettings";
 
 export default function AdminHeader({ name }: { name: string }) {
   const router = useRouter();
   const { t } = useLanguage();
+  const { logout } = useAdminSession();
 
   async function handleLogout() {
-    await fetch("/api/admin/logout", { method: "POST" });
-    router.push("/admin/login");
+    await logout();
+    router.push("/");
     router.refresh();
   }
 

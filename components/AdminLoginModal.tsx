@@ -1,15 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Coffee, Lock, User } from "lucide-react";
+import { Lock, User, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import LanguageToggle from "@/components/LanguageToggle";
-import AppearanceSettings from "@/components/AppearanceSettings";
+import { useAdminSession } from "@/contexts/AdminSessionContext";
+import BongBear from "@/components/mascots/BongBear";
 
-export default function AdminLoginPage() {
-  const router = useRouter();
+export default function AdminLoginModal({ onClose }: { onClose: () => void }) {
   const { t } = useLanguage();
+  const { login } = useAdminSession();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -19,41 +18,27 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
-
-    try {
-      const res = await fetch("/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error ?? "Login failed");
-      }
-
-      router.push("/admin/dashboard");
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
-    } finally {
-      setIsSubmitting(false);
-    }
+    const result = await login(username, password);
+    setIsSubmitting(false);
+    if (result.ok) onClose();
+    else setError(result.error ?? "Login failed");
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-coffee-900 px-4">
-      <div className="absolute right-4 top-4 flex items-center gap-2">
-        <LanguageToggle />
-        <AppearanceSettings />
-      </div>
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-coffee-900/70 p-4 backdrop-blur-sm">
+      <div className="khmer-card relative w-full max-w-sm rounded-3xl bg-cream-50 p-7 dark:bg-coffee-800">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={t("customize.cancel")}
+          className="absolute right-4 top-4 text-coffee-400 hover:text-coffee-700 dark:text-cream-400"
+        >
+          <X size={18} />
+        </button>
 
-      <div className="khmer-frame w-full max-w-sm rounded-2xl bg-cream-50 p-8 dark:bg-coffee-800">
-        <div className="mb-6 flex flex-col items-center text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full border border-gold-500 bg-coffee-800 text-gold-400">
-            <Coffee size={22} />
-          </span>
-          <h1 className="mt-3 font-heading text-2xl text-coffee-900 dark:text-cream-50">
+        <div className="flex flex-col items-center text-center">
+          <BongBear pose="wave" size={80} />
+          <h1 className="mt-2 font-heading text-xl text-coffee-900 dark:text-cream-50">
             {t("adminLogin.title")}
           </h1>
           <p className="mt-1 text-sm text-coffee-500 dark:text-cream-300">
@@ -61,7 +46,7 @@ export default function AdminLoginPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-coffee-700 dark:text-cream-200">
               {t("adminLogin.username")}
@@ -76,7 +61,7 @@ export default function AdminLoginPage() {
                 autoFocus
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full rounded-xl border border-coffee-300 bg-cream-50 py-2.5 pl-9 pr-4 text-coffee-900 outline-none focus:border-coffee-600 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
+                className="w-full rounded-xl border border-coffee-300 bg-cream-50 py-2.5 pl-9 pr-4 text-coffee-900 outline-none focus:border-clay-400 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
                 placeholder="admin"
               />
             </div>
@@ -96,7 +81,7 @@ export default function AdminLoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-coffee-300 bg-cream-50 py-2.5 pl-9 pr-4 text-coffee-900 outline-none focus:border-coffee-600 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
+                className="w-full rounded-xl border border-coffee-300 bg-cream-50 py-2.5 pl-9 pr-4 text-coffee-900 outline-none focus:border-clay-400 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
                 placeholder="••••••••"
               />
             </div>
@@ -111,7 +96,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-xl bg-gold-500 py-3 font-semibold text-coffee-900 transition-colors hover:bg-gold-600 disabled:cursor-not-allowed disabled:bg-coffee-300"
+            className="w-full rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 py-3 font-bold text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
           >
             {isSubmitting ? t("adminLogin.signingIn") : t("adminLogin.signIn")}
           </button>

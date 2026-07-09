@@ -169,6 +169,8 @@ const dictionary = {
     "adminMenu.loading": "Loading menu…",
     "adminMenu.deleteConfirmPrefix": "Delete",
     "adminMenu.deleteConfirmSuffix": "? This cannot be undone.",
+    "adminMenu.isPartner": "Partner Item",
+    "adminMenu.partnerNamePlaceholder": "Partner brand name (e.g. Bobalicious)",
 
     "customize.title": "Customize Your Drink",
     "customize.subtitle": "Make it yours before it brews.",
@@ -284,6 +286,15 @@ const dictionary = {
     "adminOrder.giftBadge": "🎁 Gift",
     "adminOrder.groupBadge": "👯 Bestie Cart",
     "adminAction.markGiftRedeemed": "Mark Gift Redeemed 🎁",
+
+    "admin.trigger": "🔐 Staff",
+    "admin.editingOn": "Editing Mode: ON 🔐",
+    "admin.editingOff": "Editing Mode: OFF",
+    "admin.editItem": "Edit price/name",
+    "admin.deleteItem": "Delete item",
+    "admin.toggleStock": "Toggle stock",
+    "admin.addNewProduct": "➕ Add a New Cute Drink",
+    "product.partnerBadge": "Partner Exclusive 🤝✨",
   },
   km: {
     "nav.home": "ផ្ទះកណ្ដាល 🏠",
@@ -447,6 +458,8 @@ const dictionary = {
     "adminMenu.loading": "កំពុងផ្ទុកមីនុយ...",
     "adminMenu.deleteConfirmPrefix": "លុប",
     "adminMenu.deleteConfirmSuffix": "? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។",
+    "adminMenu.isPartner": "ទំនិញដៃគូ",
+    "adminMenu.partnerNamePlaceholder": "ឈ្មោះម៉ាកដៃគូ (ឧ. Bobalicious)",
 
     "customize.title": "កែសម្រួលភេសជ្ជៈរបស់អ្នក",
     "customize.subtitle": "រៀបចំតាមចិត្តអ្នក មុននឹងឆុង។",
@@ -561,6 +574,15 @@ const dictionary = {
     "adminOrder.giftBadge": "🎁 កាដូ",
     "adminOrder.groupBadge": "👯 កន្ត្រកមិត្តភ័ក្តិ",
     "adminAction.markGiftRedeemed": "សម្គាល់ថាបានទទួលកាដូ 🎁",
+
+    "admin.trigger": "🔐 ម៉ោងការងារ",
+    "admin.editingOn": "របៀបកែសម្រួល: បើក 🔐",
+    "admin.editingOff": "របៀបកែសម្រួល: បិទ",
+    "admin.editItem": "កែតម្លៃ/ឈ្មោះ",
+    "admin.deleteItem": "លុបចោល",
+    "admin.toggleStock": "អស់ស្តុក/មានស្តុក",
+    "admin.addNewProduct": "➕ បន្ថែមភេសជ្ជៈ Cute ថ្មី",
+    "product.partnerBadge": "ដៃគូពិសេស 🤝✨",
   },
 } as const;
 

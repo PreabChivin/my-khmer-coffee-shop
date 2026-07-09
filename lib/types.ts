@@ -8,6 +8,9 @@ export interface ProductDTO {
   category: string;
   image: string;
   isAvailable: boolean;
+  /** 🤝 Partner Integration: co-branded / partner-exclusive items. */
+  isPartner: boolean;
+  partnerName: string | null;
 }
 
 export type OrderType = "PickUp" | "Delivery";

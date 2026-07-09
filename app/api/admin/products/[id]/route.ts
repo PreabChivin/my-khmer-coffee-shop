@@ -11,6 +11,8 @@ interface ProductPayload {
   category?: string;
   image?: string;
   isAvailable?: boolean;
+  isPartner?: boolean;
+  partnerName?: string | null;
 }
 
 export async function PUT(
@@ -55,6 +57,9 @@ export async function PUT(
       category: body.category?.trim() ?? undefined,
       image: body.image?.trim() ?? undefined,
       isAvailable: body.isAvailable ?? undefined,
+      isPartner: body.isPartner ?? undefined,
+      partnerName:
+        "partnerName" in body ? body.partnerName?.trim() || null : undefined,
     },
   });
 

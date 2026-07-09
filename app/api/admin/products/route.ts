@@ -22,6 +22,8 @@ interface ProductPayload {
   category?: string;
   image?: string;
   isAvailable?: boolean;
+  isPartner?: boolean;
+  partnerName?: string | null;
 }
 
 export async function POST(request: NextRequest) {
@@ -36,8 +38,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { nameEn, nameKh, descriptionEn, descriptionKh, price, category, image, isAvailable } =
-    body;
+  const {
+    nameEn,
+    nameKh,
+    descriptionEn,
+    descriptionKh,
+    price,
+    category,
+    image,
+    isAvailable,
+    isPartner,
+    partnerName,
+  } = body;
 
   if (
     !nameEn?.trim() ||
@@ -66,6 +78,8 @@ export async function POST(request: NextRequest) {
       category: category.trim(),
       image: image.trim(),
       isAvailable: isAvailable ?? true,
+      isPartner: isPartner ?? false,
+      partnerName: isPartner ? partnerName?.trim() || null : null,
     },
   });
 

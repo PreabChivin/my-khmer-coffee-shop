@@ -1,11 +1,15 @@
 "use client";
 
-import Link from "next/link";
+import { useMemo, useState } from "react";
 import { Bike, Clock, QrCode, Sprout, Store } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
-import KhmerDivider from "@/components/KhmerDivider";
 import HeroSlideshow from "@/components/HeroSlideshow";
+import PromoBannerCarousel from "@/components/PromoBannerCarousel";
+import CategoryScroller from "@/components/CategoryScroller";
+import HomeSidebar from "@/components/HomeSidebar";
+import AdminAddProductCard from "@/components/AdminAddProductCard";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAdminSession } from "@/contexts/AdminSessionContext";
 import type { ProductDTO } from "@/lib/types";
 import type { TranslationKey } from "@/lib/i18n";
 
@@ -32,17 +36,77 @@ const FEATURES: {
 ];
 
 export default function HomeContent({
-  featuredProducts,
+  initialProducts,
 }: {
-  featuredProducts: ProductDTO[];
+  initialProducts: ProductDTO[];
 }) {
   const { t } = useLanguage();
+  const { isEditingMode } = useAdminSession();
+  const [products, setProducts] = useState(initialProducts);
+  const [activeCategory, setActiveCategory] = useState("All");
+
+  const categories = useMemo(() => {
+    const seen: string[] = [];
+    for (const p of products) if (!seen.includes(p.category)) seen.push(p.category);
+    return seen;
+  }, [products]);
+
+  const visibleProducts = useMemo(
+    () =>
+      activeCategory === "All"
+        ? products
+        : products.filter((p) => p.category === activeCategory),
+    [products, activeCategory]
+  );
+
+  function handleProductCreated(created: ProductDTO) {
+    setProducts((prev) => [...prev, created]);
+  }
+  function handleProductUpdated(updated: ProductDTO) {
+    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+  }
+  function handleProductDeleted(id: string) {
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+  }
 
   return (
     <div>
       <HeroSlideshow />
 
-      <section className="border-b border-gold-500/30 bg-cream-50 dark:bg-coffee-900">
+      {/* 🎉 Top Promotional Banner Carousel */}
+      <PromoBannerCarousel />
+
+      {/* 🍩 Categorized horizontal menu scroller */}
+      <CategoryScroller
+        categories={categories}
+        active={activeCategory}
+        onSelect={setActiveCategory}
+      />
+
+      {/* Two-column Foodpanda-style layout: sidebar + product grid */}
+      <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
+          <HomeSidebar />
+
+          <div className="min-w-0 flex-1">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {isEditingMode && (
+                <AdminAddProductCard onCreated={handleProductCreated} />
+              )}
+              {visibleProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onProductUpdated={handleProductUpdated}
+                  onProductDeleted={handleProductDeleted}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-gold-500/30 bg-cream-50 dark:bg-coffee-900">
         <div className="mx-auto grid max-w-6xl gap-6 px-4 py-10 sm:grid-cols-3 sm:px-6">
           {FEATURES.map((feature) => (
             <div key={feature.titleKey} className="flex items-start gap-4">
@@ -75,35 +139,6 @@ export default function HomeContent({
           </p>
         </div>
       </section>
-
-      {featuredProducts.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-          <div className="mb-8 text-center">
-            <h2 className="font-heading text-3xl text-coffee-900 dark:text-cream-50">
-              {t("home.fanFavorites")}
-            </h2>
-            <p className="mt-1 text-coffee-500 dark:text-cream-300">
-              {t("home.fanFavoritesSubtitle")}
-            </p>
-            <KhmerDivider className="mt-4" />
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-
-          <div className="mt-8 text-center">
-            <Link
-              href="/menu"
-              className="text-sm font-semibold text-clay-500 hover:underline"
-            >
-              {t("home.viewFullMenu")} →
-            </Link>
-          </div>
-        </section>
-      )}
 
       <section className="kbach-overlay bg-clay-500 text-cream-50">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 py-14 text-center sm:px-6 md:flex-row md:justify-between md:text-left">

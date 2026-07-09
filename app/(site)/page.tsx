@@ -4,17 +4,15 @@ import type { ProductDTO } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-async function getFeaturedProducts(): Promise<ProductDTO[]> {
+async function getAllProducts(): Promise<ProductDTO[]> {
   const products = await prisma.product.findMany({
-    where: { isAvailable: true },
-    orderBy: { createdAt: "asc" },
-    take: 4,
+    orderBy: [{ category: "asc" }, { createdAt: "asc" }],
   });
   return products;
 }
 
 export default async function HomePage() {
-  const featuredProducts = await getFeaturedProducts();
+  const products = await getAllProducts();
 
-  return <HomeContent featuredProducts={featuredProducts} />;
+  return <HomeContent initialProducts={products} />;
 }
