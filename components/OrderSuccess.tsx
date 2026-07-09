@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Gift, Sparkles, XCircle } from "lucide-react";
+import { Gift, Sparkles } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Confetti from "@/components/Confetti";
 import BongBear, { type BongBearPose } from "@/components/mascots/BongBear";
@@ -83,18 +83,42 @@ export default function OrderSuccess({
   if (status === "CANCELLED") {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-4 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-crimson-400 bg-crimson-50 text-crimson-600">
-          <XCircle size={36} />
-        </div>
-        <h1 className="mt-6 font-heading text-3xl text-coffee-900 dark:text-cream-50">
-          {t("track.cancelledTitle")}
-        </h1>
-        <p className="mt-4 text-coffee-500 dark:text-cream-300">
-          {`${t("track.orderLabel")} ${shortId} — ${t("track.cancelledDesc")}`}
+        <BongBear pose="sad" size={130} />
+        <p className="mt-2 text-xs font-bold uppercase tracking-widest text-coffee-400 dark:text-cream-400">
+          {t("track.orderLabel")} {shortId}
+        </p>
+        <p className="mt-4 font-heading text-base font-bold leading-relaxed text-coffee-800 dark:text-cream-100">
+          អូយយយ សុំទោសម៉ាយដំឡូងខ្លាំងៗ! 🥺 ការកុម្ម៉ង់នេះមានបញ្ហាបន្តិចបន្តួចទើបត្រូវបានបោះបង់
+          (ប្រហែលមកពីបាញ់លុយខុសចំនួន ឬដាច់ស្តុក)។ កុំអាក់អន់ចិត្តអីណា៎
+          មកចុចកុម្ម៉ង់សារថ្មីម្ដងទៀតមក Bestie ពួកយើងចាំធ្វើជូនយ៉ាងពិសេស! 💖
         </p>
         <Link
           href="/menu"
-          className="mt-8 rounded-full bg-clay-400 px-8 py-3 font-bold text-white transition-transform hover:scale-105"
+          className="mt-8 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
+        >
+          {t("success.orderSomethingElse")}
+        </Link>
+      </div>
+    );
+  }
+
+  if (status === "COMPLETED") {
+    return (
+      <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-4 text-center">
+        <Confetti />
+        <div className="animate-bounce-cute">
+          <BongBear pose="cheer" size={140} />
+        </div>
+        <p className="mt-2 text-xs font-bold uppercase tracking-widest text-matcha-600">
+          {t("track.orderLabel")} {shortId}
+        </p>
+        <p className="mt-4 font-heading text-lg font-extrabold leading-relaxed text-coffee-900 dark:text-cream-50">
+          កាហ្វេឆ្ងាញ់ដល់ដៃ Bestie រួចរាល់ហើយ! ញ៉ាំឱ្យឆ្ងាញ់ និងមានក្ដីសុខពេញមួយថ្ងៃណា៎ប្រូ/ស៊ីស
+          លង់ស្តូក! ☕️ឡូវហ្នឹង! 🎉
+        </p>
+        <Link
+          href="/menu"
+          className="mt-8 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
         >
           {t("success.orderSomethingElse")}
         </Link>

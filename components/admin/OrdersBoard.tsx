@@ -94,18 +94,16 @@ const COLUMNS: { key: OrderStatus; titleKey: TranslationKey }[] = [
   { key: "CANCELLED", titleKey: "adminCol.cancelled" },
 ];
 
-// Kitchen lifecycle: Accept & Brew advances the customer's live tracker to
-// phase 2 (Brewing); Mark Ready advances it to phase 3 (Ready for Pick-Up).
+// Kitchen lifecycle: Approve advances the customer's live tracker to
+// phase 2 (Brewing); Ready advances it to phase 3 (Ready for Pick-Up);
+// Complete closes the order out. Labels are fixed bilingual strings per spec.
 const NEXT_STATUS: Partial<
-  Record<OrderStatus, { labelKey: TranslationKey; next: OrderStatus }>
+  Record<OrderStatus, { label: string; next: OrderStatus }>
 > = {
-  PENDING: { labelKey: "adminAction.acceptBrew", next: "PREPARING" },
-  AWAITING_VERIFICATION: {
-    labelKey: "adminAction.acceptBrew",
-    next: "PREPARING",
-  },
-  PREPARING: { labelKey: "adminAction.markReady", next: "READY" },
-  READY: { labelKey: "adminAction.markCompleted", next: "COMPLETED" },
+  PENDING: { label: "👩‍កាត់លុយ/Approve", next: "PREPARING" },
+  AWAITING_VERIFICATION: { label: "👩‍កាត់លុយ/Approve", next: "PREPARING" },
+  PREPARING: { label: "☕️ ឆុងរួចរាល់/Ready", next: "READY" },
+  READY: { label: "✅ រួចរាល់/Complete", next: "COMPLETED" },
 };
 
 const ACTIVE_STATUSES: OrderStatus[] = [
@@ -440,7 +438,7 @@ export default function OrdersBoard() {
                               : "bg-gold-500 text-coffee-900 hover:bg-gold-600"
                           }`}
                         >
-                          {t(action.labelKey)}
+                          {action.label}
                         </button>
                       )}
 
@@ -472,7 +470,7 @@ export default function OrdersBoard() {
                           onClick={() => updateStatus(order.id, "CANCELLED")}
                           className="mt-1.5 w-full rounded-lg border border-coffee-300 py-1.5 text-xs font-semibold text-coffee-500 transition-colors hover:bg-coffee-100 dark:border-coffee-600 dark:text-cream-300 dark:hover:bg-coffee-800"
                         >
-                          {t("adminAction.cancelOrder")}
+                          ❌ បោះបង់/Cancel
                         </button>
                       )}
                     </div>

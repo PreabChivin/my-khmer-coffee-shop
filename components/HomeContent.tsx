@@ -7,7 +7,7 @@ import HeroSlideshow from "@/components/HeroSlideshow";
 import PromoBannerCarousel from "@/components/PromoBannerCarousel";
 import CategoryScroller from "@/components/CategoryScroller";
 import HomeSidebar from "@/components/HomeSidebar";
-import AdminAddProductCard from "@/components/AdminAddProductCard";
+import StaffKitchenView from "@/components/StaffKitchenView";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAdminSession } from "@/contexts/AdminSessionContext";
 import type { ProductDTO } from "@/lib/types";
@@ -41,7 +41,7 @@ export default function HomeContent({
   initialProducts: ProductDTO[];
 }) {
   const { t } = useLanguage();
-  const { isEditingMode } = useAdminSession();
+  const { isAdmin } = useAdminSession();
   const [products, setProducts] = useState(initialProducts);
   const [activeCategory, setActiveCategory] = useState("All");
 
@@ -69,6 +69,26 @@ export default function HomeContent({
     setProducts((prev) => prev.filter((p) => p.id !== id));
   }
 
+  // Note: the customer view renders immediately by default (matching SSR
+  // output, so every visitor gets instant content with no loading flash).
+  // A returning staff session flips to the Staff view a moment later, once
+  // the client-side session check resolves — a brief, harmless flash of
+  // public menu content for the rare staff reload beats a loading spinner
+  // for 100% of customer traffic.
+
+  // 🧑‍🍳 Strict world separation: logging in swaps the ENTIRE main viewport
+  // to the Staff Kitchen View. No customer banners, menu grid, or cart.
+  if (isAdmin) {
+    return (
+      <StaffKitchenView
+        products={products}
+        onProductCreated={handleProductCreated}
+        onProductUpdated={handleProductUpdated}
+        onProductDeleted={handleProductDeleted}
+      />
+    );
+  }
+
   return (
     <div>
       <HeroSlideshow />
@@ -90,16 +110,8 @@ export default function HomeContent({
 
           <div className="min-w-0 flex-1">
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {isEditingMode && (
-                <AdminAddProductCard onCreated={handleProductCreated} />
-              )}
               {visibleProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onProductUpdated={handleProductUpdated}
-                  onProductDeleted={handleProductDeleted}
-                />
+                <ProductCard key={product.id} product={product} />
               ))}
             </div>
           </div>

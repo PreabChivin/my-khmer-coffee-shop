@@ -9,14 +9,12 @@ import {
 } from "react";
 
 interface AdminSessionContextValue {
-  /** null while the initial /api/admin/me check is in flight. */
+  /** null while the initial /api/admin/me check is in flight, or logged out. */
   adminName: string | null;
+  /** true the instant login succeeds — this alone flips the whole UI into
+   *  Staff view. There is no separate "editing mode" step. */
   isAdmin: boolean;
   isChecking: boolean;
-  /** Loud, explicit toggle for "Admin Editing Mode" on the homepage — starts
-   *  off even for a logged-in admin, so the storefront looks normal by default. */
-  isEditingMode: boolean;
-  setEditingMode: (on: boolean) => void;
   login: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   logout: () => Promise<void>;
 }
@@ -28,7 +26,6 @@ const AdminSessionContext = createContext<AdminSessionContextValue | undefined>(
 export function AdminSessionProvider({ children }: { children: React.ReactNode }) {
   const [adminName, setAdminName] = useState<string | null>(null);
   const [isChecking, setIsChecking] = useState(true);
-  const [isEditingMode, setEditingMode] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,25 +56,24 @@ export function AdminSessionProvider({ children }: { children: React.ReactNode }
       const data = await res.json();
       if (!res.ok) return { ok: false, error: data.error ?? "Login failed" };
       setAdminName(data.name ?? username);
-      setEditingMode(true);
       return { ok: true };
     } catch {
       return { ok: false, error: "Network error — please try again" };
     }
   }, []);
 
+  // Logging out destroys the session server-side (cookie cleared) AND
+  // client-side (any device-local staff state), flipping the UI back to the
+  // default customer layout instantly.
   const logout = useCallback(async () => {
     await fetch("/api/admin/logout", { method: "POST" });
     setAdminName(null);
-    setEditingMode(false);
   }, []);
 
   const value: AdminSessionContextValue = {
     adminName,
     isAdmin: adminName !== null,
     isChecking,
-    isEditingMode: adminName !== null && isEditingMode,
-    setEditingMode,
     login,
     logout,
   };

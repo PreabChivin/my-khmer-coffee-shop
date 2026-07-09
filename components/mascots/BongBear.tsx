@@ -3,7 +3,7 @@
  * a milk-chocolate bear wearing a little palm-leaf hat. Pose variants power the
  * gamified order tracker and the KHQR page.
  */
-export type BongBearPose = "wave" | "sleep" | "brew" | "cheer";
+export type BongBearPose = "wave" | "sleep" | "brew" | "cheer" | "sad";
 
 export default function BongBear({
   pose = "wave",
@@ -43,6 +43,21 @@ export default function BongBear({
         </g>
       )}
 
+      {/* sad: falling teardrops */}
+      {pose === "sad" && (
+        <g fill="#7fc4e0">
+          <path
+            className="animate-sleep-z"
+            d="M58 78 q-3 5 0 9 q3 -1 3 -5 q0 -3 -3 -4Z"
+          />
+          <path
+            className="animate-sleep-z"
+            style={{ animationDelay: "0.5s" }}
+            d="M102 78 q-3 5 0 9 q3 -1 3 -5 q0 -3 -3 -4Z"
+          />
+        </g>
+      )}
+
       {/* sleep: drifting Zzz */}
       {pose === "sleep" && (
         <g fill="#9a82ea" fontFamily="sans-serif" fontWeight="700">
@@ -78,6 +93,13 @@ export default function BongBear({
           <path d="M56 68 q8 7 16 0" />
           <path d="M88 68 q8 7 16 0" />
         </g>
+      ) : pose === "sad" ? (
+        <g>
+          <ellipse cx="64" cy="69" rx="6" ry="7" fill={dark} />
+          <ellipse cx="96" cy="69" rx="6" ry="7" fill={dark} />
+          <path d="M56 60 q8 -5 15 -1" stroke={dark} strokeWidth="2.2" fill="none" strokeLinecap="round" />
+          <path d="M89 59 q7 -4 15 1" stroke={dark} strokeWidth="2.2" fill="none" strokeLinecap="round" />
+        </g>
       ) : (
         <g>
           <ellipse cx="64" cy="66" rx="6.5" ry="8.5" fill={dark} />
@@ -94,6 +116,8 @@ export default function BongBear({
       {/* mouth */}
       {pose === "cheer" ? (
         <path d="M72 88 q8 10 16 0" fill={dark} />
+      ) : pose === "sad" ? (
+        <path d="M74 92 q6 -6 12 0" stroke={dark} strokeWidth="2.6" fill="none" strokeLinecap="round" />
       ) : (
         <path d="M74 87 q6 6 12 0" stroke={dark} strokeWidth="2.6" fill="none" strokeLinecap="round" />
       )}
@@ -140,6 +164,12 @@ export default function BongBear({
         <>
           <path d="M52 122 q-10 -12 20 -28" stroke={fur} strokeWidth="12" fill="none" strokeLinecap="round" />
           <path d="M108 122 q10 -12 -20 -28" stroke={fur} strokeWidth="12" fill="none" strokeLinecap="round" />
+        </>
+      )}
+      {pose === "sad" && (
+        <>
+          <path d="M50 122 q-8 14 -4 26" stroke={fur} strokeWidth="12" fill="none" strokeLinecap="round" />
+          <path d="M110 122 q8 14 4 26" stroke={fur} strokeWidth="12" fill="none" strokeLinecap="round" />
         </>
       )}
     </svg>

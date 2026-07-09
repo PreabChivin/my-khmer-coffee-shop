@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Package, Pencil, Plus, SlidersHorizontal, Trash2 } from "lucide-react";
+import { Plus, SlidersHorizontal } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useGroupCart } from "@/contexts/GroupCartContext";
-import { useAdminSession } from "@/contexts/AdminSessionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { localizedDescription, localizedName } from "@/lib/i18n";
 import { isCustomizable } from "@/lib/customization";
@@ -32,20 +31,24 @@ function slangFor(id: string) {
 
 interface ProductCardProps {
   product: ProductDTO;
-  /** Lets a parent list (e.g. the homepage grid) stay in sync with edits. */
+  /** Only true inside the Staff Kitchen View's own product grid — the
+   *  customer-facing grid (home, /menu) never passes this, so admin controls
+   *  can never leak into the customer world. */
+  showAdminControls?: boolean;
+  /** Lets a parent list (e.g. the Staff Kitchen View grid) stay in sync with edits. */
   onProductUpdated?: (updated: ProductDTO) => void;
   onProductDeleted?: (id: string) => void;
 }
 
 export default function ProductCard({
   product,
+  showAdminControls = false,
   onProductUpdated,
   onProductDeleted,
 }: ProductCardProps) {
   const { addItem } = useCart();
   const { isGroupMode, contributorName, setContributorName, addGroupItem } =
     useGroupCart();
-  const { isEditingMode } = useAdminSession();
   const { lang, t } = useLanguage();
   const [justAdded, setJustAdded] = useState(false);
   const [showCustomizer, setShowCustomizer] = useState(false);
@@ -193,35 +196,32 @@ export default function ProductCard({
           </div>
         )}
 
-        {/* 🔐 Admin Editing Mode overlay controls */}
-        {isEditingMode && (
-          <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-coffee-900/60 py-2 backdrop-blur-sm">
+        {/* 🔐 Staff Kitchen View: dynamic CRUD controls for this item */}
+        {showAdminControls && (
+          <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1.5 bg-coffee-900/75 p-2 backdrop-blur-sm">
             <button
               type="button"
               onClick={() => setShowEditPopover(true)}
-              aria-label={t("admin.editItem")}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-gold-500 text-coffee-900 shadow transition-transform hover:scale-110 active:scale-95"
+              className="flex items-center justify-center gap-1.5 rounded-full bg-gold-500 py-1.5 text-xs font-bold text-coffee-900 shadow transition-transform hover:scale-[1.03] active:scale-95"
             >
-              <Pencil size={14} />
+              ✏️ កែតម្លៃ/ឈ្មោះ
             </button>
             <button
               type="button"
               onClick={handleToggleStock}
               disabled={isTogglingStock}
-              aria-label={t("admin.toggleStock")}
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-white shadow transition-transform hover:scale-110 active:scale-95 disabled:opacity-60 ${
+              className={`flex items-center justify-center gap-1.5 rounded-full py-1.5 text-xs font-bold text-white shadow transition-transform hover:scale-[1.03] active:scale-95 disabled:opacity-60 ${
                 localProduct.isAvailable ? "bg-matcha-500" : "bg-coffee-400"
               }`}
             >
-              <Package size={14} />
+              📦 អស់ស្តុក/មានស្តុក
             </button>
             <button
               type="button"
               onClick={handleDelete}
-              aria-label={t("admin.deleteItem")}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-crimson-500 text-white shadow transition-transform hover:scale-110 active:scale-95"
+              className="flex items-center justify-center gap-1.5 rounded-full bg-crimson-500 py-1.5 text-xs font-bold text-white shadow transition-transform hover:scale-[1.03] active:scale-95"
             >
-              <Trash2 size={14} />
+              🗑️ លុបចោល
             </button>
           </div>
         )}
