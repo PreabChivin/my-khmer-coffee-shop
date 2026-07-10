@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Crown, Lock, LogOut } from "lucide-react";
 import { useAdminSession } from "@/contexts/AdminSessionContext";
 import AdminLoginModal from "@/components/AdminLoginModal";
@@ -28,7 +29,11 @@ export default function StaffPortalButton() {
           <Lock size={12} />
           🔐 សម្រាប់បុគ្គលិកហាង (Staff Portal)
         </button>
-        {showModal && <AdminLoginModal onClose={() => setShowModal(false)} />}
+        {showModal &&
+          createPortal(
+            <AdminLoginModal onClose={() => setShowModal(false)} />,
+            document.body
+          )}
       </>
     );
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Bell, Coffee, ShoppingCart, Users } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
@@ -74,9 +75,11 @@ export default function Header() {
         </div>
       </div>
 
-      {showTelegramModal && (
-        <TelegramLinkModal onClose={() => setShowTelegramModal(false)} />
-      )}
+      {showTelegramModal &&
+        createPortal(
+          <TelegramLinkModal onClose={() => setShowTelegramModal(false)} />,
+          document.body
+        )}
     </header>
   );
 }
