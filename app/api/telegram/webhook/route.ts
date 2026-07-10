@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendCustomerAlert } from "@/lib/telegram";
+import { normalizePhone } from "@/lib/loyalty";
 
 // Telegram's own deep-link payload charset: A-Z a-z 0-9 _ and - (max 64
 // chars) — this also happens to match our Order UUID format exactly.
@@ -42,8 +43,16 @@ export async function POST(request: NextRequest) {
 
     const match = text.match(START_COMMAND);
     if (match) {
-      const orderId = match[1];
-      await handleStart(String(chatId), orderId);
+      const payload = match[1];
+      // "p_<phone>" = pre-order linking from the Header's bell button (saves
+      // to LoyaltyAccount); a bare payload = post-order linking from the
+      // tracking page (saves to that specific Order). Distinct prefix keeps
+      // the two entirely unambiguous — no UUID could ever start with "p_".
+      if (payload?.startsWith("p_")) {
+        await handlePhoneStart(String(chatId), payload.slice(2));
+      } else {
+        await handleOrderStart(String(chatId), payload);
+      }
     }
   } catch (err) {
     console.error("[telegram/webhook] Failed to process update:", err);
@@ -52,11 +61,33 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-async function handleStart(chatId: string, orderId: string | undefined) {
+async function handlePhoneStart(chatId: string, rawPhone: string) {
+  const phone = normalizePhone(rawPhone);
+  if (phone.length < 8) {
+    await sendCustomerAlert(
+      chatId,
+      "🥺 លេខទូរស័ព្ទមិនត្រឹមត្រូវទេ Bestie។ សូមព្យាយាមម្តងទៀតពីទំព័រដើមណា៎!"
+    );
+    return;
+  }
+
+  await prisma.loyaltyAccount.upsert({
+    where: { phone },
+    create: { phone, telegramChatId: chatId },
+    update: { telegramChatId: chatId },
+  });
+
+  await sendCustomerAlert(
+    chatId,
+    "🔔 ភ្ជាប់ជោគជ័យហើយណា៎! ចាប់ពីពេលនេះទៅ រាល់ការកម្ម៉ង់ដែលអ្នកកម្ម៉ង់ដោយប្រើលេខទូរស័ព្ទនេះ នឹងទទួលបានការជូនដំណឹងស្វ័យប្រវត្តិភ្លាមៗ! ☕️💖"
+  );
+}
+
+async function handleOrderStart(chatId: string, orderId: string | undefined) {
   if (!orderId) {
     await sendCustomerAlert(
       chatId,
-      "👋 សួស្តី Bestie! ដើម្បីទទួលការជូនដំណឹងអំពីការកម្ម៉ង់ សូមចុចប៊ូតុង 🔔 នៅលើទំព័រតាមដានការកម្ម៉ង់របស់អ្នកណា៎! ☕️✨"
+      "👋 សួស្តី Bestie! ដើម្បីទទួលការជូនដំណឹងអំពីការកម្ម៉ង់ សូមចុចប៊ូតុង 🔔 នៅលើទំព័រតាមដានការកម្ម៉ង់ ឬពីទំព័រដើមរបស់អ្នកណា៎! ☕️✨"
     );
     return;
   }

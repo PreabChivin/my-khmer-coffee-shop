@@ -123,6 +123,11 @@ model LoyaltyAccount {
   phone              String   @unique
   stampCount         Int      @default(0)
   freeDrinksRedeemed Int      @default(0)
+  // 🔔 Telegram Deep Linking, pre-order: set via the Header's bell button
+  // (/start p_<phone>) so a returning customer's very first order already
+  // has notifications wired up, with no per-order re-linking needed. Falls
+  // back from Order.customerTelegramChatId when that field is unset.
+  telegramChatId     String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
