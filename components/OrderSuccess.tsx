@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Gift, Sparkles } from "lucide-react";
+import { Bell, BellRing, Gift, Sparkles } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Confetti from "@/components/Confetti";
 import BongBear, { type BongBearPose } from "@/components/mascots/BongBear";
@@ -16,6 +16,7 @@ import type {
 } from "@/lib/types";
 
 const POLL_INTERVAL_MS = 4000;
+const TELEGRAM_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
 
 /** 0 = waiting (sleeping), 1 = brewing, 2 = ready (leaping). */
 function statusToPhase(status: OrderStatus): 0 | 1 | 2 {
@@ -54,6 +55,7 @@ export default function OrderSuccess({
   const [status, setStatus] = useState<OrderStatus>("PREPARING");
   const statusRef = useRef<OrderStatus>("PREPARING");
   const [customerRating, setCustomerRating] = useState<number | null>(null);
+  const [telegramLinked, setTelegramLinked] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,6 +70,7 @@ export default function OrderSuccess({
           setStatus(data.orderStatus);
         }
         setCustomerRating(data.customerRating);
+        setTelegramLinked(data.telegramLinked);
       } catch {
         // transient network hiccup — next tick retries
       }
@@ -167,6 +170,28 @@ export default function OrderSuccess({
       <p className="mt-4 max-w-md text-sm leading-relaxed text-coffee-600 dark:text-cream-200">
         {t("success.gratitude")}
       </p>
+
+      {/* 🔔 Telegram Deep Linking — opt in to a DM the instant status changes */}
+      {TELEGRAM_BOT_USERNAME && (
+        <div className="mt-4">
+          {telegramLinked ? (
+            <span className="flex items-center gap-1.5 rounded-full border-2 border-matcha-400 bg-matcha-50 px-4 py-2 text-xs font-bold text-matcha-700 dark:bg-coffee-900">
+              <BellRing size={14} />
+              ការជូនដំណឹង Telegram: បើកហើយ ✅
+            </span>
+          ) : (
+            <a
+              href={`https://t.me/${TELEGRAM_BOT_USERNAME}?start=${orderId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-full border-2 border-clay-400 bg-clay-50 px-4 py-2 text-xs font-bold text-clay-700 transition-transform hover:scale-105 active:scale-95 dark:bg-coffee-900 dark:text-clay-300"
+            >
+              <Bell size={14} />
+              🔔 ទទួលដំណឹងតាម Telegram
+            </a>
+          )}
+        </div>
+      )}
 
       {/* 🎲 Mini board-game timeline */}
       <div className="relative mt-8 w-full rounded-3xl border-2 border-clay-400 bg-gradient-to-b from-cream-100 to-clay-50 px-4 pb-6 pt-24 dark:from-coffee-800 dark:to-coffee-900">

@@ -24,6 +24,7 @@ export async function GET(
       (order.payment?.paymentStatus as OrderStatusResponseBody["paymentStatus"]) ??
       null,
     customerRating: order.customerRating,
+    telegramLinked: Boolean(order.customerTelegramChatId),
   };
 
   return NextResponse.json(body);

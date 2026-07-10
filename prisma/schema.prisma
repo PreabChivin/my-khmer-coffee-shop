@@ -88,6 +88,12 @@ model Order {
   // Null until rated; also doubles as the "already rated" guard.
   customerRating Int?
 
+  // 🔔 Telegram Deep Linking: set the moment the customer clicks the "🔔
+  // ទទួលដំណឹងតាម Telegram" button and starts a chat with the bot via
+  // /start <orderId>. Null until then — status-change notifications only
+  // fire once this is present. Never the staff group id (see lib/telegram.ts).
+  customerTelegramChatId String?
+
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   items         OrderItem[]

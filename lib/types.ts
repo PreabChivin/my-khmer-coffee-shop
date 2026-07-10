@@ -110,6 +110,8 @@ export interface OrderStatusResponseBody {
   paymentStatus: PaymentStatus | null;
   /** ⭐ Null until the customer rates this order (also the "already rated" guard). */
   customerRating: number | null;
+  /** 🔔 True once the customer has linked their Telegram chat via the deep-link button. */
+  telegramLinked: boolean;
 }
 
 /** 🐻 Cute Bear Stamps loyalty status for a phone number. */

@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
 import { normalizePhone } from "@/lib/loyalty";
+import { buildCustomerStatusMessage, sendCustomerAlert } from "@/lib/telegram";
+import type { OrderStatus, OrderType } from "@/lib/types";
+
+const NOTIFIABLE_STATUSES: OrderStatus[] = [
+  "PREPARING",
+  "READY",
+  "COMPLETED",
+  "CANCELLED",
+];
 
 const VALID_STATUSES = [
   "PENDING",
@@ -81,6 +90,33 @@ export async function PATCH(
         include: { items: { include: { product: true } }, payment: true },
       });
     });
+
+    // 🔔 Best-effort Telegram DM — only when the status actually changed to
+    // one customers care about, and only if they've linked a chat via the
+    // deep-link button. Awaited (not fire-and-forget) since a serverless
+    // function can be frozen the instant the response is sent; wrapped so a
+    // Telegram outage can never fail an already-successful status update.
+    const statusChanged =
+      body.orderStatus !== undefined && body.orderStatus !== existing.orderStatus;
+    if (
+      statusChanged &&
+      order.customerTelegramChatId &&
+      NOTIFIABLE_STATUSES.includes(order.orderStatus as OrderStatus)
+    ) {
+      try {
+        const message = buildCustomerStatusMessage(
+          order.orderStatus as Extract<
+            OrderStatus,
+            "PREPARING" | "READY" | "COMPLETED" | "CANCELLED"
+          >,
+          order.orderType as OrderType,
+          order.id.slice(0, 8).toUpperCase()
+        );
+        await sendCustomerAlert(order.customerTelegramChatId, message);
+      } catch (err) {
+        console.error("[telegram] Failed to send customer status alert:", err);
+      }
+    }
 
     return NextResponse.json(order);
   } catch {
