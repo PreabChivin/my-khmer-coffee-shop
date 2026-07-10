@@ -99,7 +99,7 @@ export default function OrderSuccess({
           មកចុចកុម្ម៉ង់សារថ្មីម្ដងទៀតមក Bestie ពួកយើងចាំធ្វើជូនយ៉ាងពិសេស! 💖
         </p>
         <Link
-          href="/menu"
+          href="/"
           className="mt-8 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
         >
           {t("success.orderSomethingElse")}
@@ -127,7 +127,7 @@ export default function OrderSuccess({
         <RatingPicker orderId={orderId} initialRating={customerRating} />
 
         <Link
-          href="/menu"
+          href="/"
           className="mt-8 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
         >
           {t("success.orderSomethingElse")}
@@ -304,7 +304,7 @@ export default function OrderSuccess({
       </div>
 
       <Link
-        href="/menu"
+        href="/"
         className="mt-8 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
       >
         {t("success.orderSomethingElse")}

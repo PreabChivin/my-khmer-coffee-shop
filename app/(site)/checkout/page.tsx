@@ -214,7 +214,7 @@ export default function CheckoutPage() {
           {isGroupMode ? t("group.empty") : t("checkout.emptyCartHint")}
         </p>
         <Link
-          href={isGroupMode ? `/menu?group=${groupId}` : "/menu"}
+          href={isGroupMode ? `/menu?group=${groupId}` : "/"}
           className="mt-6 rounded-xl bg-gold-500 px-6 py-3 font-semibold text-coffee-900 hover:bg-gold-600"
         >
           {t("checkout.browseMenu")}
