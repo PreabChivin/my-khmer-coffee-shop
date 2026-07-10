@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BadgeCheck, Camera, ImageOff, Loader2, X } from "lucide-react";
+import { BadgeCheck, Bell, Camera, ImageOff, Loader2, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import BongBear from "@/components/mascots/BongBear";
 import type { OrderStatusResponseBody } from "@/lib/types";
@@ -95,14 +95,6 @@ export default function StaticPaymentModal({
   }
 
   async function handleConfirmPaid() {
-    // 🔔 Opened synchronously, in direct response to the click — browsers
-    // block window.open() called after an await since it's no longer
-    // considered part of the trusted user-gesture stack. The order already
-    // exists at this point, so the deep link is ready with no extra step.
-    if (TELEGRAM_BOT_USERNAME) {
-      window.open(`https://t.me/${TELEGRAM_BOT_USERNAME}?start=${orderId}`, "_blank");
-    }
-
     setIsConfirming(true);
     try {
       const formData = new FormData();
@@ -198,9 +190,27 @@ export default function StaticPaymentModal({
           </div>
 
           {hasConfirmed ? (
-            <div className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-gold-100 px-4 py-3 text-sm font-medium text-gold-700 dark:bg-coffee-900 dark:text-gold-400">
-              <Loader2 size={16} className="animate-spin" />
-              {t("payment.awaitingVerification")}
+            <div className="mt-5 space-y-3">
+              <div className="flex items-center justify-center gap-2 rounded-xl bg-gold-100 px-4 py-3 text-sm font-medium text-gold-700 dark:bg-coffee-900 dark:text-gold-400">
+                <Loader2 size={16} className="animate-spin" />
+                {t("payment.awaitingVerification")}
+              </div>
+
+              {/* 🔔 Optional — only if the customer wants Telegram updates.
+                  A real link click (no phone number, no popup-block worries);
+                  opens the order's deep link so the webhook captures their
+                  chat_id and every future status change DMs them. */}
+              {TELEGRAM_BOT_USERNAME && (
+                <a
+                  href={`https://t.me/${TELEGRAM_BOT_USERNAME}?start=${orderId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-clay-400 bg-clay-50 py-2.5 text-sm font-bold text-clay-700 transition-transform hover:scale-[1.02] active:scale-95 dark:bg-coffee-900 dark:text-clay-300"
+                >
+                  <Bell size={16} />
+                  🔔 ទទួលដំណឹងតាម Telegram
+                </a>
+              )}
             </div>
           ) : (
             <>
