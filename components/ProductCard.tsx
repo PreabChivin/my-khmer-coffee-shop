@@ -10,6 +10,7 @@ import { isCustomizable } from "@/lib/customization";
 import { computeAverageRating, computeDiscountedPrice } from "@/lib/pricing";
 import DrinkCustomizer from "@/components/DrinkCustomizer";
 import GroupNamePromptModal from "@/components/GroupNamePromptModal";
+import ProductImage from "@/components/ProductImage";
 import ApsaraChibi from "@/components/mascots/ApsaraChibi";
 import { playPop } from "@/lib/sfx";
 import type { DrinkCustomization, ProductDTO } from "@/lib/types";
@@ -105,8 +106,7 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
         </div>
       )}
       <div className="relative aspect-square w-full overflow-hidden bg-coffee-100">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <ProductImage
           src={product.image}
           alt={name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"

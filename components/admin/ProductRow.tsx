@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import AdminEditPopover from "@/components/AdminEditPopover";
+import ProductImage from "@/components/ProductImage";
 import { clampDiscountPercent, computeDiscountedPrice } from "@/lib/pricing";
 import { localizedCategory } from "@/lib/i18n";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -164,8 +165,7 @@ export default function ProductRow({
 
   return (
     <div className="grid grid-cols-[auto_1fr_5.5rem_4.5rem_auto_auto] items-center gap-2 rounded-xl border border-coffee-200 bg-cream-50 p-2 dark:border-coffee-700 dark:bg-coffee-900">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <ProductImage
         src={localProduct.image}
         alt={localProduct.nameKh}
         className="h-10 w-10 shrink-0 rounded-lg object-cover"

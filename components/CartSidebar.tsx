@@ -10,6 +10,7 @@ import { customizationSurcharge, describeCustomization } from "@/lib/customizati
 import { localizedName } from "@/lib/i18n";
 import { SPIN_UNLOCK_THRESHOLD } from "@/lib/wheel";
 import WheelOfCoffee from "@/components/WheelOfCoffee";
+import ProductImage from "@/components/ProductImage";
 
 export default function CartSidebar() {
   const {
@@ -85,8 +86,7 @@ export default function CartSidebar() {
                     return (
                       <li key={item.id} className="flex gap-3">
                         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-coffee-100">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
+                          <ProductImage
                             src={item.product.image}
                             alt={name}
                             className="h-full w-full object-cover"
@@ -225,8 +225,7 @@ export default function CartSidebar() {
                     return (
                       <li key={item.lineId} className="flex gap-3">
                         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-coffee-100">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
+                          <ProductImage
                             src={item.image}
                             alt={name}
                             className="h-full w-full object-cover"
