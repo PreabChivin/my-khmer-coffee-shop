@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import FulfillmentBar from "@/components/FulfillmentBar";
+import DrinkFinderBar from "@/components/DrinkFinderBar";
 import BongBear from "@/components/mascots/BongBear";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -44,7 +44,13 @@ const FLOAT_POS = [
 
 const AUTO_INTERVAL_MS = 5000;
 
-export default function HeroSlideshow() {
+export default function HeroSlideshow({
+  searchQuery,
+  onSearchChange,
+}: {
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+}) {
   const { lang, t } = useLanguage();
   const [index, setIndex] = useState(0);
 
@@ -109,7 +115,7 @@ export default function HeroSlideshow() {
           {t("home.subtitle")}
         </p>
 
-        <FulfillmentBar />
+        <DrinkFinderBar searchQuery={searchQuery} onSearchChange={onSearchChange} />
       </div>
 
       {/* 🐻 Bong Bear greets guests from the corner */}

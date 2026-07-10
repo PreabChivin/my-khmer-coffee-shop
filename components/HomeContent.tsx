@@ -44,6 +44,8 @@ export default function HomeContent({
   const { isAdmin } = useAdminSession();
   const [products, setProducts] = useState(initialProducts);
   const [activeCategory, setActiveCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const normalizedQuery = searchQuery.trim().toLowerCase();
 
   const categories = useMemo(() => {
     const seen: string[] = [];
@@ -51,13 +53,20 @@ export default function HomeContent({
     return seen;
   }, [products]);
 
-  const visibleProducts = useMemo(
-    () =>
-      activeCategory === "All"
-        ? products
-        : products.filter((p) => p.category === activeCategory),
-    [products, activeCategory]
-  );
+  const visibleProducts = useMemo(() => {
+    // 🔍 A hero search query searches every category at once; otherwise fall
+    // back to the category scroller's selection.
+    if (normalizedQuery) {
+      return products.filter((p) =>
+        [p.nameEn, p.nameKh, p.descriptionEn, p.descriptionKh]
+          .filter(Boolean)
+          .some((field) => field!.toLowerCase().includes(normalizedQuery))
+      );
+    }
+    return activeCategory === "All"
+      ? products
+      : products.filter((p) => p.category === activeCategory);
+  }, [products, activeCategory, normalizedQuery]);
 
   function handleProductCreated(created: ProductDTO) {
     setProducts((prev) => [...prev, created]);
@@ -91,7 +100,7 @@ export default function HomeContent({
 
   return (
     <div>
-      <HeroSlideshow />
+      <HeroSlideshow searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
       {/* 🎉 Top Promotional Banner Carousel */}
       <PromoBannerCarousel />
@@ -104,16 +113,22 @@ export default function HomeContent({
       />
 
       {/* Two-column Foodpanda-style layout: sidebar + product grid */}
-      <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <section id="menu-grid" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-8 sm:px-6">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
           <HomeSidebar />
 
           <div className="min-w-0 flex-1">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {visibleProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            {normalizedQuery && visibleProducts.length === 0 ? (
+              <p className="rounded-2xl border-2 border-dashed border-coffee-300 px-6 py-10 text-center text-coffee-500 dark:border-coffee-600 dark:text-cream-300">
+                {t("menu.noResults")}
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {visibleProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>

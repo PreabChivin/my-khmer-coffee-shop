@@ -7,8 +7,6 @@ export const LANGUAGES: { code: Lang; label: string }[] = [
 
 const dictionary = {
   en: {
-    "nav.home": "Sweet Home 🏠",
-    "nav.menu": "Menu",
     "cart.openAria": "Open cart",
 
     "appearance.openAria": "Appearance settings",
@@ -34,7 +32,6 @@ const dictionary = {
     "home.subtitle":
       "Handcrafted coffee, tea, and bakery favorites — order ahead and pay instantly with KHQR, no cash, no waiting.",
     "home.viewFullMenu": "See the Menu 🧋",
-    "home.orderNow": "Order Now ✨",
     "home.feature1Title": "Ethically Sourced",
     "home.feature1Desc": "Small-batch beans roasted weekly for peak freshness.",
     "home.feature2Title": "Pay with KHQR",
@@ -72,10 +69,6 @@ const dictionary = {
     "category.Coffee": "Coffee",
     "category.Tea": "Tea",
     "category.Bakery": "Bakery",
-
-    "fulfillment.prompt": "How would you like your order?",
-    "fulfillment.addressPlaceholder": "Enter your delivery address",
-    "fulfillment.pickupAt": "Pick up at",
 
     "cart.title": "My Sweet Cart 🛒",
     "cart.empty": "Your cart is feeling lonely 🥺",
@@ -297,8 +290,6 @@ const dictionary = {
     "product.partnerBadge": "Partner Exclusive 🤝✨",
   },
   km: {
-    "nav.home": "ផ្ទះកណ្ដាល 🏠",
-    "nav.menu": "មីនុយ",
     "cart.openAria": "បើកកន្ត្រក",
 
     "appearance.openAria": "ការកំណត់រូបរាង",
@@ -324,7 +315,6 @@ const dictionary = {
     "home.subtitle":
       "កាហ្វេ តែ និងនំដុតធ្វើដោយដៃ — កម្មង់ជាមុន ហើយទូទាត់ភ្លាមៗជាមួយ KHQR ដោយមិនចាំបាច់ប្រើសាច់ប្រាក់ ឬរង់ចាំ។",
     "home.viewFullMenu": "មើលមីនុយ 🧋",
-    "home.orderNow": "កុម្ម៉ង់ម៉ាអេម ✨",
     "home.feature1Title": "ប្រភពប្រកបដោយក្រមសីលធម៌",
     "home.feature1Desc":
       "គ្រាប់កាហ្វេចំនួនតិចដុតរៀងរាល់សប្តាហ៍ ដើម្បីភាពស្រស់បំផុត។",
@@ -361,10 +351,6 @@ const dictionary = {
     "category.Coffee": "កាហ្វេ",
     "category.Tea": "តែ",
     "category.Bakery": "នំដុត",
-
-    "fulfillment.prompt": "តើអ្នកចង់ទទួលការកម្មង់ដោយរបៀបណា?",
-    "fulfillment.addressPlaceholder": "បញ្ចូលអាសយដ្ឋានដឹកជញ្ជូនរបស់អ្នក",
-    "fulfillment.pickupAt": "មកយកនៅ",
 
     "cart.title": "ថង់ប្រមូលក្ដីស្រឡាញ់ 🛒",
     "cart.empty": "ថង់ស្រឡាញ់នៅទទេ 🥺",

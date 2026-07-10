@@ -24,13 +24,13 @@ const LanguageContext = createContext<LanguageContextValue | undefined>(
 );
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("en");
+  const [lang, setLangState] = useState<Lang>("km");
 
   useEffect(() => {
     // Deliberately deferred to an effect: localStorage is unavailable during
     // SSR, so reading it in the initializer would produce a hydration
-    // mismatch. Render English on first paint, then hydrate the saved
-    // preference client-side.
+    // mismatch. Render Khmer on first paint (the app's default language),
+    // then hydrate a returning visitor's saved preference client-side.
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored === "en" || stored === "km") {

@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { usePathname } from "next/navigation";
-import { Coffee, Menu, ShoppingCart, Users, X } from "lucide-react";
+import { Coffee, ShoppingCart, Users } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useGroupCart } from "@/contexts/GroupCartContext";
 import { useAdminSession } from "@/contexts/AdminSessionContext";
@@ -20,13 +18,6 @@ export default function Header() {
     groupState?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
   const badgeCount = isGroupMode ? groupItemCount : totalItems;
   const { t } = useLanguage();
-  const pathname = usePathname();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const navLinks = [
-    { href: "/", label: t("nav.home") },
-    { href: "/menu", label: t("nav.menu") },
-  ];
 
   return (
     <header className="sticky top-0 z-40 border-b-2 border-gold-500/70 bg-cream-50/95 backdrop-blur dark:bg-coffee-900/95">
@@ -42,22 +33,6 @@ export default function Header() {
             </span>
           </span>
         </Link>
-
-        <nav className="hidden items-center gap-8 sm:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`text-sm font-medium transition-colors hover:text-coffee-600 dark:hover:text-cream-100 ${
-                pathname === link.href
-                  ? "text-coffee-800 dark:text-cream-50"
-                  : "text-coffee-500 dark:text-cream-300"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
 
         <div className="flex items-center gap-2">
           <StaffPortalButton />
@@ -79,36 +54,8 @@ export default function Header() {
               )}
             </button>
           )}
-
-          <button
-            type="button"
-            onClick={() => setIsMenuOpen((open) => !open)}
-            aria-label="Toggle menu"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-coffee-800 hover:bg-coffee-100 dark:text-cream-100 dark:hover:bg-coffee-800 sm:hidden"
-          >
-            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
         </div>
       </div>
-
-      {isMenuOpen && (
-        <nav className="flex flex-col gap-1 border-t border-coffee-200 bg-cream-50 px-4 py-3 dark:border-coffee-700 dark:bg-coffee-900 sm:hidden">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setIsMenuOpen(false)}
-              className={`rounded-lg px-3 py-2 text-sm font-medium ${
-                pathname === link.href
-                  ? "bg-coffee-100 text-coffee-900 dark:bg-coffee-800 dark:text-cream-50"
-                  : "text-coffee-600 dark:text-cream-300"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-      )}
     </header>
   );
 }
