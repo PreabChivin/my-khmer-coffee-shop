@@ -13,6 +13,9 @@ export async function GET(request: NextRequest) {
       include: {
         items: { include: { product: true } },
         payment: true,
+        // 👤 Linked customer account (null for guest orders) so the dashboard
+        // can offer a click-through to their lifetime history + LTV.
+        user: { select: { id: true, name: true, loyaltyPoints: true } },
       },
     });
     return NextResponse.json(orders);

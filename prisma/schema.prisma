@@ -99,10 +99,43 @@ model Order {
   // fire once this is present. Never the staff group id (see lib/telegram.ts).
   customerTelegramChatId String?
 
+  // 👤 Customer account link — set when a logged-in user checks out (guests
+  // leave it null). onDelete: SetNull keeps the order + its history intact if
+  // the account is ever removed.
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  // 🎁 Loyalty idempotency guard — flipped true the first time this order is
+  // marked COMPLETED and points are credited, so re-completing never double-awards.
+  pointsAwarded Boolean     @default(false)
+
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   items         OrderItem[]
   payment       Payment?
+
+  @@index([userId])
+}
+
+// 👤 Customer account — multi-provider ready. Today: email/username + bcrypt
+// password. The google/facebook/telegram id columns are scaffolded now so the
+// social providers can be wired later without another migration (they stay
+// null until then). Distinct from the staff `Admin` model.
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  username      String?  @unique
+  passwordHash  String? // null only for future pure-OAuth accounts
+  name          String
+  phone         String?
+  // 💎 Loyalty Points Reward Program (សន្សំពិន្ទុ) — lifetime points balance.
+  loyaltyPoints Int      @default(0)
+  // 🔮 OAuth provider scaffold (wired later once credentials exist).
+  googleId      String?  @unique
+  facebookId    String?  @unique
+  telegramId    String?  @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  orders        Order[]
 }
 
 model OrderItem {

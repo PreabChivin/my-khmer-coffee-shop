@@ -10,6 +10,7 @@ import { computeDiscountedPrice } from "@/lib/pricing";
 import { computeAvailableFreeDrinks, normalizePhone } from "@/lib/loyalty";
 import { prizeById } from "@/lib/wheel";
 import { sendStaffGroupAlert } from "@/lib/telegram";
+import { getUserFromRequest } from "@/lib/customerAuth";
 import type { CheckoutRequestBody, CheckoutResponseBody } from "@/lib/types";
 
 const VALID_ORDER_TYPES = ["PickUp", "Delivery"];
@@ -200,6 +201,14 @@ export async function POST(request: NextRequest) {
   const orderId = randomUUID();
   const isGiftOrder = Boolean(isGift && giftRecipientName?.trim());
 
+  // 👤 Link this order to the customer's account if they're logged in. Read
+  // server-side from the session cookie — never trusted from the request body,
+  // so a client can't attribute an order to someone else's account.
+  const session = getUserFromRequest(request);
+  const linkedUserId = session
+    ? (await prisma.user.findUnique({ where: { id: session.id }, select: { id: true } }))?.id ?? null
+    : null;
+
   // 🔔 If this device connected Telegram from the header, resolve the saved
   // chat so this order is auto-notified on status changes. Best-effort — a
   // missing/unknown token just means no Telegram link, never a checkout error.
@@ -260,6 +269,7 @@ export async function POST(request: NextRequest) {
               : null,
           isGroupOrder: Boolean(groupCartId),
           customerTelegramChatId: linkedTelegramChatId,
+          userId: linkedUserId,
           items: {
             create: itemsCreate,
           },

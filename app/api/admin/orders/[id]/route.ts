@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
 import { normalizePhone } from "@/lib/loyalty";
+import { pointsForAmount } from "@/lib/loyaltyPoints";
 import { buildCustomerStatusMessage, sendCustomerAlert } from "@/lib/telegram";
 import type { OrderStatus, OrderType } from "@/lib/types";
 
@@ -64,6 +65,15 @@ export async function PATCH(
     const isApproval =
       body.orderStatus === "PREPARING" && existing.orderStatus !== "PREPARING";
 
+    // 💎 Loyalty points: credited exactly once, the first time an order is
+    // marked COMPLETED, and only when it belongs to a registered account. The
+    // pointsAwarded flag makes it idempotent — re-completing never double-awards.
+    const shouldAwardPoints =
+      body.orderStatus === "COMPLETED" &&
+      existing.orderStatus !== "COMPLETED" &&
+      existing.userId !== null &&
+      !existing.pointsAwarded;
+
     const order = await prisma.$transaction(async (tx) => {
       if (isApproval) {
         await tx.payment.updateMany({
@@ -81,11 +91,23 @@ export async function PATCH(
         }
       }
 
+      if (shouldAwardPoints) {
+        const points = pointsForAmount(existing.totalAmount);
+        if (points > 0 && existing.userId) {
+          await tx.user.update({
+            where: { id: existing.userId },
+            data: { loyaltyPoints: { increment: points } },
+          });
+        }
+      }
+
       return tx.order.update({
         where: { id },
         data: {
           orderStatus: body.orderStatus ?? undefined,
           giftRedeemed: body.giftRedeemed ?? undefined,
+          // Flip the guard in the same transaction as the credit above.
+          pointsAwarded: shouldAwardPoints ? true : undefined,
         },
         include: { items: { include: { product: true } }, payment: true },
       });

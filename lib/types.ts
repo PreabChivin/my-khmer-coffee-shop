@@ -24,6 +24,37 @@ export interface ProductDTO {
   ratingSum: number;
 }
 
+/** 👤 Public-safe customer account shape (never includes passwordHash). */
+export interface UserDTO {
+  id: string;
+  email: string;
+  username: string | null;
+  name: string;
+  phone: string | null;
+  loyaltyPoints: number;
+}
+
+/** 🧾 One row in a customer's / admin's order-history view. */
+export interface OrderHistoryItemDTO {
+  id: string;
+  createdAt: string;
+  orderStatus: OrderStatus;
+  orderType: OrderType;
+  totalAmount: number;
+  paymentStatus: PaymentStatus | null;
+  paymentMethod: string | null;
+  pointsAwarded: boolean;
+  items: { nameEn: string; nameKh: string; quantity: number; price: number }[];
+}
+
+/** 👑 Admin per-customer profile: the account + lifetime value + history. */
+export interface CustomerProfileDTO {
+  user: UserDTO;
+  lifetimeValue: number;
+  orderCount: number;
+  orders: OrderHistoryItemDTO[];
+}
+
 export type OrderType = "PickUp" | "Delivery";
 
 export type OrderStatus =

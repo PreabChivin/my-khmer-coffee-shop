@@ -6,6 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import Confetti from "@/components/Confetti";
 import OrderCard, { type AdminOrder } from "@/components/admin/OrderCard";
 import ReceiptModal, { type ReceiptOrder } from "@/components/admin/ReceiptModal";
+import CustomerHistoryModal from "@/components/admin/CustomerHistoryModal";
 import type { OrderStatus } from "@/lib/types";
 
 // Short two-tone chime generated with the Web Audio API — no external audio
@@ -95,6 +96,7 @@ export default function OrdersBoard({
   const [receiptOrder, setReceiptOrder] = useState<ReceiptOrder | null>(null);
   const [confettiKey, setConfettiKey] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
+  const [customerId, setCustomerId] = useState<string | null>(null);
   const knownAwaitingIds = useRef<Set<string> | null>(null);
   // Tracks whether we've ever successfully loaded orders, so a transient
   // failure on a later background poll doesn't wrongly claim the initial
@@ -267,6 +269,7 @@ export default function OrdersBoard({
                     onCancel={handleCancel}
                     onMarkGiftRedeemed={handleMarkGiftRedeemed}
                     onPrintReceipt={setReceiptOrder}
+                    onViewCustomer={setCustomerId}
                   />
                 ))}
               </div>
@@ -331,6 +334,10 @@ export default function OrdersBoard({
 
       {receiptOrder && (
         <ReceiptModal order={receiptOrder} onClose={() => setReceiptOrder(null)} />
+      )}
+
+      {customerId && (
+        <CustomerHistoryModal userId={customerId} onClose={() => setCustomerId(null)} />
       )}
 
       {confettiKey > 0 && <Confetti key={confettiKey} />}

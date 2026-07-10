@@ -31,6 +31,9 @@ export interface AdminOrder {
   giftRecipientName: string | null;
   giftRedeemed: boolean;
   isGroupOrder: boolean;
+  // 👤 Linked customer account (null for guest orders).
+  userId: string | null;
+  user: { id: string; name: string; loyaltyPoints: number } | null;
 }
 
 function formatTime(iso: string) {
@@ -56,6 +59,7 @@ export default function OrderCard({
   onCancel,
   onMarkGiftRedeemed,
   onPrintReceipt,
+  onViewCustomer,
 }: {
   order: AdminOrder;
   lang: Lang;
@@ -65,6 +69,7 @@ export default function OrderCard({
   onCancel: (order: AdminOrder) => void;
   onMarkGiftRedeemed: (order: AdminOrder) => void;
   onPrintReceipt: (order: AdminOrder) => void;
+  onViewCustomer: (userId: string) => void;
 }) {
   const isAwaitingVerification = order.orderStatus === "AWAITING_VERIFICATION";
   const isPending = order.orderStatus === "PENDING" || isAwaitingVerification;
@@ -122,6 +127,16 @@ export default function OrderCard({
           <p className="text-xs text-coffee-500 dark:text-cream-300">
             {order.customerPhone}
           </p>
+          {/* 👤 Registered member — click to inspect lifetime history + LTV */}
+          {order.userId && order.user && (
+            <button
+              type="button"
+              onClick={() => onViewCustomer(order.userId!)}
+              className="mt-1 inline-flex items-center gap-1 rounded-full bg-gold-100 px-2 py-0.5 text-[10px] font-bold text-gold-700 transition-colors hover:bg-gold-200 dark:bg-coffee-900 dark:text-gold-400"
+            >
+              👤 {order.user.name} · {order.user.loyaltyPoints.toLocaleString()}💎
+            </button>
+          )}
         </div>
         {/* 🔍 Zoomable shop QR — the exact code this customer was shown */}
         <QrZoomThumbnail />
