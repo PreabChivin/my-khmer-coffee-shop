@@ -1,30 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  AlertTriangle,
-  Bike,
-  Clock,
-  DollarSign,
-  Gift,
-  ListOrdered,
-  Printer,
-  Store,
-  Users,
-} from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { localizedName, type TranslationKey } from "@/lib/i18n";
-import { describeCustomization } from "@/lib/customization";
 import Confetti from "@/components/Confetti";
-import AdminStats from "@/components/admin/AdminStats";
-import ReceiptModal, {
-  type ReceiptOrder,
-} from "@/components/admin/ReceiptModal";
-import type {
-  DrinkCustomization,
-  OrderStatus,
-  PaymentStatus,
-} from "@/lib/types";
+import OrderCard, { type AdminOrder } from "@/components/admin/OrderCard";
+import ReceiptModal, { type ReceiptOrder } from "@/components/admin/ReceiptModal";
+import type { OrderStatus } from "@/lib/types";
 
 // Short two-tone chime generated with the Web Audio API — no external audio
 // asset needed, and it works the moment a new order needs staff attention.
@@ -56,55 +38,36 @@ function playNotificationChime() {
   }
 }
 
-interface AdminOrderItem {
-  id: string;
-  quantity: number;
-  price: number;
-  product: { nameEn: string; nameKh: string };
-  customizations?: DrinkCustomization | null;
-  contributorName?: string | null;
-}
-
-interface AdminOrder {
-  id: string;
-  customerName: string;
-  customerPhone: string;
-  orderType: string;
-  totalAmount: number;
-  orderStatus: OrderStatus;
-  address: string | null;
-  note: string | null;
-  createdAt: string;
-  items: AdminOrderItem[];
-  payment: { paymentStatus: PaymentStatus } | null;
-  isGift: boolean;
-  giftRecipientName: string | null;
-  giftRedeemed: boolean;
-  isGroupOrder: boolean;
-}
-
 const POLL_INTERVAL_MS = 3000;
 
-const COLUMNS: { key: OrderStatus; titleKey: TranslationKey }[] = [
-  { key: "PENDING", titleKey: "adminCol.pending" },
-  { key: "AWAITING_VERIFICATION", titleKey: "adminCol.awaitingVerification" },
-  { key: "PREPARING", titleKey: "adminCol.preparing" },
-  { key: "READY", titleKey: "adminCol.ready" },
-  { key: "COMPLETED", titleKey: "adminCol.completed" },
-  { key: "CANCELLED", titleKey: "adminCol.cancelled" },
+// 👀☕🛵 The 3 live processing stacks staff actually work from moment to
+// moment. AWAITING_VERIFICATION folds into "Pending" (it's still a pending
+// staff action — approving it) but keeps its own urgent pulse styling.
+const STACKS: {
+  key: string;
+  emoji: string;
+  title: string;
+  statuses: OrderStatus[];
+}[] = [
+  {
+    key: "pending",
+    emoji: "👀",
+    title: "កំពុងរង់ចាំ Pending",
+    statuses: ["PENDING", "AWAITING_VERIFICATION"],
+  },
+  {
+    key: "preparing",
+    emoji: "☕",
+    title: "កំពុងឆុង Preparing",
+    statuses: ["PREPARING"],
+  },
+  {
+    key: "ready",
+    emoji: "🛵",
+    title: "ត្រៀមរួច Ready",
+    statuses: ["READY"],
+  },
 ];
-
-// Kitchen lifecycle: Approve advances the customer's live tracker to
-// phase 2 (Brewing); Ready advances it to phase 3 (Ready for Pick-Up);
-// Complete closes the order out. Labels are fixed bilingual strings per spec.
-const NEXT_STATUS: Partial<
-  Record<OrderStatus, { label: string; next: OrderStatus }>
-> = {
-  PENDING: { label: "👩‍កាត់លុយ/Approve", next: "PREPARING" },
-  AWAITING_VERIFICATION: { label: "👩‍កាត់លុយ/Approve", next: "PREPARING" },
-  PREPARING: { label: "☕️ ឆុងរួចរាល់/Ready", next: "READY" },
-  READY: { label: "✅ រួចរាល់/Complete", next: "COMPLETED" },
-};
 
 const ACTIVE_STATUSES: OrderStatus[] = [
   "PENDING",
@@ -113,21 +76,30 @@ const ACTIVE_STATUSES: OrderStatus[] = [
   "READY",
 ];
 
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
+  PENDING: "PREPARING",
+  AWAITING_VERIFICATION: "PREPARING",
+  PREPARING: "READY",
+  READY: "COMPLETED",
+};
 
-export default function OrdersBoard() {
+export default function OrdersBoard({
+  onError,
+}: {
+  onError: (message: string) => void;
+}) {
   const { lang, t } = useLanguage();
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [receiptOrder, setReceiptOrder] = useState<ReceiptOrder | null>(null);
   const [confettiKey, setConfettiKey] = useState(0);
+  const [showHistory, setShowHistory] = useState(false);
   const knownAwaitingIds = useRef<Set<string> | null>(null);
+  // Tracks whether we've ever successfully loaded orders, so a transient
+  // failure on a later background poll doesn't wrongly claim the initial
+  // load itself failed (this ref survives across every poll tick).
+  const hasLoadedOnce = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -135,14 +107,17 @@ export default function OrdersBoard() {
     async function fetchOrders() {
       try {
         const res = await fetch("/api/admin/orders");
-        if (!res.ok) return;
+        if (!res.ok) {
+          if (!cancelled && !hasLoadedOnce.current) {
+            onError("Couldn't load orders — the database may be busy.");
+          }
+          return;
+        }
         const data: AdminOrder[] = await res.json();
         if (cancelled) return;
 
         const currentAwaiting = new Set(
-          data
-            .filter((o) => o.orderStatus === "AWAITING_VERIFICATION")
-            .map((o) => o.id)
+          data.filter((o) => o.orderStatus === "AWAITING_VERIFICATION").map((o) => o.id)
         );
         const previousAwaiting = knownAwaitingIds.current;
         const hasNewArrival =
@@ -151,7 +126,10 @@ export default function OrdersBoard() {
         if (hasNewArrival) playNotificationChime();
         knownAwaitingIds.current = currentAwaiting;
 
+        hasLoadedOnce.current = true;
         setOrders(data);
+      } catch {
+        // transient network hiccup — the next poll tick retries silently
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -163,330 +141,196 @@ export default function OrdersBoard() {
       cancelled = true;
       clearInterval(interval);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ⚡ Optimistic mutation: the local list updates the instant staff click an
+  // action, before the network round-trip resolves. If the server rejects
+  // it (validation, DB lock, etc.) the optimistic change is rolled back and
+  // a toast explains what happened — never a silent stuck UI.
   async function patchOrder(
-    orderId: string,
+    order: AdminOrder,
     body: { orderStatus?: OrderStatus; giftRedeemed?: boolean }
   ) {
-    setUpdatingId(orderId);
+    const previousOrders = orders;
+    setOrders((prev) =>
+      prev.map((o) => (o.id === order.id ? { ...o, ...body } : o))
+    );
+    setUpdatingId(order.id);
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}`, {
+      const res = await fetch(`/api/admin/orders/${order.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (res.ok) {
-        const updated = await res.json();
-        setOrders((prev) =>
-          prev.map((o) => (o.id === orderId ? updated : o))
-        );
-        // 🎉 Celebrate the moment an order is approved into the kitchen.
-        if (body.orderStatus === "PREPARING") setConfettiKey(Date.now());
+      if (!res.ok) {
+        setOrders(previousOrders);
+        const data = await res.json().catch(() => null);
+        onError(data?.error ?? "Couldn't update that order — please try again.");
+        return;
       }
+      const updated = await res.json();
+      setOrders((prev) => prev.map((o) => (o.id === order.id ? updated : o)));
+      if (body.orderStatus === "PREPARING") setConfettiKey(Date.now());
+    } catch {
+      setOrders(previousOrders);
+      onError("Network error — please check your connection and try again.");
     } finally {
       setUpdatingId(null);
     }
   }
 
-  function updateStatus(orderId: string, orderStatus: OrderStatus) {
-    return patchOrder(orderId, { orderStatus });
+  function handleAdvance(order: AdminOrder) {
+    const next = NEXT_STATUS[order.orderStatus];
+    if (!next) return;
+    void patchOrder(order, { orderStatus: next });
   }
 
-  function markGiftRedeemed(orderId: string) {
-    return patchOrder(orderId, { giftRedeemed: true });
+  function handleCancel(order: AdminOrder) {
+    void patchOrder(order, { orderStatus: "CANCELLED" });
   }
 
-  const totalRevenue = orders
-    .filter((o) => o.payment?.paymentStatus === "PAID")
-    .reduce((sum, o) => sum + o.totalAmount, 0);
-  const activeOrders = orders.filter((o) =>
-    ACTIVE_STATUSES.includes(o.orderStatus)
-  ).length;
-  const completedOrders = orders.filter(
-    (o) => o.orderStatus === "COMPLETED"
-  ).length;
+  function handleMarkGiftRedeemed(order: AdminOrder) {
+    void patchOrder(order, { giftRedeemed: true });
+  }
+
   const awaitingCount = orders.filter(
     (o) => o.orderStatus === "AWAITING_VERIFICATION"
   ).length;
+  const activeCount = orders.filter((o) => ACTIVE_STATUSES.includes(o.orderStatus)).length;
+  const historyOrders = orders.filter(
+    (o) => o.orderStatus === "COMPLETED" || o.orderStatus === "CANCELLED"
+  );
 
   if (isLoading) {
     return (
-      <p className="p-6 text-coffee-500 dark:text-cream-300">
+      <p className="p-4 text-coffee-500 dark:text-cream-300">
         {t("adminAction.loadingOrders")}
       </p>
     );
   }
 
   return (
-    <div className="p-6">
+    <div className="khmer-card rounded-2xl bg-cream-50/60 p-4 dark:bg-coffee-800/40">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="font-heading text-lg font-extrabold text-coffee-900 dark:text-cream-50">
+          តំបន់បញ្ជាការកុម្ម៉ង់ 🛎️
+        </h2>
+        <span className="rounded-full bg-coffee-100 px-2.5 py-1 text-xs font-bold text-coffee-600 dark:bg-coffee-900 dark:text-cream-200">
+          {activeCount} active
+        </span>
+      </div>
+
       {awaitingCount > 0 && (
-        <div className="animate-amber-glow mb-6 flex items-center gap-3 rounded-2xl border-2 border-amber-500 bg-amber-50 px-4 py-3 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
-          <AlertTriangle size={20} className="shrink-0" />
-          <p className="text-sm font-semibold">
+        <div className="animate-amber-glow mb-3 flex items-center gap-2 rounded-xl border-2 border-crimson-400 bg-crimson-50 px-3 py-2 text-crimson-700 dark:bg-coffee-950 dark:text-crimson-300">
+          <AlertTriangle size={16} className="shrink-0" />
+          <p className="text-xs font-semibold">
             {awaitingCount} — {t("adminAction.urgentBanner")}
           </p>
         </div>
       )}
 
-      <AdminStats />
-
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="khmer-card flex items-center gap-3 rounded-2xl bg-cream-50 p-4 dark:bg-coffee-800">
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gold-100 text-gold-700 dark:bg-coffee-900 dark:text-gold-400">
-            <DollarSign size={20} />
-          </span>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-coffee-400 dark:text-cream-400">
-              {t("adminMetrics.totalRevenue")}
-            </p>
-            <p className="text-xl font-bold text-coffee-900 dark:text-cream-50">
-              ${totalRevenue.toFixed(2)}
-            </p>
-          </div>
-        </div>
-
-        <div className="khmer-card flex items-center gap-3 rounded-2xl bg-cream-50 p-4 dark:bg-coffee-800">
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-clay-100 text-clay-500 dark:bg-coffee-900 dark:text-clay-400">
-            <ListOrdered size={20} />
-          </span>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-coffee-400 dark:text-cream-400">
-              {t("adminMetrics.activeOrders")}
-            </p>
-            <p className="text-xl font-bold text-coffee-900 dark:text-cream-50">
-              {activeOrders}
-            </p>
-          </div>
-        </div>
-
-        <div className="khmer-card flex items-center gap-3 rounded-2xl bg-cream-50 p-4 dark:bg-coffee-800">
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-coffee-200 text-coffee-700 dark:bg-coffee-900 dark:text-cream-200">
-            <Store size={20} />
-          </span>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-coffee-400 dark:text-cream-400">
-              {t("adminMetrics.completed")}
-            </p>
-            <p className="text-xl font-bold text-coffee-900 dark:text-cream-50">
-              {completedOrders}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {COLUMNS.map((column) => {
-          const columnOrders = orders.filter(
-            (o) => o.orderStatus === column.key
-          );
-          const isUrgentColumn = column.key === "AWAITING_VERIFICATION";
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {STACKS.map((stack) => {
+          const stackOrders = orders.filter((o) => stack.statuses.includes(o.orderStatus));
           return (
             <div
-              key={column.key}
-              className={`flex flex-col rounded-2xl p-3 ${
-                isUrgentColumn && columnOrders.length > 0
-                  ? "bg-amber-100 dark:bg-amber-950"
-                  : "bg-coffee-100/60 dark:bg-coffee-800/60"
-              }`}
+              key={stack.key}
+              className="flex flex-col rounded-xl bg-coffee-100/60 p-2.5 dark:bg-coffee-900/60"
             >
-              <div className="mb-3 flex items-center justify-between px-1">
-                <h3
-                  className={`text-sm font-bold uppercase tracking-wide ${
-                    isUrgentColumn
-                      ? "text-amber-800 dark:text-amber-300"
-                      : "text-coffee-700 dark:text-cream-200"
-                  }`}
-                >
-                  {t(column.titleKey)}
+              <div className="mb-2 flex items-center justify-between px-1">
+                <h3 className="flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-coffee-700 dark:text-cream-200">
+                  <span>{stack.emoji}</span>
+                  {stack.title}
                 </h3>
-                <span className="rounded-full bg-cream-50 px-2 py-0.5 text-xs font-semibold text-coffee-600 dark:bg-coffee-900 dark:text-cream-200">
-                  {columnOrders.length}
+                <span className="rounded-full bg-cream-50 px-2 py-0.5 text-[11px] font-semibold text-coffee-600 dark:bg-coffee-800 dark:text-cream-200">
+                  {stackOrders.length}
                 </span>
               </div>
 
-              <div className="flex flex-1 flex-col gap-3">
-                {columnOrders.length === 0 && (
-                  <p className="px-2 text-xs text-coffee-400 dark:text-cream-400">
+              {/* Compact, independently-scrollable stack — keeps the whole
+                  dashboard from growing tall as orders pile up. */}
+              <div className="flex max-h-[65vh] flex-col gap-2.5 overflow-y-auto pr-0.5">
+                {stackOrders.length === 0 && (
+                  <p className="px-2 py-4 text-center text-xs text-coffee-400 dark:text-cream-400">
                     {t("adminCol.noOrders")}
                   </p>
                 )}
-
-                {columnOrders.map((order) => {
-                  const action = NEXT_STATUS[order.orderStatus];
-                  const isUrgent = order.orderStatus === "AWAITING_VERIFICATION";
-                  return (
-                    <div
-                      key={order.id}
-                      className={`rounded-xl border bg-cream-50 p-3 shadow-sm dark:bg-coffee-900 ${
-                        isUrgent
-                          ? "animate-amber-glow border-amber-500"
-                          : "border-coffee-200 dark:border-coffee-700"
-                      }`}
-                    >
-                      <div className="mb-1 flex items-center justify-between">
-                        <p className="text-sm font-bold text-coffee-900 dark:text-cream-50">
-                          #{order.id.slice(0, 8).toUpperCase()}
-                        </p>
-                        <span className="flex items-center gap-1 text-xs text-coffee-400 dark:text-cream-400">
-                          <Clock size={12} />
-                          {formatTime(order.createdAt)}
-                        </span>
-                      </div>
-
-                      {(order.isGift || order.isGroupOrder) && (
-                        <div className="mb-1.5 flex flex-wrap gap-1">
-                          {order.isGift && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-crimson-100 px-2 py-0.5 text-[10px] font-bold text-crimson-600 dark:bg-coffee-800 dark:text-crimson-400">
-                              <Gift size={10} />
-                              {t("adminOrder.giftBadge")}
-                            </span>
-                          )}
-                          {order.isGroupOrder && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-matcha-100 px-2 py-0.5 text-[10px] font-bold text-matcha-700">
-                              <Users size={10} />
-                              {t("adminOrder.groupBadge")}
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      <p className="text-sm font-medium text-coffee-800 dark:text-cream-100">
-                        {order.customerName}
-                      </p>
-                      {order.isGift && order.giftRecipientName && (
-                        <p className="text-xs text-crimson-500 dark:text-crimson-400">
-                          → {order.giftRecipientName}
-                        </p>
-                      )}
-                      <p className="text-xs text-coffee-500 dark:text-cream-300">
-                        {order.customerPhone}
-                      </p>
-
-                      <div className="mt-2 flex items-center gap-1 text-xs text-coffee-600 dark:text-cream-300">
-                        {order.orderType === "Delivery" ? (
-                          <Bike size={12} />
-                        ) : (
-                          <Store size={12} />
-                        )}
-                        {order.orderType === "Delivery"
-                          ? t("checkout.delivery")
-                          : t("checkout.pickup")}
-                        {order.address ? ` · ${order.address}` : ""}
-                      </div>
-
-                      <ul className="mt-2 space-y-1 text-xs text-coffee-600 dark:text-cream-300">
-                        {order.items.map((item) => {
-                          const mods = describeCustomization(
-                            item.customizations ?? null,
-                            lang
-                          );
-                          return (
-                            <li key={item.id}>
-                              <span>
-                                {item.contributorName && (
-                                  <strong className="text-clay-600 dark:text-clay-400">
-                                    {item.contributorName}:{" "}
-                                  </strong>
-                                )}
-                                {item.quantity}×{" "}
-                                {localizedName(item.product, lang)}
-                              </span>
-                              {mods.length > 0 && (
-                                <span className="block pl-4 text-[11px] text-clay-500 dark:text-clay-400">
-                                  {mods.join(" · ")}
-                                </span>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
-
-                      {order.note && (
-                        <p className="mt-2 rounded-lg bg-coffee-50 px-2 py-1 text-xs italic text-coffee-500 dark:bg-coffee-800 dark:text-cream-300">
-                          &ldquo;{order.note}&rdquo;
-                        </p>
-                      )}
-
-                      <div className="mt-2 flex items-center justify-between">
-                        <span className="font-bold text-coffee-900 dark:text-cream-50">
-                          ${order.totalAmount.toFixed(2)}
-                        </span>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                            order.payment?.paymentStatus === "PAID"
-                              ? "bg-gold-100 text-gold-700 dark:bg-coffee-800 dark:text-gold-400"
-                              : "bg-coffee-100 text-coffee-500 dark:bg-coffee-800 dark:text-cream-300"
-                          }`}
-                        >
-                          {t(
-                            order.payment?.paymentStatus === "PAID"
-                              ? "paymentStatus.PAID"
-                              : "paymentStatus.UNPAID"
-                          )}
-                        </span>
-                      </div>
-
-                      {action && (
-                        <button
-                          type="button"
-                          disabled={updatingId === order.id}
-                          onClick={() => updateStatus(order.id, action.next)}
-                          className={`mt-3 w-full rounded-lg py-2 text-xs font-semibold transition-colors disabled:opacity-60 ${
-                            isUrgent
-                              ? "bg-amber-600 text-cream-50 hover:bg-amber-700"
-                              : "bg-gold-500 text-coffee-900 hover:bg-gold-600"
-                          }`}
-                        >
-                          {action.label}
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => setReceiptOrder(order)}
-                        className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-gold-500/60 py-1.5 text-xs font-semibold text-gold-700 transition-colors hover:bg-gold-50 dark:text-gold-400 dark:hover:bg-coffee-800"
-                      >
-                        <Printer size={13} />
-                        {t("adminAction.printReceipt")}
-                      </button>
-
-                      {order.isGift && !order.giftRedeemed && (
-                        <button
-                          type="button"
-                          disabled={updatingId === order.id}
-                          onClick={() => markGiftRedeemed(order.id)}
-                          className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg bg-crimson-500 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-crimson-600 disabled:opacity-60"
-                        >
-                          <Gift size={13} />
-                          {t("adminAction.markGiftRedeemed")}
-                        </button>
-                      )}
-
-                      {ACTIVE_STATUSES.includes(order.orderStatus) && (
-                        <button
-                          type="button"
-                          disabled={updatingId === order.id}
-                          onClick={() => updateStatus(order.id, "CANCELLED")}
-                          className="mt-1.5 w-full rounded-lg border border-coffee-300 py-1.5 text-xs font-semibold text-coffee-500 transition-colors hover:bg-coffee-100 dark:border-coffee-600 dark:text-cream-300 dark:hover:bg-coffee-800"
-                        >
-                          ❌ បោះបង់/Cancel
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
+                {stackOrders.map((order) => (
+                  <OrderCard
+                    key={order.id}
+                    order={order}
+                    lang={lang}
+                    t={t}
+                    isUpdating={updatingId === order.id}
+                    onAdvance={handleAdvance}
+                    onCancel={handleCancel}
+                    onMarkGiftRedeemed={handleMarkGiftRedeemed}
+                    onPrintReceipt={setReceiptOrder}
+                  />
+                ))}
               </div>
             </div>
           );
         })}
       </div>
 
+      {/* Collapsed by default — completed/cancelled history stays out of the
+          way of the live workflow but is one click from view. */}
+      <button
+        type="button"
+        onClick={() => setShowHistory((v) => !v)}
+        className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg border border-coffee-200 py-2 text-xs font-semibold text-coffee-500 hover:bg-coffee-100 dark:border-coffee-700 dark:text-cream-300 dark:hover:bg-coffee-800"
+      >
+        {showHistory ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        {t("adminCol.completed")} / {t("adminCol.cancelled")} ({historyOrders.length})
+      </button>
+
+      {showHistory && (
+        <div className="mt-2 flex max-h-[50vh] flex-col gap-2 overflow-y-auto rounded-xl bg-coffee-100/40 p-2 dark:bg-coffee-900/40">
+          {historyOrders.length === 0 && (
+            <p className="px-2 py-3 text-center text-xs text-coffee-400 dark:text-cream-400">
+              {t("adminCol.noOrders")}
+            </p>
+          )}
+          {historyOrders.map((order) => (
+            <div
+              key={order.id}
+              className="flex items-center justify-between rounded-lg bg-cream-50 px-3 py-2 text-xs dark:bg-coffee-800"
+            >
+              <div>
+                <span className="font-bold text-coffee-800 dark:text-cream-100">
+                  #{order.id.slice(0, 8).toUpperCase()}
+                </span>{" "}
+                <span className="text-coffee-500 dark:text-cream-300">
+                  {order.customerName}
+                </span>
+                <span
+                  className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                    order.orderStatus === "COMPLETED"
+                      ? "bg-matcha-100 text-matcha-700"
+                      : "bg-coffee-200 text-coffee-600 dark:bg-coffee-700 dark:text-cream-300"
+                  }`}
+                >
+                  {order.orderStatus === "COMPLETED"
+                    ? t("adminCol.completed")
+                    : t("adminCol.cancelled")}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReceiptOrder(order)}
+                className="font-semibold text-gold-700 underline decoration-dotted dark:text-gold-400"
+              >
+                {t("adminAction.printReceipt")}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {receiptOrder && (
-        <ReceiptModal
-          order={receiptOrder}
-          onClose={() => setReceiptOrder(null)}
-        />
+        <ReceiptModal order={receiptOrder} onClose={() => setReceiptOrder(null)} />
       )}
 
       {confettiKey > 0 && <Confetti key={confettiKey} />}

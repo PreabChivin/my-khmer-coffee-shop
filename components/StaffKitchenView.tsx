@@ -1,15 +1,19 @@
 "use client";
 
-import ProductCard from "@/components/ProductCard";
-import AdminAddProductCard from "@/components/AdminAddProductCard";
+import { useCallback, useState } from "react";
+import AdminStats from "@/components/admin/AdminStats";
 import OrdersBoard from "@/components/admin/OrdersBoard";
+import ProductManagementPanel from "@/components/admin/ProductManagementPanel";
+import AdminToast from "@/components/admin/AdminToast";
 import type { ProductDTO } from "@/lib/types";
 
 /**
  * 🧸 ផ្ទាំងគ្រប់គ្រងការកម្ម៉ង់របស់ Besties — the single unified Staff View.
  * Replaces the ENTIRE customer homepage (banners, menu grid, cart) the
- * instant a staff member logs in: order-queue Kanban up top, full menu CRUD
- * below. Nothing here is ever reachable by a logged-out customer.
+ * instant a staff member logs in. Two-column workspace: Live Orders Control
+ * on the left, Dynamic Menu & Partner CMS on the right. Nothing here is ever
+ * reachable by a logged-out customer, and everything unmounts (state and
+ * all) the moment the Header's "ចុចចេញ/Logout" button is clicked.
  */
 export default function StaffKitchenView({
   products,
@@ -22,35 +26,35 @@ export default function StaffKitchenView({
   onProductUpdated: (updated: ProductDTO) => void;
   onProductDeleted: (id: string) => void;
 }) {
+  // 🚨 One shared error toast for the whole dashboard — any failed mutation
+  // in either panel surfaces here instead of freezing or failing silently.
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const showError = useCallback((message: string) => setToastMessage(message), []);
+
   return (
     <div className="min-h-screen bg-cream-100 dark:bg-coffee-900">
-      <div className="mx-auto max-w-6xl px-4 pt-8 sm:px-6">
+      <div className="mx-auto max-w-[1600px] px-4 pt-6 sm:px-6">
         <h1 className="text-center font-heading text-2xl font-extrabold text-coffee-900 dark:text-cream-50 sm:text-3xl">
           ផ្ទាំងគ្រប់គ្រងការកម្ម៉ង់របស់ Besties 🧸
         </h1>
+        <AdminStats />
       </div>
 
-      {/* Order queue lifecycle: Approve → Ready → Complete / Cancel */}
-      <OrdersBoard />
-
-      {/* Menu management: add / edit / delete / stock toggle */}
-      <div className="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
-        <h2 className="mb-6 border-t-2 border-gold-500/40 pt-8 font-heading text-xl font-extrabold text-coffee-900 dark:text-cream-50">
-          🧋 គ្រប់គ្រងមីនុយ
-        </h2>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <AdminAddProductCard onCreated={onProductCreated} />
-          {products.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              showAdminControls
-              onProductUpdated={onProductUpdated}
-              onProductDeleted={onProductDeleted}
-            />
-          ))}
-        </div>
+      {/* Compact two-column workspace: Live Orders Control | Menu & Partner CMS */}
+      <div className="mx-auto grid max-w-[1600px] grid-cols-1 items-start gap-4 px-4 pb-16 sm:px-6 xl:grid-cols-2">
+        <OrdersBoard onError={showError} />
+        <ProductManagementPanel
+          products={products}
+          onProductCreated={onProductCreated}
+          onProductUpdated={onProductUpdated}
+          onProductDeleted={onProductDeleted}
+          onError={showError}
+        />
       </div>
+
+      {toastMessage && (
+        <AdminToast message={toastMessage} onDismiss={() => setToastMessage(null)} />
+      )}
     </div>
   );
 }

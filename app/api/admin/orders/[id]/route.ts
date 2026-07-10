@@ -43,43 +43,50 @@ export async function PATCH(
     );
   }
 
-  const existing = await prisma.order.findUnique({ where: { id } });
-  if (!existing) {
-    return NextResponse.json({ error: "Order not found" }, { status: 404 });
-  }
-
-  // Approving an order (transitioning it into the kitchen queue) is the
-  // staff's manual confirmation that they cross-checked their banking app —
-  // record that as the payment being verified, and award a 🐻 loyalty stamp.
-  const isApproval =
-    body.orderStatus === "PREPARING" && existing.orderStatus !== "PREPARING";
-
-  const order = await prisma.$transaction(async (tx) => {
-    if (isApproval) {
-      await tx.payment.updateMany({
-        where: { orderId: id },
-        data: { paymentStatus: "PAID", paidAt: new Date() },
-      });
-
-      const phone = normalizePhone(existing.customerPhone);
-      if (phone.length >= 6) {
-        await tx.loyaltyAccount.upsert({
-          where: { phone },
-          create: { phone, stampCount: 1 },
-          update: { stampCount: { increment: 1 } },
-        });
-      }
+  try {
+    const existing = await prisma.order.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    return tx.order.update({
-      where: { id },
-      data: {
-        orderStatus: body.orderStatus ?? undefined,
-        giftRedeemed: body.giftRedeemed ?? undefined,
-      },
-      include: { items: { include: { product: true } }, payment: true },
-    });
-  });
+    // Approving an order (transitioning it into the kitchen queue) is the
+    // staff's manual confirmation that they cross-checked their banking app —
+    // record that as the payment being verified, and award a 🐻 loyalty stamp.
+    const isApproval =
+      body.orderStatus === "PREPARING" && existing.orderStatus !== "PREPARING";
 
-  return NextResponse.json(order);
+    const order = await prisma.$transaction(async (tx) => {
+      if (isApproval) {
+        await tx.payment.updateMany({
+          where: { orderId: id },
+          data: { paymentStatus: "PAID", paidAt: new Date() },
+        });
+
+        const phone = normalizePhone(existing.customerPhone);
+        if (phone.length >= 6) {
+          await tx.loyaltyAccount.upsert({
+            where: { phone },
+            create: { phone, stampCount: 1 },
+            update: { stampCount: { increment: 1 } },
+          });
+        }
+      }
+
+      return tx.order.update({
+        where: { id },
+        data: {
+          orderStatus: body.orderStatus ?? undefined,
+          giftRedeemed: body.giftRedeemed ?? undefined,
+        },
+        include: { items: { include: { product: true } }, payment: true },
+      });
+    });
+
+    return NextResponse.json(order);
+  } catch {
+    return NextResponse.json(
+      { error: "The database is busy — please try again in a moment." },
+      { status: 503 }
+    );
+  }
 }
