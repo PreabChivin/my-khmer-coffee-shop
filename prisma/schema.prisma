@@ -18,7 +18,11 @@ model Product {
   descriptionEn  String?
   descriptionKh  String?
   price          Float
-  category       String
+  categoryId     String
+  // ⚠️ onDelete: Cascade — deleting a Category deletes every Product in it.
+  // The Category Manager's delete confirmation must surface the affected
+  // product count before calling this, since there is no undo.
+  category       Category        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   image          String
   isAvailable    Boolean         @default(true)
   // 🤝 Partner Integration: co-branded / partner-exclusive items.
@@ -33,6 +37,25 @@ model Product {
   updatedAt      DateTime        @updatedAt
   orderItems     OrderItem[]
   groupCartItems GroupCartItem[]
+
+  @@index([categoryId])
+}
+
+// 🍩 Category Menu — data-driven homepage category slider + admin CRUD.
+// name is the single display string (no separate nameEn/nameKh, unlike
+// Product): admins are expected to type it in whichever language they want
+// shown, consistent with this app's Khmer-default convention. iconKey is an
+// optional free-text hint fed into lib/iconResolver.ts (e.g. "coffee") when
+// the category name itself doesn't contain an obvious keyword; iconUrl is a
+// direct override path/URL that bypasses the resolver entirely.
+model Category {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  iconKey   String?
+  iconUrl   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
 }
 
 model Order {

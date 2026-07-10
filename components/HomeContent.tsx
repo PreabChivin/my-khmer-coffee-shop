@@ -5,12 +5,12 @@ import { Bike, Clock, QrCode, Sprout, Store } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import HeroSlideshow from "@/components/HeroSlideshow";
 import PromoBannerCarousel from "@/components/PromoBannerCarousel";
-import CategoryScroller from "@/components/CategoryScroller";
+import CategoryScroller, { ALL_CATEGORIES_ID } from "@/components/CategoryScroller";
 import HomeSidebar from "@/components/HomeSidebar";
 import StaffKitchenView from "@/components/StaffKitchenView";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAdminSession } from "@/contexts/AdminSessionContext";
-import type { ProductDTO } from "@/lib/types";
+import type { CategoryDTO, ProductDTO } from "@/lib/types";
 import type { TranslationKey } from "@/lib/i18n";
 
 const FEATURES: {
@@ -37,21 +37,18 @@ const FEATURES: {
 
 export default function HomeContent({
   initialProducts,
+  initialCategories,
 }: {
   initialProducts: ProductDTO[];
+  initialCategories: CategoryDTO[];
 }) {
   const { t } = useLanguage();
   const { isAdmin } = useAdminSession();
   const [products, setProducts] = useState(initialProducts);
-  const [activeCategory, setActiveCategory] = useState("All");
+  const [categories] = useState(initialCategories);
+  const [activeCategoryId, setActiveCategoryId] = useState(ALL_CATEGORIES_ID);
   const [searchQuery, setSearchQuery] = useState("");
   const normalizedQuery = searchQuery.trim().toLowerCase();
-
-  const categories = useMemo(() => {
-    const seen: string[] = [];
-    for (const p of products) if (!seen.includes(p.category)) seen.push(p.category);
-    return seen;
-  }, [products]);
 
   const visibleProducts = useMemo(() => {
     // 🔍 A hero search query searches every category at once; otherwise fall
@@ -63,10 +60,10 @@ export default function HomeContent({
           .some((field) => field!.toLowerCase().includes(normalizedQuery))
       );
     }
-    return activeCategory === "All"
+    return activeCategoryId === ALL_CATEGORIES_ID
       ? products
-      : products.filter((p) => p.category === activeCategory);
-  }, [products, activeCategory, normalizedQuery]);
+      : products.filter((p) => p.categoryId === activeCategoryId);
+  }, [products, activeCategoryId, normalizedQuery]);
 
   function handleProductCreated(created: ProductDTO) {
     setProducts((prev) => [...prev, created]);
@@ -108,8 +105,8 @@ export default function HomeContent({
       {/* 🍩 Categorized horizontal menu scroller */}
       <CategoryScroller
         categories={categories}
-        active={activeCategory}
-        onSelect={setActiveCategory}
+        activeId={activeCategoryId}
+        onSelect={setActiveCategoryId}
       />
 
       {/* Two-column Foodpanda-style layout: sidebar + product grid */}

@@ -7,7 +7,7 @@ import ProductImage from "@/components/ProductImage";
 import { clampDiscountPercent, computeDiscountedPrice } from "@/lib/pricing";
 import { localizedCategory } from "@/lib/i18n";
 import { useLanguage } from "@/contexts/LanguageContext";
-import type { ProductDTO } from "@/lib/types";
+import type { CategoryDTO, ProductDTO } from "@/lib/types";
 
 function isValidPrice(n: number): boolean {
   return Number.isFinite(n) && n > 0;
@@ -15,11 +15,13 @@ function isValidPrice(n: number): boolean {
 
 export default function ProductRow({
   product,
+  categories,
   onProductUpdated,
   onProductDeleted,
   onError,
 }: {
   product: ProductDTO;
+  categories: CategoryDTO[];
   onProductUpdated: (updated: ProductDTO) => void;
   onProductDeleted: (id: string) => void;
   onError: (message: string) => void;
@@ -271,6 +273,7 @@ export default function ProductRow({
       {showEditPopover && (
         <AdminEditPopover
           product={localProduct}
+          categories={categories}
           onSaved={(updated) => {
             setLocalProduct(updated);
             onProductUpdated(updated);

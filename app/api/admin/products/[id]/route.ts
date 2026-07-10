@@ -3,6 +3,14 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
 import { clampDiscountPercent } from "@/lib/pricing";
+import type { ProductDTO } from "@/lib/types";
+
+function toProductDTO(
+  product: Prisma.ProductGetPayload<{ include: { category: true } }>
+): ProductDTO {
+  const { category, ...rest } = product;
+  return { ...rest, category: category.name };
+}
 
 interface ProductPayload {
   nameEn?: string;
@@ -10,7 +18,7 @@ interface ProductPayload {
   descriptionEn?: string | null;
   descriptionKh?: string | null;
   price?: number;
-  category?: string;
+  categoryId?: string;
   image?: string;
   isAvailable?: boolean;
   isPartner?: boolean;
@@ -57,10 +65,26 @@ export async function PUT(
     );
   }
 
+  if (body.categoryId !== undefined && !body.categoryId.trim()) {
+    return NextResponse.json(
+      { error: "categoryId cannot be empty" },
+      { status: 400 }
+    );
+  }
+
   try {
     const existing = await prisma.product.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    if (body.categoryId !== undefined) {
+      const category = await prisma.category.findUnique({
+        where: { id: body.categoryId },
+      });
+      if (!category) {
+        return NextResponse.json({ error: "Category not found" }, { status: 400 });
+      }
     }
 
     const product = await prisma.product.update({
@@ -73,7 +97,7 @@ export async function PUT(
         descriptionKh:
           "descriptionKh" in body ? body.descriptionKh?.trim() || null : undefined,
         price: body.price ?? undefined,
-        category: body.category?.trim() ?? undefined,
+        categoryId: body.categoryId?.trim() ?? undefined,
         image: body.image?.trim() ?? undefined,
         isAvailable: body.isAvailable ?? undefined,
         isPartner: body.isPartner ?? undefined,
@@ -84,8 +108,9 @@ export async function PUT(
             ? clampDiscountPercent(body.discountPercent)
             : undefined,
       },
+      include: { category: true },
     });
-    return NextResponse.json(product);
+    return NextResponse.json(toProductDTO(product));
   } catch (err) {
     if (
       err instanceof Prisma.PrismaClientKnownRequestError &&

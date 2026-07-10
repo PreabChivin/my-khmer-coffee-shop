@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import AddProductInline from "@/components/admin/AddProductInline";
 import ProductRow from "@/components/admin/ProductRow";
-import type { ProductDTO } from "@/lib/types";
+import CategoryManager from "@/components/admin/CategoryManager";
+import type { CategoryDTO, ProductDTO } from "@/lib/types";
 
 /** 🧋 RIGHT PANEL — "តំបន់គ្រប់គ្រងហាងសកល (Dynamic Menu & Partner CMS)".
- *  Quick-add form up top, dense inline-editable product table below. */
+ *  Category Manager up top, quick-add form next, dense inline-editable
+ *  product table below. */
 export default function ProductManagementPanel({
   products,
   onProductCreated,
@@ -24,6 +26,38 @@ export default function ProductManagementPanel({
   const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const normalizedQuery = query.trim().toLowerCase();
+
+  // 🍩 Categories fetched once here and threaded down to every child that
+  // needs them (Category Manager itself, the quick-add form, and each
+  // product row's full-edit popover) so there's a single source of truth
+  // and no redundant fetches.
+  const [categories, setCategories] = useState<CategoryDTO[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/categories")
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data: CategoryDTO[]) => {
+        if (!cancelled) setCategories(data);
+      })
+      .catch(() => {
+        if (!cancelled) onError("Couldn't load categories — the database may be busy.");
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function handleCategoryCreated(created: CategoryDTO) {
+    setCategories((prev) => [...prev, created]);
+  }
+  function handleCategoryUpdated(updated: CategoryDTO) {
+    setCategories((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+  }
+  function handleCategoryDeleted(id: string) {
+    setCategories((prev) => prev.filter((c) => c.id !== id));
+  }
 
   const visibleProducts = useMemo(() => {
     if (!normalizedQuery) return products;
@@ -45,8 +79,20 @@ export default function ProductManagementPanel({
         </span>
       </div>
 
+      <CategoryManager
+        categories={categories}
+        onCategoryCreated={handleCategoryCreated}
+        onCategoryUpdated={handleCategoryUpdated}
+        onCategoryDeleted={handleCategoryDeleted}
+        onError={onError}
+      />
+
       <div className="mb-3">
-        <AddProductInline onCreated={onProductCreated} onError={onError} />
+        <AddProductInline
+          categories={categories}
+          onCreated={onProductCreated}
+          onError={onError}
+        />
       </div>
 
       <input
@@ -66,6 +112,7 @@ export default function ProductManagementPanel({
           <ProductRow
             key={product.id}
             product={product}
+            categories={categories}
             onProductUpdated={onProductUpdated}
             onProductDeleted={onProductDeleted}
             onError={onError}

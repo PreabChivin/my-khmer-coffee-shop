@@ -14,9 +14,13 @@ export const dynamic = "force-dynamic";
 
 async function getProducts(): Promise<ProductDTO[]> {
   const products = await prisma.product.findMany({
-    orderBy: [{ category: "asc" }, { createdAt: "asc" }],
+    include: { category: true },
+    orderBy: [{ category: { name: "asc" } }, { createdAt: "asc" }],
   });
-  return products;
+  return products.map(({ category, ...p }) => ({
+    ...p,
+    category: category.name,
+  }));
 }
 
 export default async function MenuPage() {

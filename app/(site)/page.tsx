@@ -1,18 +1,37 @@
 import { prisma } from "@/lib/prisma";
 import HomeContent from "@/components/HomeContent";
-import type { ProductDTO } from "@/lib/types";
+import type { CategoryDTO, ProductDTO } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 async function getAllProducts(): Promise<ProductDTO[]> {
   const products = await prisma.product.findMany({
-    orderBy: [{ category: "asc" }, { createdAt: "asc" }],
+    include: { category: true },
+    orderBy: [{ category: { name: "asc" } }, { createdAt: "asc" }],
   });
-  return products;
+  return products.map(({ category, ...p }) => ({
+    ...p,
+    category: category.name,
+  }));
+}
+
+async function getAllCategories(): Promise<CategoryDTO[]> {
+  const categories = await prisma.category.findMany({
+    orderBy: { createdAt: "asc" },
+  });
+  return categories.map((c) => ({
+    id: c.id,
+    name: c.name,
+    iconKey: c.iconKey,
+    iconUrl: c.iconUrl,
+  }));
 }
 
 export default async function HomePage() {
-  const products = await getAllProducts();
+  const [products, categories] = await Promise.all([
+    getAllProducts(),
+    getAllCategories(),
+  ]);
 
-  return <HomeContent initialProducts={products} />;
+  return <HomeContent initialProducts={products} initialCategories={categories} />;
 }

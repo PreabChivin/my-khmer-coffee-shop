@@ -3,6 +3,14 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+// 🍩 Category Menu — name is kept stable as the upsert key (same pattern as
+// Product.nameEn) so re-seeding updates existing rows instead of duplicating.
+const CATEGORIES = [
+  { name: "Coffee", iconKey: "coffee" },
+  { name: "Tea", iconKey: "tea" },
+  { name: "Bakery", iconKey: "cake" },
+];
+
 // Ultra-cute, playful naming (Gen-Z Khmer pop). nameEn is kept stable as the
 // upsert key so re-seeding updates existing rows in place instead of creating
 // duplicates; the cuteness lives in the Khmer names + bilingual descriptions.
@@ -136,11 +144,23 @@ const PRODUCTS = [
 ];
 
 async function main() {
-  for (const product of PRODUCTS) {
+  const categoryIdByName = new Map<string, string>();
+  for (const category of CATEGORIES) {
+    const row = await prisma.category.upsert({
+      where: { name: category.name },
+      update: { iconKey: category.iconKey },
+      create: category,
+    });
+    categoryIdByName.set(row.name, row.id);
+  }
+
+  for (const { category, ...product } of PRODUCTS) {
+    const categoryId = categoryIdByName.get(category);
+    if (!categoryId) throw new Error(`Unknown seed category: ${category}`);
     await prisma.product.upsert({
       where: { nameEn: product.nameEn },
-      update: product,
-      create: product,
+      update: { ...product, categoryId },
+      create: { ...product, categoryId },
     });
   }
 
@@ -155,7 +175,9 @@ async function main() {
     },
   });
 
-  console.log(`Seeded ${PRODUCTS.length} products and 1 admin account.`);
+  console.log(
+    `Seeded ${CATEGORIES.length} categories, ${PRODUCTS.length} products, and 1 admin account.`
+  );
   console.log("Admin login -> username: admin / password: admin123");
   console.log("");
   console.log("ACTION REQUIRED: drop your bank-issued static KHQR image at:");

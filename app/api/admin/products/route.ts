@@ -3,6 +3,14 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
 import { clampDiscountPercent } from "@/lib/pricing";
+import type { ProductDTO } from "@/lib/types";
+
+function toProductDTO(
+  product: Prisma.ProductGetPayload<{ include: { category: true } }>
+): ProductDTO {
+  const { category, ...rest } = product;
+  return { ...rest, category: category.name };
+}
 
 export async function GET(request: NextRequest) {
   if (!getAdminFromRequest(request)) {
@@ -11,9 +19,10 @@ export async function GET(request: NextRequest) {
 
   try {
     const products = await prisma.product.findMany({
-      orderBy: [{ category: "asc" }, { createdAt: "asc" }],
+      include: { category: true },
+      orderBy: [{ category: { name: "asc" } }, { createdAt: "asc" }],
     });
-    return NextResponse.json(products);
+    return NextResponse.json(products.map(toProductDTO));
   } catch {
     return NextResponse.json(
       { error: "The database is busy — please try again in a moment." },
@@ -28,7 +37,7 @@ interface ProductPayload {
   descriptionEn?: string | null;
   descriptionKh?: string | null;
   price?: number;
-  category?: string;
+  categoryId?: string;
   image?: string;
   isAvailable?: boolean;
   isPartner?: boolean;
@@ -54,7 +63,7 @@ export async function POST(request: NextRequest) {
     descriptionEn,
     descriptionKh,
     price,
-    category,
+    categoryId,
     image,
     isAvailable,
     isPartner,
@@ -68,19 +77,26 @@ export async function POST(request: NextRequest) {
     typeof price !== "number" ||
     !Number.isFinite(price) ||
     price <= 0 ||
-    !category?.trim() ||
+    !categoryId?.trim() ||
     !image?.trim()
   ) {
     return NextResponse.json(
       {
         error:
-          "nameEn, nameKh, a positive price, category, and image are required",
+          "nameEn, nameKh, a positive price, categoryId, and image are required",
       },
       { status: 400 }
     );
   }
 
   try {
+    const category = await prisma.category.findUnique({
+      where: { id: categoryId },
+    });
+    if (!category) {
+      return NextResponse.json({ error: "Category not found" }, { status: 400 });
+    }
+
     const product = await prisma.product.create({
       data: {
         nameEn: nameEn.trim(),
@@ -88,15 +104,16 @@ export async function POST(request: NextRequest) {
         descriptionEn: descriptionEn?.trim() || null,
         descriptionKh: descriptionKh?.trim() || null,
         price,
-        category: category.trim(),
+        categoryId,
         image: image.trim(),
         isAvailable: isAvailable ?? true,
         isPartner: isPartner ?? false,
         partnerName: isPartner ? partnerName?.trim() || null : null,
         discountPercent: clampDiscountPercent(discountPercent),
       },
+      include: { category: true },
     });
-    return NextResponse.json(product, { status: 201 });
+    return NextResponse.json(toProductDTO(product), { status: 201 });
   } catch (err) {
     if (
       err instanceof Prisma.PrismaClientKnownRequestError &&

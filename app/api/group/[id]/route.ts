@@ -16,7 +16,12 @@ export async function GET(
 
   const groupCart = await prisma.groupCart.findUnique({
     where: { id },
-    include: { items: { include: { product: true }, orderBy: { createdAt: "asc" } } },
+    include: {
+      items: {
+        include: { product: { include: { category: true } } },
+        orderBy: { createdAt: "asc" },
+      },
+    },
   });
 
   if (!groupCart) {
@@ -40,7 +45,7 @@ export async function GET(
         // checkout) shows correct totals without duplicating the discount math.
         price: computeDiscountedPrice(item.product.price, item.product.discountPercent),
         image: item.product.image,
-        category: item.product.category,
+        category: item.product.category.name,
       },
     })),
   };

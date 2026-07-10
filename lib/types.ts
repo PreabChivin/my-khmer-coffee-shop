@@ -5,7 +5,11 @@ export interface ProductDTO {
   descriptionEn: string | null;
   descriptionKh: string | null;
   price: number;
+  /** Resolved Category.name — kept as a plain string for backward
+   *  compatibility with display + customization-eligibility logic. */
   category: string;
+  /** 🍩 Category Menu: the real foreign key, used for filtering. */
+  categoryId: string;
   image: string;
   isAvailable: boolean;
   /** 🤝 Partner Integration: co-branded / partner-exclusive items. */
@@ -137,6 +141,17 @@ export interface GroupCartStateDTO {
   status: "OPEN" | "CHECKED_OUT";
   orderId: string | null;
   items: GroupCartItemDTO[];
+}
+
+/** 🍩 Category Menu — a homepage/menu category, resolvable to an icon via
+ *  lib/iconResolver.ts. productCount is only present on the admin CRUD list
+ *  response (used to warn before a cascading delete). */
+export interface CategoryDTO {
+  id: string;
+  name: string;
+  iconKey: string | null;
+  iconUrl: string | null;
+  productCount?: number;
 }
 
 /** 💖 Public gift voucher shown at /gift/[orderId]. */

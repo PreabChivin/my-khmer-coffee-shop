@@ -1,19 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { localizedCategory } from "@/lib/i18n";
 import { computeDiscountedPrice } from "@/lib/pricing";
-import type { ProductDTO } from "@/lib/types";
-
-const CATEGORIES = ["Coffee", "Tea", "Bakery"];
+import type { CategoryDTO, ProductDTO } from "@/lib/types";
 
 const EMPTY_FORM = {
   nameEn: "",
   nameKh: "",
   price: "",
-  category: CATEGORIES[0],
+  categoryId: "",
   image: "/images/espresso.jpg",
   discountPercent: "",
   isPartner: false,
@@ -28,9 +26,11 @@ function isValidPrice(n: number): boolean {
  *  panel — expands inline (no modal) so staff can rattle off several new
  *  items back to back without an overlay interrupting the workspace. */
 export default function AddProductInline({
+  categories,
   onCreated,
   onError,
 }: {
+  categories: CategoryDTO[];
   onCreated: (created: ProductDTO) => void;
   onError: (message: string) => void;
 }) {
@@ -39,6 +39,15 @@ export default function AddProductInline({
   const [form, setForm] = useState(EMPTY_FORM);
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    // Default the select to the first available category once categories
+    // arrive (the form may render before the fetch in the parent resolves).
+    if (!form.categoryId && categories.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setForm((f) => ({ ...f, categoryId: categories[0].id }));
+    }
+  }, [categories, form.categoryId]);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -53,6 +62,10 @@ export default function AddProductInline({
       setFieldError("Price must be a positive number.");
       return;
     }
+    if (!form.categoryId) {
+      setFieldError("Please create a category first (see Category Manager above).");
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -63,7 +76,7 @@ export default function AddProductInline({
           nameEn: form.nameEn,
           nameKh: form.nameKh,
           price,
-          category: form.category,
+          categoryId: form.categoryId,
           image: form.image,
           discountPercent: Number(form.discountPercent) || 0,
           isPartner: form.isPartner,
@@ -155,13 +168,14 @@ export default function AddProductInline({
           className="w-full rounded-xl border border-coffee-300 px-3 py-2 text-sm text-coffee-900 outline-none focus:border-crimson-400 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
         />
         <select
-          value={form.category}
-          onChange={(e) => setForm({ ...form, category: e.target.value })}
+          value={form.categoryId}
+          onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
           className="w-full rounded-xl border border-coffee-300 px-2 py-2 text-sm text-coffee-900 outline-none focus:border-clay-400 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
         >
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {localizedCategory(c, lang)}
+          {categories.length === 0 && <option value="">No categories yet</option>}
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {localizedCategory(c.name, lang)}
             </option>
           ))}
         </select>

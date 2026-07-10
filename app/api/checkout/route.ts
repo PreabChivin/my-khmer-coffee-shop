@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
   const productIds = items.map((item) => item.productId);
   const products = await prisma.product.findMany({
     where: { id: { in: productIds } },
+    include: { category: true },
   });
 
   const productMap = new Map(products.map((p) => [p.id, p]));
@@ -126,7 +127,7 @@ export async function POST(request: NextRequest) {
   const lineItems = items.map((item) => {
     const product = productMap.get(item.productId)!;
     const customization = sanitizeCustomization(
-      product.category,
+      product.category.name,
       item.customization
     );
     const discountedBase = computeDiscountedPrice(

@@ -55,7 +55,10 @@ export async function POST(
     );
   }
 
-  const product = await prisma.product.findUnique({ where: { id: body.productId } });
+  const product = await prisma.product.findUnique({
+    where: { id: body.productId },
+    include: { category: true },
+  });
   if (!product) {
     return NextResponse.json({ error: "Product not found" }, { status: 400 });
   }
@@ -66,7 +69,7 @@ export async function POST(
     );
   }
 
-  const customization = sanitizeCustomization(product.category, body.customization);
+  const customization = sanitizeCustomization(product.category.name, body.customization);
 
   const item = await prisma.groupCartItem.create({
     data: {
