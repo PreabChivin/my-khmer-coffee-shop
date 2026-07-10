@@ -51,6 +51,8 @@ export interface AdminCustomerRowDTO {
 export interface OrderHistoryItemDTO {
   id: string;
   createdAt: string;
+  /** Last change timestamp — drives the header "unread since last seen" badge. */
+  updatedAt: string;
   orderStatus: OrderStatus;
   orderType: OrderType;
   totalAmount: number;

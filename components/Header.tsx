@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Coffee, ShoppingCart, User, Users } from "lucide-react";
+import { Coffee, ShoppingCart, Truck, User, Users } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useGroupCart } from "@/contexts/GroupCartContext";
 import { useAdminSession } from "@/contexts/AdminSessionContext";
@@ -12,6 +12,7 @@ import { getOrCreateTelegramSessionToken } from "@/lib/telegramSession";
 import LanguageToggle from "@/components/LanguageToggle";
 import AppearanceSettings from "@/components/AppearanceSettings";
 import StaffPortalButton from "@/components/StaffPortalButton";
+import NotificationBell from "@/components/NotificationBell";
 
 const TELEGRAM_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
 
@@ -97,12 +98,31 @@ export default function Header() {
               </button>
             ))}
 
+          {/* 🔔 In-app notifications (live order-status alerts + promos) */}
+          {!isAdmin && <NotificationBell />}
+
+          {/* 🚚 Order tracking — jumps to the live tracking dashboard */}
+          {!isAdmin && (
+            <Link
+              href="/orders"
+              aria-label="តាមដានការកុម្ម៉ង់"
+              title="តាមដានការកុម្ម៉ង់"
+              className="group relative flex h-10 w-10 items-center justify-center rounded-full text-coffee-800 transition-transform hover:scale-110 hover:bg-coffee-100 active:scale-95 dark:text-cream-100 dark:hover:bg-coffee-800"
+            >
+              <Truck size={20} />
+              {/* Hover tooltip */}
+              <span className="pointer-events-none absolute -bottom-8 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-lg bg-coffee-900 px-2 py-1 text-[10px] font-semibold text-cream-50 opacity-0 shadow-lg transition-opacity group-hover:opacity-100 dark:bg-cream-50 dark:text-coffee-900">
+                តាមដានការកុម្ម៉ង់
+              </span>
+            </Link>
+          )}
+
           {!isAdmin && (
             <button
               type="button"
               onClick={openCart}
               aria-label={t("cart.openAria")}
-              className="relative flex h-10 w-10 items-center justify-center rounded-full text-coffee-800 transition-colors hover:bg-coffee-100 dark:text-cream-100 dark:hover:bg-coffee-800"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full text-coffee-800 transition-transform hover:scale-110 hover:bg-coffee-100 active:scale-95 dark:text-cream-100 dark:hover:bg-coffee-800"
             >
               {isGroupMode ? <Users size={20} /> : <ShoppingCart size={20} />}
               {badgeCount > 0 && (

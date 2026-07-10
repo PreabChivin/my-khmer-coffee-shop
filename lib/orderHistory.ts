@@ -19,6 +19,7 @@ export function toOrderHistoryItem(order: OrderWithHistory): OrderHistoryItemDTO
   return {
     id: order.id,
     createdAt: order.createdAt.toISOString(),
+    updatedAt: order.updatedAt.toISOString(),
     orderStatus: order.orderStatus as OrderStatus,
     orderType: order.orderType as OrderType,
     totalAmount: order.totalAmount,
