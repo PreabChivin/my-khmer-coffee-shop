@@ -55,7 +55,19 @@ const ICON_RULES: IconRule[] = [
     icon: IceCreamCone,
   },
   {
-    keywords: ["juice", "smoothie", "soda", "cold drink", "ទឹកផ្លែឈើ", "ភេសជ្ជៈត្រជាក់"],
+    keywords: [
+      "juice",
+      "smoothie",
+      "soda",
+      "cold drink",
+      "boba",
+      "bubble tea",
+      "milk tea",
+      "ទឹកផ្លែឈើ",
+      "ភេសជ្ជៈត្រជាក់",
+      "គុជ",
+      "តែទឹកដោះគោ",
+    ],
     icon: CupSoda,
   },
   {

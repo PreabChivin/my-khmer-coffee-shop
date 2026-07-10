@@ -54,6 +54,45 @@ export async function sendStaffGroupAlert(text: string): Promise<boolean> {
   return sendTelegramMessage(groupChatId, text);
 }
 
+/** 📸 Forwards a customer-uploaded payment-proof screenshot straight to the
+ *  staff group via sendPhoto — never stored on our own infrastructure, the
+ *  upload is relayed through in-memory bytes and discarded. */
+export async function sendStaffGroupPhoto(
+  photo: Blob,
+  filename: string,
+  caption: string
+): Promise<boolean> {
+  const groupChatId = process.env.TELEGRAM_CHAT_ID;
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!groupChatId || !token) {
+    console.warn(
+      "[telegram] Skipped payment-proof photo — TELEGRAM_CHAT_ID/TELEGRAM_BOT_TOKEN not configured."
+    );
+    return false;
+  }
+  try {
+    const form = new FormData();
+    form.append("chat_id", groupChatId);
+    form.append("caption", caption);
+    form.append("parse_mode", "HTML");
+    form.append("photo", photo, filename);
+
+    const res = await fetch(`${TELEGRAM_API_BASE}/bot${token}/sendPhoto`, {
+      method: "POST",
+      body: form,
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error(`[telegram] sendPhoto failed (${res.status}): ${body}`);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("[telegram] sendPhoto threw:", err);
+    return false;
+  }
+}
+
 /** 💌 Private DM — only ever called with an Order's own customerTelegramChatId. */
 export async function sendCustomerAlert(chatId: string, text: string): Promise<boolean> {
   return sendTelegramMessage(chatId, text);

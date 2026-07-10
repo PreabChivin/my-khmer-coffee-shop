@@ -9,6 +9,7 @@ import {
 import { computeDiscountedPrice } from "@/lib/pricing";
 import { computeAvailableFreeDrinks, normalizePhone } from "@/lib/loyalty";
 import { prizeById } from "@/lib/wheel";
+import { sendStaffGroupAlert } from "@/lib/telegram";
 import type { CheckoutRequestBody, CheckoutResponseBody } from "@/lib/types";
 
 const VALID_ORDER_TYPES = ["PickUp", "Delivery"];
@@ -264,6 +265,23 @@ export async function POST(request: NextRequest) {
 
       return createdOrder;
     });
+
+    // 📣 Channel 1 — instant staff group ping the moment an order lands,
+    // separate from the later "customer says they paid" alert. Best-effort:
+    // a Telegram outage must never fail a checkout that already succeeded.
+    try {
+      const shortId = order.id.slice(0, 8).toUpperCase();
+      const itemCount = lineItems.reduce((sum, line) => sum + line.quantity, 0);
+      await sendStaffGroupAlert(
+        `🆕 <b>ការកម្ម៉ង់ថ្មី!</b>\n` +
+          `ការកម្ម៉ង់ #${shortId} — ${customerName.trim()} (${customerPhone.trim()})\n` +
+          `🧋 ${itemCount} item${itemCount === 1 ? "" : "s"} · 💵 $${totalAmount.toFixed(2)}\n` +
+          `${orderType === "Delivery" ? "🛵 ដឹកជញ្ជូន" : "🏠 មកយកខ្លួនឯង"}${isGiftOrder ? " · 🎁 កាដូ" : ""}\n` +
+          `រង់ចាំការទូទាត់... 👀`
+      );
+    } catch (err) {
+      console.error("[telegram] Failed to send new-order staff alert:", err);
+    }
 
     const responseBody: CheckoutResponseBody = {
       orderId: order.id,

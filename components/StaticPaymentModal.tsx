@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BadgeCheck, ImageOff, Loader2 } from "lucide-react";
+import { BadgeCheck, Camera, ImageOff, Loader2, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import BongBear from "@/components/mascots/BongBear";
 import type { OrderStatusResponseBody } from "@/lib/types";
@@ -16,6 +16,7 @@ interface StaticPaymentModalProps {
 const POLL_INTERVAL_MS = 3000;
 const ACCOUNT_NAME =
   process.env.NEXT_PUBLIC_KHQR_ACCOUNT_NAME ?? "[បញ្ចូលឈ្មោះពិតរបស់អ្នក]";
+const MAX_PHOTO_BYTES = 4.5 * 1024 * 1024;
 
 export default function StaticPaymentModal({
   orderId,
@@ -27,11 +28,22 @@ export default function StaticPaymentModal({
   const [hasConfirmed, setHasConfirmed] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofPreviewUrl, setProofPreviewUrl] = useState<string | null>(null);
+  const [proofError, setProofError] = useState<string | null>(null);
   const onApprovedRef = useRef(onApproved);
 
   useEffect(() => {
     onApprovedRef.current = onApproved;
   });
+
+  useEffect(() => {
+    // Revoke the object URL on unmount so the blob isn't retained forever.
+    return () => {
+      if (proofPreviewUrl) URL.revokeObjectURL(proofPreviewUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const poll = async () => {
@@ -55,11 +67,40 @@ export default function StaticPaymentModal({
     return () => clearInterval(interval);
   }, [orderId]);
 
+  function handleProofSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file later
+    if (!file) return;
+
+    setProofError(null);
+    if (!file.type.startsWith("image/")) {
+      setProofError("សូមជ្រើសរើសរូបភាពមួយណា៎ (JPG, PNG)។");
+      return;
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      setProofError("រូបភាពធំពេក (កំណត់ 4.5MB)។");
+      return;
+    }
+
+    if (proofPreviewUrl) URL.revokeObjectURL(proofPreviewUrl);
+    setProofFile(file);
+    setProofPreviewUrl(URL.createObjectURL(file));
+  }
+
+  function removeProof() {
+    if (proofPreviewUrl) URL.revokeObjectURL(proofPreviewUrl);
+    setProofFile(null);
+    setProofPreviewUrl(null);
+  }
+
   async function handleConfirmPaid() {
     setIsConfirming(true);
     try {
+      const formData = new FormData();
+      if (proofFile) formData.append("photo", proofFile);
       const res = await fetch(`/api/orders/${orderId}/confirm-payment`, {
         method: "POST",
+        body: formData,
       });
       if (res.ok) setHasConfirmed(true);
     } finally {
@@ -153,14 +194,58 @@ export default function StaticPaymentModal({
               {t("payment.awaitingVerification")}
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={handleConfirmPaid}
-              disabled={isConfirming}
-              className="mt-5 w-full rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 py-3 text-sm font-bold text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
-            >
-              បាញ់លុយរួចហើយម៉ាយដំឡូង ចុចលិប! 👆
-            </button>
+            <>
+              {/* 📸 Optional payment-proof screenshot — forwarded straight to
+                  the staff group via Telegram, never stored on our servers. */}
+              <div className="mt-4">
+                {proofPreviewUrl ? (
+                  <div className="flex items-center gap-2 rounded-xl border border-coffee-300 bg-cream-50 p-2 dark:border-coffee-600 dark:bg-coffee-900">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={proofPreviewUrl}
+                      alt="Payment proof preview"
+                      className="h-12 w-12 rounded-lg object-cover"
+                    />
+                    <span className="flex-1 truncate text-xs text-coffee-600 dark:text-cream-300">
+                      {proofFile?.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={removeProof}
+                      aria-label="Remove"
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-coffee-400 hover:bg-coffee-100 dark:hover:bg-coffee-800"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-coffee-300 py-2.5 text-xs font-semibold text-coffee-500 hover:bg-coffee-100 dark:border-coffee-600 dark:text-cream-300 dark:hover:bg-coffee-800">
+                    <Camera size={14} />
+                    📸 ភ្ជាប់រូបថតបញ្ជាក់ការទូទាត់ (មិនចាំបាច់)
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProofSelected}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+                {proofError && (
+                  <p className="mt-1.5 text-center text-xs font-medium text-crimson-500">
+                    {proofError}
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleConfirmPaid}
+                disabled={isConfirming}
+                className="mt-3 w-full rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 py-3 text-sm font-bold text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
+              >
+                បាញ់លុយរួចហើយម៉ាយដំឡូង ចុចលិប! 👆
+              </button>
+            </>
           )}
         </div>
       </div>
