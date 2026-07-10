@@ -17,6 +17,7 @@ const POLL_INTERVAL_MS = 3000;
 const ACCOUNT_NAME =
   process.env.NEXT_PUBLIC_KHQR_ACCOUNT_NAME ?? "[បញ្ចូលឈ្មោះពិតរបស់អ្នក]";
 const MAX_PHOTO_BYTES = 4.5 * 1024 * 1024;
+const TELEGRAM_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
 
 export default function StaticPaymentModal({
   orderId,
@@ -94,6 +95,14 @@ export default function StaticPaymentModal({
   }
 
   async function handleConfirmPaid() {
+    // 🔔 Opened synchronously, in direct response to the click — browsers
+    // block window.open() called after an await since it's no longer
+    // considered part of the trusted user-gesture stack. The order already
+    // exists at this point, so the deep link is ready with no extra step.
+    if (TELEGRAM_BOT_USERNAME) {
+      window.open(`https://t.me/${TELEGRAM_BOT_USERNAME}?start=${orderId}`, "_blank");
+    }
+
     setIsConfirming(true);
     try {
       const formData = new FormData();

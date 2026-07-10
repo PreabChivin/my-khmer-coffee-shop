@@ -92,44 +92,27 @@ export async function PATCH(
     });
 
     // 🔔 Best-effort Telegram DM — only when the status actually changed to
-    // one customers care about. Prefers a chat_id linked directly on this
-    // order (post-order deep link); falls back to one linked ahead of time
-    // via the Header's phone-based bell button (LoyaltyAccount). Awaited
-    // (not fire-and-forget) since a serverless function can be frozen the
-    // instant the response is sent; wrapped so a Telegram outage can never
-    // fail an already-successful status update.
+    // one customers care about, and only if they've linked a chat via the
+    // deep-link button. Awaited (not fire-and-forget) since a serverless
+    // function can be frozen the instant the response is sent; wrapped so a
+    // Telegram outage can never fail an already-successful status update.
     const statusChanged =
       body.orderStatus !== undefined && body.orderStatus !== existing.orderStatus;
-    if (statusChanged && NOTIFIABLE_STATUSES.includes(order.orderStatus as OrderStatus)) {
+    if (
+      statusChanged &&
+      order.customerTelegramChatId &&
+      NOTIFIABLE_STATUSES.includes(order.orderStatus as OrderStatus)
+    ) {
       try {
-        let chatId = order.customerTelegramChatId;
-        if (!chatId) {
-          const phone = normalizePhone(order.customerPhone);
-          const loyaltyAccount = phone.length >= 6
-            ? await prisma.loyaltyAccount.findUnique({ where: { phone } })
-            : null;
-          chatId = loyaltyAccount?.telegramChatId ?? null;
-          // Backfill onto the order so the tracking page's "linked" badge
-          // and any future status change skip this lookup.
-          if (chatId) {
-            await prisma.order.update({
-              where: { id: order.id },
-              data: { customerTelegramChatId: chatId },
-            });
-          }
-        }
-
-        if (chatId) {
-          const message = buildCustomerStatusMessage(
-            order.orderStatus as Extract<
-              OrderStatus,
-              "PREPARING" | "READY" | "COMPLETED" | "CANCELLED"
-            >,
-            order.orderType as OrderType,
-            order.id.slice(0, 8).toUpperCase()
-          );
-          await sendCustomerAlert(chatId, message);
-        }
+        const message = buildCustomerStatusMessage(
+          order.orderStatus as Extract<
+            OrderStatus,
+            "PREPARING" | "READY" | "COMPLETED" | "CANCELLED"
+          >,
+          order.orderType as OrderType,
+          order.id.slice(0, 8).toUpperCase()
+        );
+        await sendCustomerAlert(order.customerTelegramChatId, message);
       } catch (err) {
         console.error("[telegram] Failed to send customer status alert:", err);
       }

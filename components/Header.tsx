@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Bell, Coffee, ShoppingCart, Users } from "lucide-react";
+import { Coffee, ShoppingCart, Users } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useGroupCart } from "@/contexts/GroupCartContext";
 import { useAdminSession } from "@/contexts/AdminSessionContext";
@@ -11,9 +9,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import AppearanceSettings from "@/components/AppearanceSettings";
 import StaffPortalButton from "@/components/StaffPortalButton";
-import TelegramLinkModal from "@/components/TelegramLinkModal";
-
-const TELEGRAM_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
 
 export default function Header() {
   const { totalItems, openCart } = useCart();
@@ -23,7 +18,6 @@ export default function Header() {
     groupState?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
   const badgeCount = isGroupMode ? groupItemCount : totalItems;
   const { t } = useLanguage();
-  const [showTelegramModal, setShowTelegramModal] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 border-b-2 border-gold-500/70 bg-cream-50/95 backdrop-blur dark:bg-coffee-900/95">
@@ -45,18 +39,6 @@ export default function Header() {
           <LanguageToggle />
           <AppearanceSettings />
 
-          {/* 🔔 Pre-order Telegram linking — opt in before ever checking out */}
-          {!isAdmin && TELEGRAM_BOT_USERNAME && (
-            <button
-              type="button"
-              onClick={() => setShowTelegramModal(true)}
-              aria-label="🔔 ទទួលដំណឹងតាម Telegram"
-              className="flex h-10 w-10 items-center justify-center rounded-full text-coffee-800 transition-colors hover:bg-coffee-100 dark:text-cream-100 dark:hover:bg-coffee-800"
-            >
-              <Bell size={20} />
-            </button>
-          )}
-
           {!isAdmin && (
             <button
               type="button"
@@ -74,12 +56,6 @@ export default function Header() {
           )}
         </div>
       </div>
-
-      {showTelegramModal &&
-        createPortal(
-          <TelegramLinkModal onClose={() => setShowTelegramModal(false)} />,
-          document.body
-        )}
     </header>
   );
 }
