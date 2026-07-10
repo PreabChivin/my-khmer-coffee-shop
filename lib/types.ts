@@ -15,8 +15,10 @@ export interface ProductDTO {
   /** 🤝 Partner Integration: co-branded / partner-exclusive items. */
   isPartner: boolean;
   partnerName: string | null;
-  /** 🔥 Dynamic Discount System: 0 = no discount. */
-  discountPercent: number;
+  /** 🔥 Multi-tier Discount System. */
+  discountPercent: number; // % off (0 = none)
+  flatDiscount: number; // $ off, applied after the % (0 = none)
+  promoTag: string | null; // cosmetic conditional badge, e.g. "ទិញ 1 ថែម 1"
   /** ⭐ Rating aggregate — compute average with computeAverageRating(). */
   ratingCount: number;
   ratingSum: number;

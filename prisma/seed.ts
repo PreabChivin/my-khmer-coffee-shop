@@ -9,12 +9,28 @@ const CATEGORIES = [
   { name: "Coffee", iconKey: "coffee" },
   { name: "Tea", iconKey: "tea" },
   { name: "Bakery", iconKey: "cake" },
+  { name: "Frappe", iconKey: "smoothie" },
+  { name: "Combo", iconKey: "combo" },
 ];
 
 // Ultra-cute, playful naming (Gen-Z Khmer pop). nameEn is kept stable as the
 // upsert key so re-seeding updates existing rows in place instead of creating
 // duplicates; the cuteness lives in the Khmer names + bilingual descriptions.
-const PRODUCTS = [
+type SeedProduct = {
+  nameEn: string;
+  nameKh: string;
+  descriptionEn: string;
+  descriptionKh: string;
+  price: number;
+  category: string;
+  image: string;
+  isAvailable: boolean;
+  discountPercent?: number;
+  flatDiscount?: number;
+  promoTag?: string;
+};
+
+const PRODUCTS: SeedProduct[] = [
   {
     nameEn: "Espresso",
     nameKh: "អេស្ព្រេសសូ ដាស់ខួរ ⚡",
@@ -140,6 +156,114 @@ const PRODUCTS = [
     category: "Bakery",
     image: "/images/khmer-layer-cake.svg",
     isAvailable: true,
+  },
+
+  // 🍧 Frappes
+  {
+    nameEn: "Caramel Frappe",
+    nameKh: "ខារ៉ាមែល ហ្វ្រាបេ 🍮",
+    descriptionEn: "Blended icy caramel dream topped with fluffy cream. 🍮❄️",
+    descriptionKh: "ខារ៉ាមែលកិនទឹកកក ត្រជាក់ឆ្ងាញ់ ដាក់ក្រែមទន់ៗ 🍮❄️",
+    price: 4.25,
+    category: "Frappe",
+    image: "/images/iced-latte.jpg",
+    isAvailable: true,
+    discountPercent: 20,
+  },
+  {
+    nameEn: "Cookies & Cream Frappe",
+    nameKh: "ខូឃី ក្រែម ហ្វ្រាបេ 🍪",
+    descriptionEn: "Crushed cookies blended into creamy iced heaven. 🍪🤍",
+    descriptionKh: "ខូឃីកិនល្អិត លាយក្រែមទឹកកក ឆ្ងាញ់ខ្លាំង 🍪🤍",
+    price: 4.5,
+    category: "Frappe",
+    image: "/images/mocha.jpg",
+    isAvailable: true,
+    flatDiscount: 0.5,
+  },
+
+  // 🧋 Boba & Matcha
+  {
+    nameEn: "Brown Sugar Boba",
+    nameKh: "តែទឹកដោះគោ ស្ករ្រ 🧋",
+    descriptionEn: "Chewy brown-sugar pearls in creamy milk tea. 🧋🤎",
+    descriptionKh: "គុជស្ករត្នោត ទំពាស្អិត ក្នុងតែទឹកដោះគោ 🧋🤎",
+    price: 3.75,
+    category: "Tea",
+    image: "/images/milk-tea.jpg",
+    isAvailable: true,
+    promoTag: "ទិញ 1 ថែម 1",
+  },
+  {
+    nameEn: "Iced Matcha Latte",
+    nameKh: "ម៉ាចា ឡាតេ ត្រជាក់ 🍵",
+    descriptionEn: "Stone-ground matcha over creamy iced milk. 🍵💚",
+    descriptionKh: "ម៉ាចាកិនល្អិត លើទឹកដោះគោត្រជាក់ ស្រួយឆ្ងាញ់ 🍵💚",
+    price: 3.95,
+    category: "Tea",
+    image: "/images/green-tea.jpg",
+    isAvailable: true,
+    discountPercent: 10,
+  },
+  {
+    nameEn: "Taro Boba",
+    nameKh: "តៃរ៉ូ គុជ 💜",
+    descriptionEn: "Dreamy purple taro milk tea with bouncy boba. 💜🧋",
+    descriptionKh: "តៃរ៉ូពណ៌ស្វាយ ផ្អែមល្មម ជាមួយគុជទន់ៗ 💜🧋",
+    price: 3.75,
+    category: "Tea",
+    image: "/images/milk-tea.jpg",
+    isAvailable: true,
+    promoTag: "E-Power Deal",
+  },
+
+  // 🥐 More Pastries
+  {
+    nameEn: "Chocolate Donut",
+    nameKh: "នំដូណាត់ សូកូឡា 🍩",
+    descriptionEn: "Soft glazed donut drizzled with rich chocolate. 🍩🍫",
+    descriptionKh: "នំដូណាត់ទន់ ដាក់សូកូឡាឆ្ងាញ់ 🍩🍫",
+    price: 2.25,
+    category: "Bakery",
+    image: "/images/muffin.jpg",
+    isAvailable: true,
+    flatDiscount: 0.5,
+  },
+  {
+    nameEn: "Cinnamon Roll",
+    nameKh: "នំម្នាស់ ស៊ីណាមិន 🌀",
+    descriptionEn: "Warm swirled roll with sweet cinnamon glaze. 🌀🍯",
+    descriptionKh: "នំរមួល ក្រអូបស៊ីណាមិន ផ្អែមល្មម 🌀🍯",
+    price: 2.75,
+    category: "Bakery",
+    image: "/images/croissant.jpg",
+    isAvailable: true,
+    discountPercent: 10,
+  },
+
+  // 🎁 Special Combos
+  {
+    nameEn: "Coffee + Croissant Combo",
+    nameKh: "កាហ្វេ + នំគ្រ័រសាំង ឈុត 🎁",
+    descriptionEn: "Your morning fix: hot coffee paired with a buttery croissant. ☕🥐",
+    descriptionKh: "ឈុតពេលព្រឹក៖ កាហ្វេក្តៅ ជាមួយនំគ្រ័រសាំងប៊ឺ ☕🥐",
+    price: 5.5,
+    category: "Combo",
+    image: "/images/croissant.jpg",
+    isAvailable: true,
+    discountPercent: 15,
+    promoTag: "Special Combo",
+  },
+  {
+    nameEn: "Boba + Cake Combo",
+    nameKh: "គុជ + នំខេក ឈុត 🎁",
+    descriptionEn: "Bestie combo: milk tea boba with a slice of cheesecake. 🧋🍰",
+    descriptionKh: "ឈុតបេស្តី៖ តែគុជ ជាមួយនំឈីសខេកមួយចំណិត 🧋🍰",
+    price: 6.5,
+    category: "Combo",
+    image: "/images/cheesecake.jpg",
+    isAvailable: true,
+    discountPercent: 20,
   },
 ];
 

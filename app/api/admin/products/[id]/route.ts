@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
-import { clampDiscountPercent } from "@/lib/pricing";
+import { clampDiscountPercent, clampFlatDiscount } from "@/lib/pricing";
 import type { ProductDTO } from "@/lib/types";
 
 function toProductDTO(
@@ -24,6 +24,8 @@ interface ProductPayload {
   isPartner?: boolean;
   partnerName?: string | null;
   discountPercent?: number;
+  flatDiscount?: number;
+  promoTag?: string | null;
 }
 
 export async function PUT(
@@ -107,6 +109,12 @@ export async function PUT(
           "discountPercent" in body
             ? clampDiscountPercent(body.discountPercent)
             : undefined,
+        flatDiscount:
+          "flatDiscount" in body
+            ? clampFlatDiscount(body.flatDiscount)
+            : undefined,
+        promoTag:
+          "promoTag" in body ? body.promoTag?.trim() || null : undefined,
       },
       include: { category: true },
     });

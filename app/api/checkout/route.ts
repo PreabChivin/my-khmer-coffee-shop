@@ -134,7 +134,8 @@ export async function POST(request: NextRequest) {
     );
     const discountedBase = computeDiscountedPrice(
       product.price,
-      product.discountPercent
+      product.discountPercent,
+      product.flatDiscount
     );
     const unitPrice = round2(
       discountedBase + customizationSurcharge(customization)

@@ -123,7 +123,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       // before customization add-ons) — server re-verifies at checkout.
       const discountedBase = computeDiscountedPrice(
         product.price,
-        product.discountPercent
+        product.discountPercent,
+        product.flatDiscount
       );
       const unitPrice = round2(
         discountedBase + customizationSurcharge(customization)

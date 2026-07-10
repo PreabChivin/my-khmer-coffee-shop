@@ -24,70 +24,57 @@ export default function CategoryScroller({
     onSelect(id);
   }
 
+  // One consistent, fixed-width tile per category so the icons and labels
+  // stay perfectly aligned in a row regardless of label length.
+  function renderTile(id: string, label: string, icon: React.ReactNode) {
+    const isActive = activeId === id;
+    return (
+      <button
+        key={id}
+        type="button"
+        onClick={() => select(id)}
+        aria-pressed={isActive}
+        className="flex w-[4.75rem] shrink-0 snap-start select-none flex-col items-center gap-1.5 outline-none"
+      >
+        <span
+          className={`flex h-16 w-16 items-center justify-center rounded-full text-3xl shadow-sm transition-all ${
+            isActive
+              ? "bg-gradient-to-br from-clay-300 to-crimson-300 ring-4 ring-clay-400"
+              : "bg-cream-100 ring-2 ring-transparent hover:ring-clay-200 dark:bg-coffee-800"
+          }`}
+        >
+          <span className={isActive ? "animate-bounce-cute inline-flex" : "inline-flex"}>
+            {icon}
+          </span>
+        </span>
+        <span
+          className={`w-full truncate text-center text-xs font-bold ${
+            isActive
+              ? "text-clay-600 dark:text-clay-400"
+              : "text-coffee-500 dark:text-cream-300"
+          }`}
+        >
+          {label}
+        </span>
+      </button>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6">
-      <div className="flex gap-5 overflow-x-auto pb-3 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <button
-          type="button"
-          onClick={() => select(ALL_CATEGORIES_ID)}
-          className="flex shrink-0 flex-col items-center gap-1.5"
-        >
-          <span
-            className={`flex h-16 w-16 items-center justify-center rounded-full text-3xl shadow-sm transition-all ${
-              activeId === ALL_CATEGORIES_ID
-                ? "bg-gradient-to-br from-clay-300 to-crimson-300 ring-4 ring-clay-400"
-                : "bg-cream-100 ring-2 ring-transparent hover:ring-clay-200 dark:bg-coffee-800"
-            }`}
-          >
-            <span className={activeId === ALL_CATEGORIES_ID ? "animate-bounce-cute inline-block" : ""}>
-              🌈
-            </span>
-          </span>
-          <span
-            className={`text-xs font-bold ${
-              activeId === ALL_CATEGORIES_ID
-                ? "text-clay-600 dark:text-clay-400"
-                : "text-coffee-500 dark:text-cream-300"
-            }`}
-          >
-            {t("menu.categoryAll")}
-          </span>
-        </button>
-
-        {categories.map((category) => {
-          const isActive = activeId === category.id;
-          return (
-            <button
-              key={category.id}
-              type="button"
-              onClick={() => select(category.id)}
-              className="flex shrink-0 flex-col items-center gap-1.5"
-            >
-              <span
-                className={`flex h-16 w-16 items-center justify-center rounded-full shadow-sm transition-all ${
-                  isActive
-                    ? "bg-gradient-to-br from-clay-300 to-crimson-300 ring-4 ring-clay-400"
-                    : "bg-cream-100 ring-2 ring-transparent hover:ring-clay-200 dark:bg-coffee-800"
-                }`}
-              >
-                <span className={isActive ? "animate-bounce-cute inline-block" : "inline-block"}>
-                  <CategoryIcon
-                    category={category}
-                    size={30}
-                    className={isActive ? "text-crimson-600" : "text-clay-500"}
-                  />
-                </span>
-              </span>
-              <span
-                className={`text-xs font-bold ${
-                  isActive ? "text-clay-600 dark:text-clay-400" : "text-coffee-500 dark:text-cream-300"
-                }`}
-              >
-                {localizedCategory(category.name, lang)}
-              </span>
-            </button>
-          );
-        })}
+      <div className="flex snap-x gap-4 overflow-x-auto scroll-px-4 pb-3 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {renderTile(ALL_CATEGORIES_ID, t("menu.categoryAll"), <span>🌈</span>)}
+        {categories.map((category) =>
+          renderTile(
+            category.id,
+            localizedCategory(category.name, lang),
+            <CategoryIcon
+              category={category}
+              size={30}
+              className={activeId === category.id ? "text-crimson-600" : "text-clay-500"}
+            />
+          )
+        )}
       </div>
     </div>
   );

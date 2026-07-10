@@ -14,6 +14,8 @@ const EMPTY_FORM = {
   categoryId: "",
   image: "/images/espresso.jpg",
   discountPercent: "",
+  flatDiscount: "",
+  promoTag: "",
   isPartner: false,
   partnerName: "",
 };
@@ -79,6 +81,8 @@ export default function AddProductInline({
           categoryId: form.categoryId,
           image: form.image,
           discountPercent: Number(form.discountPercent) || 0,
+          flatDiscount: Number(form.flatDiscount) || 0,
+          promoTag: form.promoTag || null,
           isPartner: form.isPartner,
           partnerName: form.isPartner ? form.partnerName || null : null,
         }),
@@ -179,6 +183,31 @@ export default function AddProductInline({
             </option>
           ))}
         </select>
+      </div>
+
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="$ off (flat)"
+          value={form.flatDiscount}
+          onChange={(e) => setForm({ ...form, flatDiscount: e.target.value })}
+          onWheel={(e) => e.currentTarget.blur()}
+          className="w-full rounded-xl border border-coffee-300 px-3 py-2 text-sm text-coffee-900 outline-none focus:border-crimson-400 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
+        />
+        <input
+          list="promo-tag-suggestions-add"
+          placeholder="🏷️ Promo tag (ទិញ 1 ថែម 1…)"
+          value={form.promoTag}
+          onChange={(e) => setForm({ ...form, promoTag: e.target.value })}
+          className="w-full rounded-xl border border-coffee-300 px-3 py-2 text-sm text-coffee-900 outline-none focus:border-crimson-400 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
+        />
+        <datalist id="promo-tag-suggestions-add">
+          <option value="ទិញ 1 ថែម 1" />
+          <option value="E-Power Deal" />
+          <option value="Special Combo" />
+        </datalist>
       </div>
 
       <input

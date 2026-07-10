@@ -28,8 +28,13 @@ model Product {
   // 🤝 Partner Integration: co-branded / partner-exclusive items.
   isPartner      Boolean         @default(false)
   partnerName    String?
-  // 🔥 Dynamic Discount System
+  // 🔥 Multi-tier Discount System (foodpanda-style badges)
+  //   discountPercent — % off (affects price). flatDiscount — $ off (affects
+  //   price, applied after the %). promoTag — a cosmetic conditional label
+  //   (e.g. "ទិញ 1 ថែម 1", "E-Power Deal") shown as a badge, no price effect.
   discountPercent Int            @default(0)
+  flatDiscount   Float           @default(0)
+  promoTag       String?
   // ⭐ Rating aggregate — average = ratingSum / ratingCount (guard div-by-0).
   ratingCount    Int             @default(0)
   ratingSum      Float           @default(0)

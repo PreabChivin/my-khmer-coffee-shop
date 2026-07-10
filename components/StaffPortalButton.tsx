@@ -1,42 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { createPortal } from "react-dom";
-import { Crown, Lock, LogOut } from "lucide-react";
+import { Crown, LogOut } from "lucide-react";
 import { useAdminSession } from "@/contexts/AdminSessionContext";
-import AdminLoginModal from "@/components/AdminLoginModal";
 
 /**
- * 🔐 Staff Login Portal — lives in the header's corner. Logged out: a
- * discreet cute button that opens the login modal. Logged in: an
- * always-visible glowing pastel-green badge confirming Staff View is active,
- * with a one-click logout that destroys the session instantly.
+ * 🔐 Staff status badge — the login button is intentionally gone (customers
+ * never see a way in). Logging in happens via the hidden Ctrl+S / ⌘+S
+ * shortcut (see StaffPortalShortcut). This renders NOTHING for logged-out
+ * visitors; once a staff member is signed in it shows a glowing pastel-green
+ * badge with a one-click logout.
  */
 export default function StaffPortalButton() {
   const { isAdmin, isChecking, adminName, logout } = useAdminSession();
-  const [showModal, setShowModal] = useState(false);
 
-  if (isChecking) return null;
-
-  if (!isAdmin) {
-    return (
-      <>
-        <button
-          type="button"
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-coffee-100 px-3 py-1.5 text-[11px] font-bold text-coffee-500 transition-transform hover:scale-105 dark:bg-coffee-800 dark:text-cream-300"
-        >
-          <Lock size={12} />
-          🔐 សម្រាប់បុគ្គលិកហាង (Staff Portal)
-        </button>
-        {showModal &&
-          createPortal(
-            <AdminLoginModal onClose={() => setShowModal(false)} />,
-            document.body
-          )}
-      </>
-    );
-  }
+  if (isChecking || !isAdmin) return null;
 
   return (
     <div className="flex animate-pulse items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-matcha-300 to-matcha-500 px-3 py-1.5 text-[11px] font-bold text-white shadow-[0_0_14px_rgba(127,209,174,0.8)]">

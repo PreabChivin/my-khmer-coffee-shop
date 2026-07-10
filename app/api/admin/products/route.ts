@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
-import { clampDiscountPercent } from "@/lib/pricing";
+import { clampDiscountPercent, clampFlatDiscount } from "@/lib/pricing";
 import type { ProductDTO } from "@/lib/types";
 
 function toProductDTO(
@@ -43,6 +43,8 @@ interface ProductPayload {
   isPartner?: boolean;
   partnerName?: string | null;
   discountPercent?: number;
+  flatDiscount?: number;
+  promoTag?: string | null;
 }
 
 export async function POST(request: NextRequest) {
@@ -69,6 +71,8 @@ export async function POST(request: NextRequest) {
     isPartner,
     partnerName,
     discountPercent,
+    flatDiscount,
+    promoTag,
   } = body;
 
   if (
@@ -110,6 +114,8 @@ export async function POST(request: NextRequest) {
         isPartner: isPartner ?? false,
         partnerName: isPartner ? partnerName?.trim() || null : null,
         discountPercent: clampDiscountPercent(discountPercent),
+        flatDiscount: clampFlatDiscount(flatDiscount),
+        promoTag: promoTag?.trim() || null,
       },
       include: { category: true },
     });

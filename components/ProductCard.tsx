@@ -11,6 +11,7 @@ import { computeAverageRating, computeDiscountedPrice } from "@/lib/pricing";
 import DrinkCustomizer from "@/components/DrinkCustomizer";
 import GroupNamePromptModal from "@/components/GroupNamePromptModal";
 import ProductImage from "@/components/ProductImage";
+import PromoBadge, { hasAnyPromo } from "@/components/PromoBadge";
 import ApsaraChibi from "@/components/mascots/ApsaraChibi";
 import { playPop } from "@/lib/sfx";
 import type { DrinkCustomization, ProductDTO } from "@/lib/types";
@@ -47,9 +48,15 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
   const customizable = isCustomizable(product.category);
   const slang = slangFor(product.id);
 
-  // 🔥 Dynamic Discount System
-  const hasDiscount = product.discountPercent > 0;
-  const discountedPrice = computeDiscountedPrice(product.price, product.discountPercent);
+  // 🔥 Multi-tier Discount System — percent + flat both reduce the price;
+  // promoTag is a cosmetic badge only.
+  const discountedPrice = computeDiscountedPrice(
+    product.price,
+    product.discountPercent,
+    product.flatDiscount
+  );
+  const hasPriceCut = discountedPrice < product.price;
+  const hasPromo = hasAnyPromo(product);
 
   // ⭐ Rating aggregate — guarded against division by zero.
   const avgRating = computeAverageRating(product.ratingSum, product.ratingCount);
@@ -111,15 +118,11 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
           alt={name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
-        {/* 🔥 Discount badge takes priority over the generic slang badge */}
-        {product.isAvailable && hasDiscount && (
-          <span className="animate-pop-in absolute left-2 top-2 rounded-full bg-gradient-to-r from-crimson-500 to-crimson-400 px-2.5 py-1 text-[11px] font-extrabold text-white shadow-md">
-            🔥 បញ្ចុះតម្លៃដល់ {product.discountPercent}%
-          </span>
-        )}
-        {/* 💖 Playful slang badge */}
-        {product.isAvailable && !hasDiscount && (
-          <span className="absolute left-2 top-2 rounded-full bg-clay-400/95 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
+        {/* 🔖 Foodpanda-style promo badges take priority over the slang badge */}
+        {product.isAvailable && hasPromo && <PromoBadge product={product} />}
+        {/* 💖 Playful slang badge — only when there's no promo to show */}
+        {product.isAvailable && !hasPromo && (
+          <span className="absolute left-2 top-2 z-10 rounded-full bg-clay-400/95 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
             {lang === "km" ? slang.km : slang.en}
           </span>
         )}
@@ -144,7 +147,7 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
           <h3 className="font-heading text-base text-coffee-900 dark:text-cream-50">
             {name}
           </h3>
-          {hasDiscount ? (
+          {hasPriceCut ? (
             <span className="flex shrink-0 flex-col items-end whitespace-nowrap">
               <span className="text-xs text-coffee-400 line-through dark:text-cream-400">
                 ${product.price.toFixed(2)}

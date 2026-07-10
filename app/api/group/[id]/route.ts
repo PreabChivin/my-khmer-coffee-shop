@@ -43,7 +43,11 @@ export async function GET(
         nameKh: item.product.nameKh,
         // Pre-discounted so every downstream consumer (banner, sidebar,
         // checkout) shows correct totals without duplicating the discount math.
-        price: computeDiscountedPrice(item.product.price, item.product.discountPercent),
+        price: computeDiscountedPrice(
+          item.product.price,
+          item.product.discountPercent,
+          item.product.flatDiscount
+        ),
         image: item.product.image,
         category: item.product.category.name,
       },
