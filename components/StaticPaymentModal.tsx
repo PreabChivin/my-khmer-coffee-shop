@@ -190,27 +190,9 @@ export default function StaticPaymentModal({
           </div>
 
           {hasConfirmed ? (
-            <div className="mt-5 space-y-3">
-              <div className="flex items-center justify-center gap-2 rounded-xl bg-gold-100 px-4 py-3 text-sm font-medium text-gold-700 dark:bg-coffee-900 dark:text-gold-400">
-                <Loader2 size={16} className="animate-spin" />
-                {t("payment.awaitingVerification")}
-              </div>
-
-              {/* 🔔 Optional — only if the customer wants Telegram updates.
-                  A real link click (no phone number, no popup-block worries);
-                  opens the order's deep link so the webhook captures their
-                  chat_id and every future status change DMs them. */}
-              {TELEGRAM_BOT_USERNAME && (
-                <a
-                  href={`https://t.me/${TELEGRAM_BOT_USERNAME}?start=${orderId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-clay-400 bg-clay-50 py-2.5 text-sm font-bold text-clay-700 transition-transform hover:scale-[1.02] active:scale-95 dark:bg-coffee-900 dark:text-clay-300"
-                >
-                  <Bell size={16} />
-                  🔔 ទទួលដំណឹងតាម Telegram
-                </a>
-              )}
+            <div className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-gold-100 px-4 py-3 text-sm font-medium text-gold-700 dark:bg-coffee-900 dark:text-gold-400">
+              <Loader2 size={16} className="animate-spin" />
+              {t("payment.awaitingVerification")}
             </div>
           ) : (
             <>
@@ -265,6 +247,23 @@ export default function StaticPaymentModal({
                 បាញ់លុយរួចហើយម៉ាយដំឡូង ចុចលិប! 👆
               </button>
             </>
+          )}
+
+          {/* 🔔 Optional Telegram updates — always visible on the payment
+              screen (the order already exists here, so the deep link works
+              right away). Opt-in, no phone number: a plain link click opens
+              the bot so the webhook captures their chat_id and every future
+              status change DMs them. */}
+          {TELEGRAM_BOT_USERNAME && (
+            <a
+              href={`https://t.me/${TELEGRAM_BOT_USERNAME}?start=${orderId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border-2 border-clay-400 bg-clay-50 py-2.5 text-sm font-bold text-clay-700 transition-transform hover:scale-[1.02] active:scale-95 dark:bg-coffee-900 dark:text-clay-300"
+            >
+              <Bell size={16} />
+              🔔 ទទួលដំណឹងតាម Telegram
+            </a>
           )}
         </div>
       </div>
