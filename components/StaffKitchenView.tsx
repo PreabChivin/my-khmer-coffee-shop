@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import AdminStats from "@/components/admin/AdminStats";
 import OrdersBoard from "@/components/admin/OrdersBoard";
 import ProductManagementPanel from "@/components/admin/ProductManagementPanel";
+import RegisteredCustomersPanel from "@/components/admin/RegisteredCustomersPanel";
 import AdminToast from "@/components/admin/AdminToast";
 import type { ProductDTO } from "@/lib/types";
 
@@ -50,6 +51,11 @@ export default function StaffKitchenView({
           onProductDeleted={onProductDeleted}
           onError={showError}
         />
+      </div>
+
+      {/* 👥 Full registered-customer roster with generation + LTV drill-down */}
+      <div className="px-4 pb-16 sm:px-6">
+        <RegisteredCustomersPanel onError={showError} />
       </div>
 
       {toastMessage && (

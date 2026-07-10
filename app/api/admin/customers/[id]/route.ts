@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
 import { toOrderHistoryItem } from "@/lib/orderHistory";
+import { toUserDTO } from "@/lib/userDto";
 import type { CustomerProfileDTO } from "@/lib/types";
 
 // 👑 Admin-only per-customer profile: account details, lifetime value (sum of
@@ -37,14 +38,7 @@ export async function GET(
       .reduce((sum, o) => sum + o.totalAmount, 0);
 
     const body: CustomerProfileDTO = {
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        name: user.name,
-        phone: user.phone,
-        loyaltyPoints: user.loyaltyPoints,
-      },
+      user: toUserDTO(user),
       lifetimeValue: Math.round(lifetimeValue * 100) / 100,
       orderCount: orders.length,
       orders: orders.map(toOrderHistoryItem),

@@ -6,6 +6,7 @@ import { LogOut } from "lucide-react";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
 import LoyaltyProgress from "@/components/LoyaltyProgress";
 import OrderHistoryList from "@/components/OrderHistoryList";
+import { generationFromDOB } from "@/lib/generation";
 import type { OrderHistoryItemDTO } from "@/lib/types";
 
 export default function AccountPage() {
@@ -74,6 +75,24 @@ export default function AccountPage() {
           ចាកចេញ
         </button>
       </div>
+
+      {/* 🎂 Generation tier — fun personalized blurb from date of birth */}
+      {(() => {
+        const gen = generationFromDOB(user.dateOfBirth);
+        return gen ? (
+          <div className="mb-4 flex items-center gap-3 rounded-3xl border-2 border-clay-300 bg-clay-50 px-4 py-3 dark:border-coffee-600 dark:bg-coffee-800">
+            <span className="text-3xl">{gen.emoji}</span>
+            <div className="min-w-0">
+              <p className="text-sm font-extrabold text-clay-600 dark:text-clay-400">
+                {gen.km} · {gen.label}
+              </p>
+              <p className="text-xs leading-relaxed text-coffee-600 dark:text-cream-200">
+                {gen.slang}
+              </p>
+            </div>
+          </div>
+        ) : null;
+      })()}
 
       {/* 💎 Loyalty points + tier progress */}
       <LoyaltyProgress points={user.loyaltyPoints} />

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, BellRing, Gift, Sparkles } from "lucide-react";
+import { Bell, BellRing, Gift, Radio, Sparkles } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Confetti from "@/components/Confetti";
 import BongBear, { type BongBearPose } from "@/components/mascots/BongBear";
@@ -192,6 +192,25 @@ export default function OrderSuccess({
           )}
         </div>
       )}
+
+      {/* 📡 Multi-channel tracking info — website live view + Telegram DMs */}
+      <div className="mt-5 w-full rounded-2xl border-2 border-dashed border-gold-500/60 bg-gold-50/70 px-4 py-3 text-left dark:bg-coffee-800/60">
+        <p className="flex items-center gap-1.5 text-xs font-extrabold text-coffee-800 dark:text-cream-100">
+          <Radio size={14} className="text-gold-600" />
+          តាមដានស្ថានភាព ២ ផ្លូវ · Track your order 2 ways
+        </p>
+        <ul className="mt-1.5 space-y-1 text-[11px] leading-relaxed text-coffee-600 dark:text-cream-300">
+          <li>
+            🖥️ <span className="font-semibold">នៅលើគេហទំព័រនេះ</span> — ទំព័រនេះ update ដោយស្វ័យប្រវត្តិ រាល់ពេលស្ថានភាពផ្លាស់ប្តូរ។
+          </li>
+          <li>
+            🔔 <span className="font-semibold">តាម Telegram Bot</span> —{" "}
+            {telegramLinked
+              ? "អ្នកបានភ្ជាប់ហើយ! យើងនឹង DM ប្រាប់អ្នកភ្លាមៗ (ឧ. «ឆុងរួចរាល់», «បានបញ្ចប់») 💬"
+              : "ចុចប៊ូតុង 🔔 ខាងលើ ដើម្បីទទួល DM រាល់ការ update (ឧ. «ឆុងរួចរាល់», «បានបញ្ចប់»)។"}
+          </li>
+        </ul>
+      </div>
 
       {/* 🎲 Mini board-game timeline */}
       <div className="relative mt-8 w-full rounded-3xl border-2 border-clay-400 bg-gradient-to-b from-cream-100 to-clay-50 px-4 pb-6 pt-24 dark:from-coffee-800 dark:to-coffee-900">

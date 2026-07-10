@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, Mail, Phone, User as UserIcon, X } from "lucide-react";
+import { Cake, Lock, Mail, Phone, User as UserIcon, X } from "lucide-react";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
+import { generationFromDOB } from "@/lib/generation";
 
 // Social providers are scaffolded (DB fields + these slots) but need OAuth
 // credentials to be wired — shown disabled until then.
@@ -20,6 +21,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
     email: "",
     password: "",
     name: "",
+    dateOfBirth: "",
     username: "",
     phone: "",
   });
@@ -41,6 +43,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
             email: form.email,
             password: form.password,
             name: form.name,
+            dateOfBirth: form.dateOfBirth,
             username: form.username || undefined,
             phone: form.phone || undefined,
           });
@@ -99,16 +102,44 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-3">
           {mode === "register" && (
-            <div className="relative">
-              <UserIcon size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-coffee-400" />
-              <input
-                required
-                placeholder="ឈ្មោះ / Name"
-                value={form.name}
-                onChange={(e) => set("name", e.target.value)}
-                className={inputCls}
-              />
-            </div>
+            <>
+              <div className="relative">
+                <UserIcon size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-coffee-400" />
+                <input
+                  required
+                  placeholder="ឈ្មោះពិត / Real Name"
+                  value={form.name}
+                  onChange={(e) => set("name", e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+              <div className="relative">
+                <Cake size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-coffee-400" />
+                <input
+                  required
+                  type="date"
+                  aria-label="ថ្ងៃខែកំណើត / Date of birth"
+                  max={new Date().toISOString().slice(0, 10)}
+                  value={form.dateOfBirth}
+                  onChange={(e) => set("dateOfBirth", e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+              {/* 🎂 Live generation preview from the entered date of birth */}
+              {(() => {
+                const gen = generationFromDOB(form.dateOfBirth);
+                return gen ? (
+                  <div className="animate-pop-in rounded-xl bg-clay-50 px-3 py-2 text-center dark:bg-coffee-900">
+                    <p className="text-xs font-bold text-clay-600 dark:text-clay-400">
+                      {gen.emoji} អ្នកគឺជា {gen.km} ({gen.label})!
+                    </p>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-coffee-600 dark:text-cream-200">
+                      {gen.slang}
+                    </p>
+                  </div>
+                ) : null;
+              })()}
+            </>
           )}
 
           {mode === "login" ? (

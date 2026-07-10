@@ -13,6 +13,7 @@ interface RegisterInput {
   email: string;
   password: string;
   name: string;
+  dateOfBirth: string;
   username?: string;
   phone?: string;
 }

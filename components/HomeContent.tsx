@@ -8,6 +8,7 @@ import PromoBannerCarousel from "@/components/PromoBannerCarousel";
 import CategoryScroller, { ALL_CATEGORIES_ID } from "@/components/CategoryScroller";
 import HomeSidebar from "@/components/HomeSidebar";
 import StaffKitchenView from "@/components/StaffKitchenView";
+import WelcomePopup from "@/components/WelcomePopup";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAdminSession } from "@/contexts/AdminSessionContext";
 import type { CategoryDTO, ProductDTO } from "@/lib/types";
@@ -97,6 +98,9 @@ export default function HomeContent({
 
   return (
     <div>
+      {/* 🎉 First-visit registration promo (unauth guests only, shown once) */}
+      <WelcomePopup />
+
       <HeroSlideshow searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
       {/* 🎉 Top Promotional Banner Carousel */}

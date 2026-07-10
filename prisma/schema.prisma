@@ -127,6 +127,10 @@ model User {
   passwordHash  String? // null only for future pure-OAuth accounts
   name          String
   phone         String?
+  // 🎂 Date of birth — used to derive the customer's generation tier
+  // (lib/generation.ts). Nullable so pre-existing accounts stay valid; the
+  // registration form requires it for all new sign-ups.
+  dateOfBirth   DateTime?
   // 💎 Loyalty Points Reward Program (សន្សំពិន្ទុ) — lifetime points balance.
   loyaltyPoints Int      @default(0)
   // 🔮 OAuth provider scaffold (wired later once credentials exist).

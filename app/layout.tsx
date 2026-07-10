@@ -7,6 +7,7 @@ import { FulfillmentProvider } from "@/contexts/FulfillmentContext";
 import { GroupCartProvider } from "@/contexts/GroupCartContext";
 import { AdminSessionProvider } from "@/contexts/AdminSessionContext";
 import { CustomerSessionProvider } from "@/contexts/CustomerSessionContext";
+import { AuthModalProvider } from "@/contexts/AuthModalContext";
 import "./globals.css";
 
 const kantumruyPro = Kantumruy_Pro({
@@ -43,11 +44,13 @@ export default function RootLayout({
           <LanguageProvider>
             <AdminSessionProvider>
               <CustomerSessionProvider>
-                <FulfillmentProvider>
-                  <GroupCartProvider>
-                    <CartProvider>{children}</CartProvider>
-                  </GroupCartProvider>
-                </FulfillmentProvider>
+                <AuthModalProvider>
+                  <FulfillmentProvider>
+                    <GroupCartProvider>
+                      <CartProvider>{children}</CartProvider>
+                    </GroupCartProvider>
+                  </FulfillmentProvider>
+                </AuthModalProvider>
               </CustomerSessionProvider>
             </AdminSessionProvider>
           </LanguageProvider>

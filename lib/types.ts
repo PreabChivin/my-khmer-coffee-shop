@@ -32,6 +32,19 @@ export interface UserDTO {
   name: string;
   phone: string | null;
   loyaltyPoints: number;
+  /** ISO date string, or null if not on file. Generation is derived from it. */
+  dateOfBirth: string | null;
+}
+
+/** 👑 One row in the admin "Registered Customers" table. */
+export interface AdminCustomerRowDTO {
+  id: string;
+  name: string;
+  email: string;
+  dateOfBirth: string | null;
+  loyaltyPoints: number;
+  joinedAt: string;
+  orderCount: number;
 }
 
 /** 🧾 One row in a customer's / admin's order-history view. */

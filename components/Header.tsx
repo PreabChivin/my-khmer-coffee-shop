@@ -1,19 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Coffee, ShoppingCart, User, Users } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useGroupCart } from "@/contexts/GroupCartContext";
 import { useAdminSession } from "@/contexts/AdminSessionContext";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
+import { useAuthModal } from "@/contexts/AuthModalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getOrCreateTelegramSessionToken } from "@/lib/telegramSession";
 import LanguageToggle from "@/components/LanguageToggle";
 import AppearanceSettings from "@/components/AppearanceSettings";
 import StaffPortalButton from "@/components/StaffPortalButton";
-import AuthModal from "@/components/AuthModal";
 
 const TELEGRAM_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
 
@@ -22,11 +20,11 @@ export default function Header() {
   const { isGroupMode, state: groupState } = useGroupCart();
   const { isAdmin } = useAdminSession();
   const { user } = useCustomerSession();
+  const { openAuth } = useAuthModal();
   const groupItemCount =
     groupState?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
   const badgeCount = isGroupMode ? groupItemCount : totalItems;
   const { t } = useLanguage();
-  const [showAuth, setShowAuth] = useState(false);
 
   // 🔔 Connect this browser to the Telegram bot (device-session token). Opened
   // synchronously in the click handler — a real user gesture, so it isn't
@@ -91,7 +89,7 @@ export default function Header() {
             ) : (
               <button
                 type="button"
-                onClick={() => setShowAuth(true)}
+                onClick={openAuth}
                 aria-label="Sign in"
                 className="flex h-10 w-10 items-center justify-center rounded-full text-coffee-800 transition-colors hover:bg-coffee-100 dark:text-cream-100 dark:hover:bg-coffee-800"
               >
@@ -116,12 +114,6 @@ export default function Header() {
           )}
         </div>
       </div>
-
-      {showAuth &&
-        createPortal(
-          <AuthModal onClose={() => setShowAuth(false)} />,
-          document.body
-        )}
     </header>
   );
 }

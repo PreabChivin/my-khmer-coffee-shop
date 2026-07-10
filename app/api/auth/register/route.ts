@@ -8,7 +8,7 @@ import {
   signUserToken,
 } from "@/lib/customerAuth";
 import { registerSchema } from "@/lib/validation/auth";
-import type { UserDTO } from "@/lib/types";
+import { toUserDTO } from "@/lib/userDto";
 
 export async function POST(request: NextRequest) {
   let raw: unknown;
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   }
 
   const email = parsed.data.email.toLowerCase();
-  const { password, name, username, phone } = parsed.data;
+  const { password, name, username, phone, dateOfBirth } = parsed.data;
 
   try {
     const passwordHash = await bcrypt.hash(password, 10);
@@ -38,17 +38,11 @@ export async function POST(request: NextRequest) {
         name,
         username: username || null,
         phone: phone || null,
+        dateOfBirth: new Date(`${dateOfBirth}T00:00:00Z`),
       },
     });
 
-    const body: UserDTO = {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      name: user.name,
-      phone: user.phone,
-      loyaltyPoints: user.loyaltyPoints,
-    };
+    const body = toUserDTO(user);
     const response = NextResponse.json(body, { status: 201 });
     response.cookies.set(
       USER_COOKIE_NAME,
