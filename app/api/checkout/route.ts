@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
     giftRecipientName,
     giftMessage,
     groupCartId,
+    telegramSessionToken,
   } = body;
 
   // 🎡 Only accept a spin prize that maps to a real wheel segment.
@@ -198,6 +199,21 @@ export async function POST(request: NextRequest) {
   const orderId = randomUUID();
   const isGiftOrder = Boolean(isGift && giftRecipientName?.trim());
 
+  // 🔔 If this device connected Telegram from the header, resolve the saved
+  // chat so this order is auto-notified on status changes. Best-effort — a
+  // missing/unknown token just means no Telegram link, never a checkout error.
+  let linkedTelegramChatId: string | null = null;
+  if (typeof telegramSessionToken === "string" && telegramSessionToken.trim()) {
+    try {
+      const session = await prisma.telegramSession.findUnique({
+        where: { token: telegramSessionToken.trim() },
+      });
+      linkedTelegramChatId = session?.chatId ?? null;
+    } catch {
+      // notification linking is non-critical — proceed with the order
+    }
+  }
+
   try {
     const order = await prisma.$transaction(async (tx) => {
       // Claim the group cart FIRST (if any) so two people racing to check out
@@ -242,6 +258,7 @@ export async function POST(request: NextRequest) {
               ? giftMessage.trim().slice(0, 300)
               : null,
           isGroupOrder: Boolean(groupCartId),
+          customerTelegramChatId: linkedTelegramChatId,
           items: {
             create: itemsCreate,
           },

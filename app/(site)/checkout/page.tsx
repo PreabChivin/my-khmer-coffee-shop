@@ -13,6 +13,7 @@ import StampCard from "@/components/StampCard";
 import { customizationSurcharge, describeCustomization } from "@/lib/customization";
 import { randomFortune, type Fortune } from "@/lib/fortunes";
 import { normalizePhone } from "@/lib/loyalty";
+import { getTelegramSessionToken } from "@/lib/telegramSession";
 import { localizedName } from "@/lib/i18n";
 import type {
   CheckoutResponseBody,
@@ -151,6 +152,9 @@ export default function CheckoutPage() {
           giftRecipientName: isGift ? giftRecipientName : undefined,
           giftMessage: isGift ? giftMessage : undefined,
           groupCartId: isGroupMode ? groupId : undefined,
+          // 🔔 Links this order to the customer's Telegram if they connected
+          // from the header on this device (null/absent otherwise).
+          telegramSessionToken: getTelegramSessionToken(),
           items: lines.map((line) => ({
             productId: line.productId,
             quantity: line.quantity,

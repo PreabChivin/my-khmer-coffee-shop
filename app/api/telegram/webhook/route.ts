@@ -42,8 +42,16 @@ export async function POST(request: NextRequest) {
 
     const match = text.match(START_COMMAND);
     if (match) {
-      const orderId = match[1];
-      await handleStart(String(chatId), orderId);
+      const payload = match[1];
+      // "s_<token>" = device-session link from the header connect button
+      // (saves to TelegramSession, keyed by the browser's localStorage
+      // token); a bare payload = per-order link from the payment/tracking
+      // screen (saves to that Order). Distinct prefix → no ambiguity.
+      if (payload?.startsWith("s_")) {
+        await handleSessionStart(String(chatId), payload.slice(2));
+      } else {
+        await handleStart(String(chatId), payload);
+      }
     }
   } catch (err) {
     console.error("[telegram/webhook] Failed to process update:", err);
@@ -52,11 +60,33 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
+async function handleSessionStart(chatId: string, token: string) {
+  // Tokens are client-generated UUIDs — sanity-check shape before storing.
+  if (!/^[A-Za-z0-9_-]{8,64}$/.test(token)) {
+    await sendCustomerAlert(
+      chatId,
+      "🥺 មានបញ្ហាបន្តិចនឹងការភ្ជាប់។ សូមព្យាយាមចុចប៊ូតុង 🔔 ម្តងទៀតណា៎ Bestie!"
+    );
+    return;
+  }
+
+  await prisma.telegramSession.upsert({
+    where: { token },
+    create: { token, chatId },
+    update: { chatId },
+  });
+
+  await sendCustomerAlert(
+    chatId,
+    "🔔 ភ្ជាប់ជោគជ័យហើយណា៎! ចាប់ពីពេលនេះទៅ រាល់ការកម្ម៉ង់ដែលអ្នកកម្ម៉ង់ពីឧបករណ៍នេះ នឹងទទួលបានការជូនដំណឹងស្វ័យប្រវត្តិភ្លាមៗ! ☕️💖"
+  );
+}
+
 async function handleStart(chatId: string, orderId: string | undefined) {
   if (!orderId) {
     await sendCustomerAlert(
       chatId,
-      "👋 សួស្តី Bestie! ដើម្បីទទួលការជូនដំណឹងអំពីការកម្ម៉ង់ សូមចុចប៊ូតុង 🔔 នៅលើទំព័រតាមដានការកម្ម៉ង់របស់អ្នកណា៎! ☕️✨"
+      "👋 សួស្តី Bestie! ដើម្បីទទួលការជូនដំណឹងអំពីការកម្ម៉ង់ សូមចុចប៊ូតុង 🔔 នៅលើទំព័រតាមដានការកម្ម៉ង់ ឬនៅលើ Header របស់អ្នកណា៎! ☕️✨"
     );
     return;
   }

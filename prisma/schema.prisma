@@ -127,6 +127,18 @@ model LoyaltyAccount {
   updatedAt          DateTime @updatedAt
 }
 
+// 🔔 Telegram device session — links a browser (via a localStorage token) to
+// a Telegram chat. When a customer taps "🔔 ទទួលដំណឹងតាម Telegram" in the
+// header, they connect once with no phone number; every future order placed
+// from that same device is then auto-linked to this chat at checkout, so
+// status updates DM them with no per-order re-linking.
+model TelegramSession {
+  token     String   @id
+  chatId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // 👯 Bestie Cart: a shared, unauthenticated cart that anyone with the link
 // (?group=ID) can add items to before one person checks it out together.
 model GroupCart {

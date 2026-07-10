@@ -95,6 +95,9 @@ export interface CheckoutRequestBody {
   giftMessage?: string;
   /** 👯 Present when checking out a shared Bestie Cart. */
   groupCartId?: string | null;
+  /** 🔔 This device's Telegram session token (localStorage) — when the
+   *  customer connected via the header button, links this order's chat. */
+  telegramSessionToken?: string | null;
   items: CheckoutRequestItem[];
 }
 

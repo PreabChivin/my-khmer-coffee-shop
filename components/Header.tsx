@@ -6,9 +6,12 @@ import { useCart } from "@/contexts/CartContext";
 import { useGroupCart } from "@/contexts/GroupCartContext";
 import { useAdminSession } from "@/contexts/AdminSessionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getOrCreateTelegramSessionToken } from "@/lib/telegramSession";
 import LanguageToggle from "@/components/LanguageToggle";
 import AppearanceSettings from "@/components/AppearanceSettings";
 import StaffPortalButton from "@/components/StaffPortalButton";
+
+const TELEGRAM_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
 
 export default function Header() {
   const { totalItems, openCart } = useCart();
@@ -18,6 +21,19 @@ export default function Header() {
     groupState?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
   const badgeCount = isGroupMode ? groupItemCount : totalItems;
   const { t } = useLanguage();
+
+  // 🔔 Connect this browser to the Telegram bot (device-session token). Opened
+  // synchronously in the click handler — a real user gesture, so it isn't
+  // popup-blocked. From then on, every order placed on this device is
+  // auto-notified on status changes, no phone number needed.
+  function handleConnectTelegram() {
+    const token = getOrCreateTelegramSessionToken();
+    window.open(
+      `https://t.me/${TELEGRAM_BOT_USERNAME}?start=s_${token}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b-2 border-gold-500/70 bg-cream-50/95 backdrop-blur dark:bg-coffee-900/95">
@@ -36,6 +52,21 @@ export default function Header() {
 
         <div className="flex items-center gap-2">
           <StaffPortalButton />
+
+          {/* 🔔 Connect Telegram anytime — links this device so future orders
+              get live status DMs. Hidden for staff and until the bot is set. */}
+          {!isAdmin && TELEGRAM_BOT_USERNAME && (
+            <button
+              type="button"
+              onClick={handleConnectTelegram}
+              aria-label="🔔 ទទួលដំណឹងតាម Telegram"
+              className="flex items-center gap-1 whitespace-nowrap rounded-full bg-gradient-to-r from-lavender-400 to-clay-400 px-3 py-1.5 text-[11px] font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95"
+            >
+              <span className="md:hidden">🔔</span>
+              <span className="hidden md:inline">🔔 ទទួលដំណឹងតាម Telegram</span>
+            </button>
+          )}
+
           <LanguageToggle />
           <AppearanceSettings />
 
