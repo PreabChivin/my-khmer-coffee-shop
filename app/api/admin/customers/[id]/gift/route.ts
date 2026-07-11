@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
+import { resolveUserTelegramChatId, sendCustomerAlert } from "@/lib/telegram";
 
 const schema = z
   .object({
@@ -81,6 +82,24 @@ export async function POST(
       });
       return u;
     });
+
+    // 🔔 Also DM the customer via Telegram if they've linked it (best-effort).
+    try {
+      const chatId = await resolveUserTelegramChatId(id);
+      if (chatId) {
+        const parts: string[] = [];
+        if (points > 0) parts.push(`+${points} ពិន្ទុ 💎`);
+        if (badge) parts.push(`ផ្លាកសញ្ញា ${badge} 🏅`);
+        await sendCustomerAlert(
+          chatId,
+          `🎁 <b>អ្នកទទួលបានអំណោយពិសេស!</b>\n${
+            message ? message : `ពួកយើងបានផ្ដល់ជូនអ្នក ${parts.join(" + ")}!`
+          } អរគុណ Bestie 💖`
+        );
+      }
+    } catch (err) {
+      console.error("[telegram] gift DM failed:", err);
+    }
 
     return NextResponse.json({
       success: true,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
+import { resolveUserTelegramChatId, sendCustomerAlert } from "@/lib/telegram";
 
 // 🎟️ Draw a winner: picks a random eligible customer (lifetime points >=
 // the draw's minPoints threshold) that hasn't already won this draw, records
@@ -52,19 +53,31 @@ export async function POST(
       );
     }
 
-    // 🔔 Notify the winner privately.
+    // 🔔 Notify the winner — in-app bell + a Telegram DM if they've linked it.
+    const winMessage = `អ្នកបានឈ្នះ ${draw.prizeEmoji} ${draw.prizeName} ក្នុងការចាប់រង្វាន់ «${draw.title}»! សូមទាក់ទងបុគ្គលិកដើម្បីទទួល 💖`;
     try {
       await prisma.notification.create({
         data: {
           userId: winner.id,
           emoji: draw.prizeEmoji,
           title: "🎉 អបអរសាទរ! អ្នកបានឈ្នះរង្វាន់!",
-          body: `អ្នកបានឈ្នះ ${draw.prizeEmoji} ${draw.prizeName} ក្នុងការចាប់រង្វាន់ «${draw.title}»! សូមទាក់ទងបុគ្គលិកដើម្បីទទួល 💖`,
+          body: winMessage,
           href: "/account",
         },
       });
     } catch {
       // ignore — the winner is still recorded
+    }
+    try {
+      const chatId = await resolveUserTelegramChatId(winner.id);
+      if (chatId) {
+        await sendCustomerAlert(
+          chatId,
+          `🎉 <b>អបអរសាទរ ${winner.name}!</b>\n${winMessage}`
+        );
+      }
+    } catch (err) {
+      console.error("[telegram] draw winner DM failed:", err);
     }
 
     return NextResponse.json({

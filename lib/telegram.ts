@@ -1,6 +1,28 @@
+import { prisma } from "@/lib/prisma";
 import type { OrderStatus, OrderType } from "@/lib/types";
 
 const TELEGRAM_API_BASE = "https://api.telegram.org";
+
+/**
+ * 🔗 Resolve a registered customer's Telegram chat id (for account-level DMs
+ * like gifts / lucky-draw wins). We have no User→chat mapping, so we reuse the
+ * most recent order of theirs that had Telegram linked. Returns null if they
+ * never connected Telegram on any order.
+ */
+export async function resolveUserTelegramChatId(
+  userId: string
+): Promise<string | null> {
+  try {
+    const order = await prisma.order.findFirst({
+      where: { userId, customerTelegramChatId: { not: null } },
+      orderBy: { createdAt: "desc" },
+      select: { customerTelegramChatId: true },
+    });
+    return order?.customerTelegramChatId ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * 🔔 Telegram Bot integration — dual channel:
