@@ -5,6 +5,7 @@ import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
 import LoyaltyProgress from "@/components/LoyaltyProgress";
+import RewardStore from "@/components/RewardStore";
 import OrderHistoryList from "@/components/OrderHistoryList";
 import { generationFromDOB } from "@/lib/generation";
 import type { OrderHistoryItemDTO } from "@/lib/types";
@@ -96,6 +97,9 @@ export default function AccountPage() {
 
       {/* 💎 Loyalty points + tier progress */}
       <LoyaltyProgress points={user.loyaltyPoints} />
+
+      {/* 🎁 Redeem Rewards store */}
+      <RewardStore />
 
       {/* 🧾 My Orders */}
       <h2 className="mb-3 mt-8 font-heading text-lg font-extrabold text-coffee-900 dark:text-cream-50">

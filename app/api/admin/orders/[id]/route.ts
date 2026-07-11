@@ -101,6 +101,19 @@ export async function PATCH(
         }
       }
 
+      // 🕒 Timeline: stamp the moment each stage is first reached (never
+      // overwrite an earlier stamp, so the recorded time is the true first
+      // transition even if staff toggle statuses back and forth).
+      const now = new Date();
+      const stageStamp =
+        body.orderStatus === "PREPARING" && !existing.preparingAt
+          ? { preparingAt: now }
+          : body.orderStatus === "READY" && !existing.readyAt
+            ? { readyAt: now }
+            : body.orderStatus === "COMPLETED" && !existing.completedAt
+              ? { completedAt: now }
+              : {};
+
       return tx.order.update({
         where: { id },
         data: {
@@ -108,6 +121,7 @@ export async function PATCH(
           giftRedeemed: body.giftRedeemed ?? undefined,
           // Flip the guard in the same transaction as the credit above.
           pointsAwarded: shouldAwardPoints ? true : undefined,
+          ...stageStamp,
         },
         include: { items: { include: { product: true } }, payment: true },
       });

@@ -20,11 +20,18 @@ export async function GET(
   const body: OrderStatusResponseBody = {
     orderId: order.id,
     orderStatus: order.orderStatus as OrderStatusResponseBody["orderStatus"],
+    orderType: order.orderType as OrderStatusResponseBody["orderType"],
     paymentStatus:
       (order.payment?.paymentStatus as OrderStatusResponseBody["paymentStatus"]) ??
       null,
     customerRating: order.customerRating,
     telegramLinked: Boolean(order.customerTelegramChatId),
+    timeline: {
+      placedAt: order.createdAt.toISOString(),
+      preparingAt: order.preparingAt?.toISOString() ?? null,
+      readyAt: order.readyAt?.toISOString() ?? null,
+      completedAt: order.completedAt?.toISOString() ?? null,
+    },
   };
 
   return NextResponse.json(body);

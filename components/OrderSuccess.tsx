@@ -7,11 +7,13 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import Confetti from "@/components/Confetti";
 import BongBear, { type BongBearPose } from "@/components/mascots/BongBear";
 import RatingPicker from "@/components/RatingPicker";
+import OrderTimeline from "@/components/OrderTimeline";
 import { prizeById } from "@/lib/wheel";
 import type { Fortune } from "@/lib/fortunes";
 import type {
   OrderStatus,
   OrderStatusResponseBody,
+  OrderTimelineStamps,
   OrderType,
 } from "@/lib/types";
 
@@ -35,7 +37,6 @@ function statusToPhase(status: OrderStatus): 0 | 1 | 2 {
 }
 
 const POSE_BY_PHASE: BongBearPose[] = ["sleep", "brew", "cheer"];
-const MASCOT_LEFT = ["12%", "50%", "88%"];
 
 export default function OrderSuccess({
   orderId,
@@ -56,6 +57,7 @@ export default function OrderSuccess({
   const statusRef = useRef<OrderStatus>("PREPARING");
   const [customerRating, setCustomerRating] = useState<number | null>(null);
   const [telegramLinked, setTelegramLinked] = useState(false);
+  const [timeline, setTimeline] = useState<OrderTimelineStamps | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,6 +73,7 @@ export default function OrderSuccess({
         }
         setCustomerRating(data.customerRating);
         setTelegramLinked(data.telegramLinked);
+        setTimeline(data.timeline);
       } catch {
         // transient network hiccup — next tick retries
       }
@@ -84,7 +87,6 @@ export default function OrderSuccess({
   }, [orderId]);
 
   const shortId = `#${orderId.slice(0, 8).toUpperCase()}`;
-  const isDelivery = orderType === "Delivery";
 
   if (status === "CANCELLED") {
     return (
@@ -138,12 +140,6 @@ export default function OrderSuccess({
 
   const phase = statusToPhase(status);
   const pose = POSE_BY_PHASE[phase];
-
-  const stations = [
-    { emoji: "💤", label: t("track.received") },
-    { emoji: "☕", label: t("track.brewing") },
-    { emoji: "🎉", label: isDelivery ? t("track.readyDelivery") : t("track.ready") },
-  ];
 
   const phaseNote =
     phase === 2
@@ -212,48 +208,19 @@ export default function OrderSuccess({
         </ul>
       </div>
 
-      {/* 🎲 Mini board-game timeline */}
-      <div className="relative mt-8 w-full rounded-3xl border-2 border-clay-400 bg-gradient-to-b from-cream-100 to-clay-50 px-4 pb-6 pt-24 dark:from-coffee-800 dark:to-coffee-900">
-        <div
-          className="absolute top-2 z-10 -translate-x-1/2 transition-all duration-700 ease-out"
-          style={{ left: MASCOT_LEFT[phase] }}
-        >
+      {/* 🚚 Order Timeline — Grab/Foodpanda-style 4-stage stepper w/ timestamps */}
+      <div className="mt-8 w-full rounded-3xl border-2 border-clay-400 bg-gradient-to-b from-cream-100 to-clay-50 px-5 py-5 dark:from-coffee-800 dark:to-coffee-900">
+        <div className="mb-4 flex items-center gap-2">
           <div className={phase === 2 ? "animate-leap" : "animate-float-cute"}>
-            <BongBear pose={pose} size={92} />
+            <BongBear pose={pose} size={52} />
           </div>
+          <p className="font-heading text-base font-extrabold text-coffee-900 dark:text-cream-50">
+            ស្ថានភាពការកម្ម៉ង់ · Order Timeline
+          </p>
         </div>
-
-        <div className="relative mt-2">
-          <div className="absolute left-[12%] right-[12%] top-5 border-t-4 border-dotted border-clay-400" />
-          <div className="relative flex justify-between">
-            {stations.map((station, i) => {
-              const active = i <= phase;
-              const current = i === phase;
-              return (
-                <div key={i} className="flex w-1/3 flex-col items-center">
-                  <div
-                    className={`flex h-11 w-11 items-center justify-center rounded-full border-2 text-lg transition-all ${
-                      active
-                        ? "border-gold-500 bg-gold-100"
-                        : "border-clay-100 bg-white/70 opacity-60 dark:bg-coffee-800"
-                    } ${current ? "animate-urgent-pulse scale-110" : ""}`}
-                  >
-                    {station.emoji}
-                  </div>
-                  <p
-                    className={`mt-2 text-[11px] font-bold leading-tight sm:text-xs ${
-                      active
-                        ? "text-coffee-800 dark:text-cream-50"
-                        : "text-coffee-400 dark:text-cream-400"
-                    }`}
-                  >
-                    {station.label}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        {timeline && (
+          <OrderTimeline status={status} orderType={orderType} timeline={timeline} />
+        )}
       </div>
 
       <p className="mt-5 flex items-center gap-2 rounded-2xl bg-matcha-100 px-5 py-3 text-sm font-medium text-coffee-800 dark:bg-coffee-800 dark:text-cream-100">

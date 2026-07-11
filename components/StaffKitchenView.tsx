@@ -5,6 +5,7 @@ import AdminStats from "@/components/admin/AdminStats";
 import OrdersBoard from "@/components/admin/OrdersBoard";
 import ProductManagementPanel from "@/components/admin/ProductManagementPanel";
 import RegisteredCustomersPanel from "@/components/admin/RegisteredCustomersPanel";
+import RedemptionsPanel from "@/components/admin/RedemptionsPanel";
 import AdminToast from "@/components/admin/AdminToast";
 import type { ProductDTO } from "@/lib/types";
 
@@ -51,6 +52,11 @@ export default function StaffKitchenView({
           onProductDeleted={onProductDeleted}
           onError={showError}
         />
+      </div>
+
+      {/* 🎁 Reward redemptions awaiting fulfilment */}
+      <div className="px-4 sm:px-6">
+        <RedemptionsPanel onError={showError} />
       </div>
 
       {/* 👥 Full registered-customer roster with generation + LTV drill-down */}

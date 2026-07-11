@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import OrderTimeline from "@/components/OrderTimeline";
 import type { OrderHistoryItemDTO, OrderStatus } from "@/lib/types";
 
 const STATUS_STYLE: Record<OrderStatus, { km: string; cls: string }> = {
@@ -30,6 +33,7 @@ export default function OrderHistoryList({
   emptyLabel?: string;
 }) {
   const { lang } = useLanguage();
+  const [openId, setOpenId] = useState<string | null>(null);
 
   if (orders.length === 0) {
     return (
@@ -84,6 +88,26 @@ export default function OrderHistoryList({
                 ${order.totalAmount.toFixed(2)}
               </span>
             </div>
+
+            {/* 🚚 Expandable per-order timeline with timestamps */}
+            <button
+              type="button"
+              onClick={() => setOpenId(openId === order.id ? null : order.id)}
+              className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg py-1.5 text-[11px] font-bold text-clay-600 hover:bg-clay-50 dark:text-clay-400 dark:hover:bg-coffee-900"
+            >
+              {openId === order.id ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+              {openId === order.id ? "លាក់" : "មើលដំណើរការ · Timeline"}
+            </button>
+            {openId === order.id && (
+              <div className="mt-2 rounded-2xl bg-cream-100 p-3 dark:bg-coffee-900">
+                <OrderTimeline
+                  status={order.orderStatus}
+                  orderType={order.orderType}
+                  timeline={order.timeline}
+                  compact
+                />
+              </div>
+            )}
           </div>
         );
       })}

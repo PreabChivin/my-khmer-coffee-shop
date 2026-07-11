@@ -59,6 +59,8 @@ export interface OrderHistoryItemDTO {
   paymentStatus: PaymentStatus | null;
   paymentMethod: string | null;
   pointsAwarded: boolean;
+  /** 🕒 Timeline stage timestamps for the history card's mini-stepper. */
+  timeline: OrderTimelineStamps;
   items: { nameEn: string; nameKh: string; quantity: number; price: number }[];
 }
 
@@ -155,14 +157,53 @@ export interface CheckoutResponseBody {
   isGift: boolean;
 }
 
+/** 🕒 Per-stage timeline timestamps (ISO strings, null = not reached yet). */
+export interface OrderTimelineStamps {
+  placedAt: string;
+  preparingAt: string | null;
+  readyAt: string | null;
+  completedAt: string | null;
+}
+
 export interface OrderStatusResponseBody {
   orderId: string;
   orderStatus: OrderStatus;
+  orderType: OrderType;
   paymentStatus: PaymentStatus | null;
   /** ⭐ Null until the customer rates this order (also the "already rated" guard). */
   customerRating: number | null;
   /** 🔔 True once the customer has linked their Telegram chat via the deep-link button. */
   telegramLinked: boolean;
+  /** 🕒 Timeline stage timestamps. */
+  timeline: OrderTimelineStamps;
+}
+
+/** 🎁 A redeemable reward in the loyalty store. */
+export interface RewardDTO {
+  id: string;
+  name: string;
+  nameKh: string;
+  cost: number;
+  emoji: string;
+  description: string | null;
+  isAvailable: boolean;
+}
+
+/** 🧾 A customer's redemption record. */
+export interface RedemptionDTO {
+  id: string;
+  rewardName: string;
+  rewardEmoji: string;
+  cost: number;
+  status: "PENDING" | "FULFILLED";
+  createdAt: string;
+}
+
+/** 👑 Admin view of a pending/fulfilled redemption to hand over. */
+export interface AdminRedemptionDTO extends RedemptionDTO {
+  userId: string;
+  customerName: string;
+  customerEmail: string;
 }
 
 /** 🐻 Cute Bear Stamps loyalty status for a phone number. */

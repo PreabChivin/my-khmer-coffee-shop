@@ -108,6 +108,12 @@ model Order {
   // marked COMPLETED and points are credited, so re-completing never double-awards.
   pointsAwarded Boolean     @default(false)
 
+  // 🕒 Order Timeline — the moment each stage was first reached (set by staff
+  // transitions). placedAt is createdAt; null means "not reached yet".
+  preparingAt   DateTime?
+  readyAt       DateTime?
+  completedAt   DateTime?
+
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   items         OrderItem[]
@@ -137,9 +143,81 @@ model User {
   googleId      String?  @unique
   facebookId    String?  @unique
   telegramId    String?  @unique
+  // 🏅 Admin-awarded personalized badges (direct gift giver).
+  badges        String[] @default([])
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   orders        Order[]
+  redemptions   RedemptionHistory[]
+  notifications Notification[]
+}
+
+// 🔔 Targeted Notification Engine. userId null = a broadcast shown to every
+// customer; userId set = a private alert for one customer. The client bell
+// treats anything newer than its last-seen marker as unread.
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String? // null = broadcast to all customers
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  href      String?
+  emoji     String   @default("📣")
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// 🎟️ Monthly Lucky Draw. Eligibility is a minimum lifetime-points threshold
+// (tiers map to points), optionally labelled. Drawing picks a random eligible
+// customer and notifies them.
+model LuckyDraw {
+  id          String    @id @default(uuid())
+  title       String
+  prizeName   String
+  prizeEmoji  String    @default("🎁")
+  month       String // e.g. "2026-07"
+  minPoints   Int       @default(0)
+  tierLabel   String?
+  winnerId    String?
+  winnerName  String?
+  drawnAt     DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+// 🎁 Loyalty Redemption Store (ហាងប្ដូររង្វាន់) — catalogue of rewards a
+// customer can spend points on (e.g. Free Coffee = 500 pts).
+model Reward {
+  id          String   @id @default(uuid())
+  name        String
+  nameKh      String
+  cost        Int // points required
+  emoji       String   @default("🎁")
+  description String?
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  redemptions RedemptionHistory[]
+}
+
+// 🧾 One redemption event. cost + rewardName are snapshotted so the record
+// stays meaningful even if the Reward is later edited/deleted. status flags
+// it to staff: PENDING (needs fulfilling) -> FULFILLED (handed over).
+model RedemptionHistory {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rewardId   String?
+  reward     Reward?  @relation(fields: [rewardId], references: [id], onDelete: SetNull)
+  rewardName String
+  rewardEmoji String  @default("🎁")
+  cost       Int
+  status     String   @default("PENDING") // 'PENDING' | 'FULFILLED'
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([status])
 }
 
 model OrderItem {

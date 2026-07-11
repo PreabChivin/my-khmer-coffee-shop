@@ -26,6 +26,12 @@ export function toOrderHistoryItem(order: OrderWithHistory): OrderHistoryItemDTO
     paymentStatus: (order.payment?.paymentStatus as PaymentStatus) ?? null,
     paymentMethod: order.payment?.paymentMethod ?? null,
     pointsAwarded: order.pointsAwarded,
+    timeline: {
+      placedAt: order.createdAt.toISOString(),
+      preparingAt: order.preparingAt?.toISOString() ?? null,
+      readyAt: order.readyAt?.toISOString() ?? null,
+      completedAt: order.completedAt?.toISOString() ?? null,
+    },
     items: order.items.map((item) => ({
       nameEn: item.product.nameEn,
       nameKh: item.product.nameKh,
