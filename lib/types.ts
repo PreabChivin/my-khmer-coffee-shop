@@ -72,6 +72,31 @@ export interface CustomerProfileDTO {
   orders: OrderHistoryItemDTO[];
 }
 
+/** 📣 A notification shown in the customer's bell (broadcast or targeted). */
+export interface NotificationDTO {
+  id: string;
+  title: string;
+  body: string;
+  href: string | null;
+  emoji: string;
+  createdAt: string;
+  isBroadcast: boolean;
+}
+
+/** 🎟️ A monthly lucky-draw configuration + result. */
+export interface LuckyDrawDTO {
+  id: string;
+  title: string;
+  prizeName: string;
+  prizeEmoji: string;
+  month: string;
+  minPoints: number;
+  tierLabel: string | null;
+  winnerName: string | null;
+  drawnAt: string | null;
+  createdAt: string;
+}
+
 export type OrderType = "PickUp" | "Delivery";
 
 export type OrderStatus =

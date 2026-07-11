@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Bell, Gift } from "lucide-react";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
 import { useAuthModal } from "@/contexts/AuthModalContext";
-import type { OrderHistoryItemDTO, OrderStatus } from "@/lib/types";
+import type { NotificationDTO, OrderHistoryItemDTO, OrderStatus } from "@/lib/types";
 
 const SEEN_KEY = "cafe-notif-seen";
 const POLL_MS = 60000;
@@ -23,19 +23,21 @@ interface Alert {
   id: string;
   emoji: string;
   title: string;
+  body: string;
   ts: number;
+  href: string | null;
 }
 
 export default function NotificationBell() {
   const { user } = useCustomerSession();
   const { openAuth } = useAuthModal();
   const [orders, setOrders] = useState<OrderHistoryItemDTO[]>([]);
+  const [notifs, setNotifs] = useState<NotificationDTO[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [lastSeen, setLastSeen] = useState(0);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Load the last-seen marker once on mount (deferred to an effect so it stays
-  // hydration-safe — localStorage isn't available during SSR).
+  // Load the last-seen marker once on mount (hydration-safe).
   useEffect(() => {
     try {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -45,16 +47,15 @@ export default function NotificationBell() {
     }
   }, []);
 
-  // Poll the customer's orders while signed in (order status = notifications).
+  // Poll server notifications (broadcast + targeted) — works for guests too.
   useEffect(() => {
-    if (!user) return; // logged-out: unread is force-zeroed below
     let cancelled = false;
     const load = async () => {
       try {
-        const res = await fetch("/api/orders/mine");
+        const res = await fetch("/api/notifications");
         if (!res.ok) return;
-        const data: OrderHistoryItemDTO[] = await res.json();
-        if (!cancelled) setOrders(data);
+        const data: NotificationDTO[] = await res.json();
+        if (!cancelled) setNotifs(data);
       } catch {
         // transient — next tick retries
       }
@@ -65,9 +66,32 @@ export default function NotificationBell() {
       cancelled = true;
       clearInterval(timer);
     };
+    // Re-fetch when auth changes so targeted notifications appear/disappear.
   }, [user]);
 
-  // Close the panel on an outside click.
+  // Poll the customer's order statuses while signed in. (Logged-out users
+  // simply have their order alerts filtered out in the memo below.)
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await fetch("/api/orders/mine");
+        if (!res.ok) return;
+        const data: OrderHistoryItemDTO[] = await res.json();
+        if (!cancelled) setOrders(data);
+      } catch {
+        // transient
+      }
+    };
+    load();
+    const timer = setInterval(load, POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [user]);
+
   useEffect(() => {
     if (!isOpen) return;
     function onDown(e: MouseEvent) {
@@ -80,30 +104,37 @@ export default function NotificationBell() {
   }, [isOpen]);
 
   const alerts = useMemo<Alert[]>(() => {
-    return orders
-      .map((o) => {
-        const s = STATUS_ALERT[o.orderStatus];
-        return {
-          id: o.id,
-          emoji: s.emoji,
-          title: `ការកម្ម៉ង់ #${o.id.slice(0, 8).toUpperCase()} — ${s.text}`,
-          ts: new Date(o.updatedAt).getTime(),
-        };
-      })
-      .sort((a, b) => b.ts - a.ts)
-      .slice(0, 10);
-  }, [orders]);
+    const orderAlerts: Alert[] = (user ? orders : []).map((o) => {
+      const s = STATUS_ALERT[o.orderStatus];
+      return {
+        id: `o-${o.id}`,
+        emoji: s.emoji,
+        title: `ការកម្ម៉ង់ #${o.id.slice(0, 8).toUpperCase()}`,
+        body: s.text,
+        ts: new Date(o.updatedAt).getTime(),
+        href: "/orders",
+      };
+    });
+    const notifAlerts: Alert[] = notifs.map((n) => ({
+      id: `n-${n.id}`,
+      emoji: n.emoji,
+      title: n.title,
+      body: n.body,
+      ts: new Date(n.createdAt).getTime(),
+      href: n.href,
+    }));
+    return [...orderAlerts, ...notifAlerts].sort((a, b) => b.ts - a.ts).slice(0, 15);
+  }, [user, orders, notifs]);
 
   const unread = useMemo(
-    () => (user ? alerts.filter((a) => a.ts > lastSeen).length : 0),
-    [user, alerts, lastSeen]
+    () => alerts.filter((a) => a.ts > lastSeen).length,
+    [alerts, lastSeen]
   );
 
   function toggle() {
     const next = !isOpen;
     setIsOpen(next);
     if (next) {
-      // Opening marks everything read.
       const now = Date.now();
       setLastSeen(now);
       try {
@@ -140,47 +171,61 @@ export default function NotificationBell() {
           </div>
 
           <div className="max-h-[60vh] overflow-y-auto">
-            {!user ? (
-              <div className="px-4 py-6 text-center">
-                <p className="text-sm text-coffee-500 dark:text-cream-300">
-                  ចូលគណនីដើម្បីទទួលការជូនដំណឹងអំពីការកម្ម៉ង់ 💖
+            {alerts.length === 0 ? (
+              !user ? (
+                <div className="px-4 py-6 text-center">
+                  <p className="text-sm text-coffee-500 dark:text-cream-300">
+                    ចូលគណនីដើម្បីទទួលការជូនដំណឹងអំពីការកម្ម៉ង់ 💖
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false);
+                      openAuth();
+                    }}
+                    className="mt-3 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-5 py-2 text-xs font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95"
+                  >
+                    ចូល / ចុះឈ្មោះ
+                  </button>
+                </div>
+              ) : (
+                <p className="px-4 py-6 text-center text-sm text-coffee-400 dark:text-cream-400">
+                  គ្មានការជូនដំណឹងថ្មីទេ 🌈
                 </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsOpen(false);
-                    openAuth();
-                  }}
-                  className="mt-3 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-5 py-2 text-xs font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95"
-                >
-                  ចូល / ចុះឈ្មោះ
-                </button>
-              </div>
-            ) : alerts.length === 0 ? (
-              <p className="px-4 py-6 text-center text-sm text-coffee-400 dark:text-cream-400">
-                គ្មានការជូនដំណឹងថ្មីទេ 🌈
-              </p>
+              )
             ) : (
               <ul>
-                {alerts.map((a) => (
-                  <li key={a.id}>
-                    <Link
-                      href="/orders"
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-start gap-2.5 border-b border-coffee-100 px-4 py-3 transition-colors hover:bg-clay-50 dark:border-coffee-700 dark:hover:bg-coffee-900"
-                    >
+                {alerts.map((a) => {
+                  const inner = (
+                    <>
                       <span className="text-lg">{a.emoji}</span>
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold leading-snug text-coffee-800 dark:text-cream-100">
+                        <p className="text-xs font-bold leading-snug text-coffee-800 dark:text-cream-100">
                           {a.title}
+                        </p>
+                        <p className="text-[11px] leading-snug text-coffee-500 dark:text-cream-300">
+                          {a.body}
                         </p>
                         <p className="text-[10px] text-coffee-400 dark:text-cream-400">
                           {new Date(a.ts).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                         </p>
                       </div>
-                    </Link>
-                  </li>
-                ))}
+                    </>
+                  );
+                  const cls =
+                    "flex items-start gap-2.5 border-b border-coffee-100 px-4 py-3 transition-colors hover:bg-clay-50 dark:border-coffee-700 dark:hover:bg-coffee-900";
+                  return (
+                    <li key={a.id}>
+                      {a.href ? (
+                        <Link href={a.href} onClick={() => setIsOpen(false)} className={cls}>
+                          {inner}
+                        </Link>
+                      ) : (
+                        <div className={cls}>{inner}</div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
 

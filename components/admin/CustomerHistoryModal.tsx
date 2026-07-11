@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { Gift, X } from "lucide-react";
 import OrderHistoryList from "@/components/OrderHistoryList";
 import { tierProgress } from "@/lib/loyaltyPoints";
 import type { CustomerProfileDTO } from "@/lib/types";
@@ -17,6 +17,12 @@ export default function CustomerHistoryModal({
 }) {
   const [profile, setProfile] = useState<CustomerProfileDTO | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // 🎁 Direct gift giver
+  const [showGift, setShowGift] = useState(false);
+  const [gift, setGift] = useState({ points: "", badge: "", message: "" });
+  const [giftBusy, setGiftBusy] = useState(false);
+  const [giftMsg, setGiftMsg] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,6 +41,39 @@ export default function CustomerHistoryModal({
       cancelled = true;
     };
   }, [userId]);
+
+  async function sendGift(e: React.FormEvent) {
+    e.preventDefault();
+    setGiftBusy(true);
+    setGiftMsg(null);
+    try {
+      const res = await fetch(`/api/admin/customers/${userId}/gift`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          points: Number(gift.points) || 0,
+          badge: gift.badge || undefined,
+          message: gift.message || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setGiftMsg(data.error ?? "Couldn't send gift.");
+        return;
+      }
+      setGiftMsg("✅ បានផ្ដល់ជូនជោគជ័យ!");
+      setGift({ points: "", badge: "", message: "" });
+      setShowGift(false);
+      // Reflect the new points/badges locally.
+      setProfile((p) =>
+        p ? { ...p, user: { ...p.user, loyaltyPoints: data.loyaltyPoints } } : p
+      );
+    } catch {
+      setGiftMsg("Network error — please try again.");
+    } finally {
+      setGiftBusy(false);
+    }
+  }
 
   const tier = profile ? tierProgress(profile.user.loyaltyPoints) : null;
 
@@ -100,6 +139,69 @@ export default function CustomerHistoryModal({
                 {tier.current.emoji} {tier.current.name} member
               </p>
             )}
+
+            {/* 🎁 Direct Gift/Reward Giver */}
+            <div className="mt-3">
+              {giftMsg && (
+                <p className="mb-2 rounded-lg bg-matcha-100 px-3 py-1.5 text-xs font-semibold text-matcha-700">
+                  {giftMsg}
+                </p>
+              )}
+              {showGift ? (
+                <form
+                  onSubmit={sendGift}
+                  className="rounded-2xl border-2 border-dashed border-crimson-400 bg-crimson-50/60 p-3 dark:bg-coffee-900/40"
+                >
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="💎 ពិន្ទុ (points)"
+                      value={gift.points}
+                      onChange={(e) => setGift({ ...gift, points: e.target.value })}
+                      onWheel={(e) => e.currentTarget.blur()}
+                      className="rounded-lg border border-coffee-300 px-3 py-2 text-sm text-coffee-900 outline-none focus:border-crimson-400 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
+                    />
+                    <input
+                      placeholder="🏅 ផ្លាកសញ្ញា (badge)"
+                      value={gift.badge}
+                      onChange={(e) => setGift({ ...gift, badge: e.target.value })}
+                      className="rounded-lg border border-coffee-300 px-3 py-2 text-sm text-coffee-900 outline-none focus:border-crimson-400 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
+                    />
+                  </div>
+                  <input
+                    placeholder="💌 សារផ្ទាល់ខ្លួន (optional)"
+                    value={gift.message}
+                    onChange={(e) => setGift({ ...gift, message: e.target.value })}
+                    className="mt-2 w-full rounded-lg border border-coffee-300 px-3 py-2 text-sm text-coffee-900 outline-none focus:border-crimson-400 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
+                  />
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={giftBusy}
+                      className="flex-1 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 py-2 text-xs font-bold text-white disabled:opacity-60"
+                    >
+                      {giftBusy ? "..." : "🎁 ផ្ដល់ជូន"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowGift(false)}
+                      className="rounded-full border border-coffee-300 px-3 text-xs font-semibold text-coffee-500 dark:border-coffee-600 dark:text-cream-300"
+                    >
+                      បោះបង់
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowGift(true)}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-full border-2 border-dashed border-crimson-400 py-2 text-xs font-bold text-crimson-600 hover:bg-crimson-50 dark:text-crimson-400 dark:hover:bg-coffee-900"
+                >
+                  <Gift size={14} /> ផ្ដល់អំណោយ · Send Gift (points / badge)
+                </button>
+              )}
+            </div>
 
             <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
               <OrderHistoryList orders={profile.orders} />

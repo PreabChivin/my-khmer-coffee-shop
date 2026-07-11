@@ -6,6 +6,8 @@ import OrdersBoard from "@/components/admin/OrdersBoard";
 import ProductManagementPanel from "@/components/admin/ProductManagementPanel";
 import RegisteredCustomersPanel from "@/components/admin/RegisteredCustomersPanel";
 import RedemptionsPanel from "@/components/admin/RedemptionsPanel";
+import NotificationsPanel from "@/components/admin/NotificationsPanel";
+import LuckyDrawPanel from "@/components/admin/LuckyDrawPanel";
 import AdminToast from "@/components/admin/AdminToast";
 import type { ProductDTO } from "@/lib/types";
 
@@ -57,6 +59,14 @@ export default function StaffKitchenView({
       {/* 🎁 Reward redemptions awaiting fulfilment */}
       <div className="px-4 sm:px-6">
         <RedemptionsPanel onError={showError} />
+      </div>
+
+      {/* 📣 Marketing: broadcast/targeted notifications + monthly lucky draw */}
+      <div className="px-4 sm:px-6">
+        <NotificationsPanel onError={showError} />
+      </div>
+      <div className="px-4 sm:px-6">
+        <LuckyDrawPanel onError={showError} />
       </div>
 
       {/* 👥 Full registered-customer roster with generation + LTV drill-down */}
