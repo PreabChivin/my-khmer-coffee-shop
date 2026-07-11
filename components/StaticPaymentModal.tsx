@@ -15,7 +15,7 @@ interface StaticPaymentModalProps {
 
 const POLL_INTERVAL_MS = 3000;
 const ACCOUNT_NAME =
-  process.env.NEXT_PUBLIC_KHQR_ACCOUNT_NAME ?? "[បញ្ចូលឈ្មោះពិតរបស់អ្នក]";
+  process.env.NEXT_PUBLIC_KHQR_ACCOUNT_NAME ?? "PREAB CHIVIN";
 const MAX_PHOTO_BYTES = 4.5 * 1024 * 1024;
 const TELEGRAM_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
 
