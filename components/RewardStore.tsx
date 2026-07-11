@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import type { RedemptionDTO, RewardDTO } from "@/lib/types";
 
 export default function RewardStore() {
   const { user, refresh } = useCustomerSession();
+  const { lang, t } = useLanguage();
   const [rewards, setRewards] = useState<RewardDTO[]>([]);
   const [redemptions, setRedemptions] = useState<RedemptionDTO[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -43,14 +45,14 @@ export default function RewardStore() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setMsg({ ok: false, text: data.error ?? "Couldn't redeem." });
+        setMsg({ ok: false, text: data.error ?? t("rewards.couldntRedeem") });
         return;
       }
-      setMsg({ ok: true, text: `${reward.emoji} ប្ដូរជោគជ័យ! បង្ហាញនៅ counter ដើម្បីទទួល 🎉` });
+      setMsg({ ok: true, text: `${reward.emoji} ${t("rewards.redeemSuccess")}` });
       await refresh(); // updates the points balance
       await loadRedemptions();
     } catch {
-      setMsg({ ok: false, text: "Network error — please try again." });
+      setMsg({ ok: false, text: t("rewards.networkError") });
     } finally {
       setBusyId(null);
     }
@@ -61,7 +63,7 @@ export default function RewardStore() {
   return (
     <div className="mt-8">
       <h2 className="mb-3 font-heading text-lg font-extrabold text-coffee-900 dark:text-cream-50">
-        ហាងប្ដូររង្វាន់ · Redeem Rewards 🎁
+        {t("rewards.title")}
       </h2>
 
       {msg && (
@@ -79,7 +81,7 @@ export default function RewardStore() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {rewards.length === 0 && (
           <p className="col-span-full rounded-2xl border-2 border-dashed border-coffee-300 px-6 py-8 text-center text-sm text-coffee-400 dark:border-coffee-600 dark:text-cream-400">
-            មិនទាន់មានរង្វាន់ទេ — ឆាប់ៗនេះ! 🌈
+            {t("rewards.empty")}
           </p>
         )}
         {rewards.map((r) => {
@@ -94,7 +96,7 @@ export default function RewardStore() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-heading text-sm font-bold text-coffee-900 dark:text-cream-50">
-                  {r.nameKh}
+                  {lang === "km" ? r.nameKh : r.name}
                 </p>
                 <p className="text-xs font-bold text-clay-600 dark:text-clay-400">
                   {r.cost.toLocaleString()} 💎
@@ -111,7 +113,7 @@ export default function RewardStore() {
                 onClick={() => redeem(r)}
                 className="shrink-0 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-3 py-2 text-xs font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:from-coffee-200 disabled:to-coffee-200 disabled:text-coffee-400"
               >
-                {busyId === r.id ? "..." : affordable ? "ប្ដូរ" : "ខ្វះពិន្ទុ"}
+                {busyId === r.id ? "..." : affordable ? t("rewards.redeemBtn") : t("rewards.notEnough")}
               </button>
             </div>
           );
@@ -122,7 +124,7 @@ export default function RewardStore() {
         <>
           <h3 className="mb-2 mt-6 flex items-center gap-1.5 font-heading text-sm font-extrabold text-coffee-900 dark:text-cream-50">
             <Sparkles size={14} className="text-gold-600" />
-            ប្រវត្តិការប្ដូររង្វាន់
+            {t("rewards.historyTitle")}
           </h3>
           <div className="space-y-2">
             {redemptions.map((rd) => (
@@ -143,7 +145,7 @@ export default function RewardStore() {
                       : "bg-gold-100 text-gold-700 dark:bg-coffee-900 dark:text-gold-400"
                   }`}
                 >
-                  {rd.status === "FULFILLED" ? "បានទទួល ✅" : "រង់ចាំទទួល ⏳"}
+                  {rd.status === "FULFILLED" ? t("rewards.fulfilled") : t("rewards.pendingStatus")}
                 </span>
               </div>
             ))}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "@/contexts/LanguageContext";
 import { tierProgress } from "@/lib/loyaltyPoints";
 
 /**
@@ -7,14 +8,17 @@ import { tierProgress } from "@/lib/loyaltyPoints";
  * balance, current tier, and a pastel progress bar toward the next tier.
  */
 export default function LoyaltyProgress({ points }: { points: number }) {
+  const { lang, t } = useLanguage();
   const { current, next, percent, pointsToNext } = tierProgress(points);
+  const tierLabel = (tier: { name: string; km: string; emoji: string }) =>
+    `${tier.emoji} ${lang === "km" ? tier.km : tier.name}`;
 
   return (
     <div className="w-full rounded-3xl bg-gradient-to-br from-clay-400 via-crimson-400 to-clay-500 p-5 text-white shadow-lg">
       <div className="flex items-end justify-between">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/80">
-            ពិន្ទុសន្សំ · Loyalty Points
+            {t("loyalty2.label")}
           </p>
           <p className="font-heading text-4xl font-extrabold drop-shadow-sm">
             {points.toLocaleString()}
@@ -22,7 +26,7 @@ export default function LoyaltyProgress({ points }: { points: number }) {
           </p>
         </div>
         <span className="rounded-full bg-white/25 px-3 py-1 text-sm font-extrabold backdrop-blur-sm">
-          {current.emoji} {current.name}
+          {tierLabel(current)}
         </span>
       </div>
 
@@ -35,8 +39,10 @@ export default function LoyaltyProgress({ points }: { points: number }) {
         </div>
         <p className="mt-1.5 text-center text-xs font-semibold text-white/90">
           {next
-            ? `នៅសល់ ${pointsToNext.toLocaleString()} ពិន្ទុ ដើម្បីឡើងកម្រិត ${next.emoji} ${next.name}!`
-            : `🎉 អ្នកបានឈានដល់កម្រិតខ្ពស់បំផុត ${current.emoji} ${current.name} ហើយ!`}
+            ? t("loyalty2.toNext")
+                .replace("{n}", pointsToNext.toLocaleString())
+                .replace("{tier}", tierLabel(next))
+            : t("loyalty2.maxTier").replace("{tier}", tierLabel(current))}
         </p>
       </div>
     </div>

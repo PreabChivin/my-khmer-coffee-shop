@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/contexts/LanguageContext";
+import type { TranslationKey } from "@/lib/i18n";
 import type { OrderStatus, OrderTimelineStamps, OrderType } from "@/lib/types";
 
 // How far along a status is (index into the 4 stages).
@@ -36,16 +38,16 @@ export default function OrderTimeline({
   timeline: OrderTimelineStamps;
   compact?: boolean;
 }) {
-  const stages = [
-    { emoji: "📥", label: "បានទទួលការកម្ម៉ង់", en: "Order Placed", at: timeline.placedAt },
-    { emoji: "☕", label: "កំពុងរៀបចំ/ឆុង", en: "Preparing", at: timeline.preparingAt },
+  const { t } = useLanguage();
+  const stages: { emoji: string; key: TranslationKey; at: string | null }[] = [
+    { emoji: "📥", key: "timeline.placed", at: timeline.placedAt },
+    { emoji: "☕", key: "timeline.preparing", at: timeline.preparingAt },
     {
       emoji: orderType === "Delivery" ? "🛵" : "🛍️",
-      label: orderType === "Delivery" ? "កំពុងដឹក" : "រួចរាល់ មកយកបាន",
-      en: orderType === "Delivery" ? "In Delivery" : "Ready",
+      key: orderType === "Delivery" ? "timeline.inDelivery" : "timeline.ready",
       at: timeline.readyAt,
     },
-    { emoji: "✅", label: "បានបញ្ចប់", en: "Completed", at: timeline.completedAt },
+    { emoji: "✅", key: "timeline.completed", at: timeline.completedAt },
   ];
 
   if (status === "CANCELLED") {
@@ -54,10 +56,10 @@ export default function OrderTimeline({
         <span className="text-2xl">🥺</span>
         <div>
           <p className="text-sm font-extrabold text-crimson-600 dark:text-crimson-400">
-            ការកម្ម៉ង់ត្រូវបានបោះបង់ · Cancelled
+            {t("timeline.cancelledTitle")}
           </p>
           <p className="text-[11px] text-coffee-500 dark:text-cream-300">
-            បានទទួល {formatTime(timeline.placedAt)}
+            {t("timeline.received")} {formatTime(timeline.placedAt)}
           </p>
         </div>
       </div>
@@ -109,7 +111,7 @@ export default function OrderTimeline({
                     : "text-coffee-400 dark:text-cream-400"
                 }`}
               >
-                {stage.emoji} {stage.label}
+                {stage.emoji} {t(stage.key)}
               </p>
               <div className="mt-0.5 flex items-center gap-2">
                 {time ? (
@@ -118,7 +120,7 @@ export default function OrderTimeline({
                   </span>
                 ) : (
                   <span className="text-[11px] text-coffee-300 dark:text-coffee-500">
-                    {isActive ? "កំពុងដំណើរការ..." : "រង់ចាំ..."}
+                    {isActive ? t("timeline.inProgress") : t("timeline.waiting")}
                   </span>
                 )}
                 {isActive && (

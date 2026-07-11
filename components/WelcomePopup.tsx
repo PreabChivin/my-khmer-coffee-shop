@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Gift, Sparkles, X } from "lucide-react";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
 import { useAuthModal } from "@/contexts/AuthModalContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const SEEN_KEY = "cafe-welcome-seen";
 
@@ -16,6 +17,7 @@ const SEEN_KEY = "cafe-welcome-seen";
 export default function WelcomePopup() {
   const { user, isLoading } = useCustomerSession();
   const { openAuth } = useAuthModal();
+  const { t } = useLanguage();
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -66,20 +68,19 @@ export default function WelcomePopup() {
           <span className="pointer-events-none absolute -bottom-4 -left-2 text-5xl opacity-20">💖</span>
           <div className="animate-bounce-cute text-5xl">🧋🎉</div>
           <h2 className="mt-2 font-heading text-xl font-extrabold drop-shadow-sm">
-            សួស្តី Bestie! សូមស្វាគមន៍ 💖
+            {t("welcomePopup.greeting")}
           </h2>
         </div>
 
         <div className="px-6 py-5 text-center">
           <p className="text-sm font-medium leading-relaxed text-coffee-700 dark:text-cream-200">
-            ចុះឈ្មោះឥឡូវនេះ ដើម្បីទទួលបានការបញ្ចុះតម្លៃពិសេស និងឱកាសចូលរួមចាប់រង្វាន់ប្រចាំខែ
-            ផ្អែកលើកម្រិតនៃការកម្ម៉ង់ (Order Tier Level) របស់អ្នក!
+            {t("welcomePopup.body")}
           </p>
 
           <div className="mt-4 flex flex-col gap-2 text-left">
             {[
-              { icon: <Sparkles size={15} className="text-clay-500" />, text: "សន្សំពិន្ទុរាល់ការកម្ម៉ង់ 💎" },
-              { icon: <Gift size={15} className="text-crimson-500" />, text: "ចាប់រង្វាន់ប្រចាំខែ តាមកម្រិត Tier 🎁" },
+              { icon: <Sparkles size={15} className="text-clay-500" />, text: t("welcomePopup.benefit1") },
+              { icon: <Gift size={15} className="text-crimson-500" />, text: t("welcomePopup.benefit2") },
             ].map((b, i) => (
               <div
                 key={i}
@@ -96,14 +97,14 @@ export default function WelcomePopup() {
             onClick={signUp}
             className="mt-5 w-full rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 py-3 text-sm font-bold text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95"
           >
-            ចុះឈ្មោះឥឡូវនេះ · Sign Up Now 🎉
+            {t("welcomePopup.signUp")}
           </button>
           <button
             type="button"
             onClick={dismiss}
             className="mt-2 w-full text-xs font-medium text-coffee-400 hover:text-coffee-600 dark:text-cream-400"
           >
-            ពេលក្រោយ · Maybe later
+            {t("welcomePopup.later")}
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Cake, Lock, Mail, Phone, User as UserIcon, X } from "lucide-react";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { generationFromDOB } from "@/lib/generation";
 
 // Social providers are scaffolded (DB fields + these slots) but need OAuth
@@ -15,6 +16,7 @@ const SOCIALS = [
 
 export default function AuthModal({ onClose }: { onClose: () => void }) {
   const { login, register } = useCustomerSession();
+  const { lang, t } = useLanguage();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [form, setForm] = useState({
     identifier: "",
@@ -49,7 +51,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
           });
     setBusy(false);
     if (res.ok) onClose();
-    else setError(res.error ?? "Something went wrong");
+    else setError(res.error ?? t("auth.genericError"));
   }
 
   const inputCls =
@@ -70,12 +72,12 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
         <div className="text-center">
           <div className="animate-bounce-cute text-4xl">🧋💖</div>
           <h2 className="mt-1 font-heading text-xl text-coffee-900 dark:text-cream-50">
-            {mode === "login" ? "សូមស្វាគមន៍ត្រឡប់មកវិញ!" : "បង្កើតគណនីថ្មី"}
+            {mode === "login" ? t("auth.welcomeBack") : t("auth.createAccount")}
           </h2>
           <p className="text-xs text-coffee-500 dark:text-cream-300">
             {mode === "login"
-              ? "ចូលគណនីដើម្បីមើលការកម្ម៉ង់ + សន្សំពិន្ទុ 💎"
-              : "ចុះឈ្មោះដើម្បីសន្សំពិន្ទុ និងទទួលរង្វាន់ 🎁"}
+              ? t("auth.loginSubtitle")
+              : t("auth.registerSubtitle")}
           </p>
         </div>
 
@@ -95,7 +97,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
                   : "text-coffee-500 dark:text-cream-300"
               }`}
             >
-              {m === "login" ? "ចូល" : "ចុះឈ្មោះ"}
+              {m === "login" ? t("auth.tabLogin") : t("auth.tabRegister")}
             </button>
           ))}
         </div>
@@ -107,7 +109,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
                 <UserIcon size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-coffee-400" />
                 <input
                   required
-                  placeholder="ឈ្មោះពិត / Real Name"
+                  placeholder={t("auth.namePlaceholder")}
                   value={form.name}
                   onChange={(e) => set("name", e.target.value)}
                   className={inputCls}
@@ -118,7 +120,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
                 <input
                   required
                   type="date"
-                  aria-label="ថ្ងៃខែកំណើត / Date of birth"
+                  aria-label={t("auth.dob")}
                   max={new Date().toISOString().slice(0, 10)}
                   value={form.dateOfBirth}
                   onChange={(e) => set("dateOfBirth", e.target.value)}
@@ -131,7 +133,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
                 return gen ? (
                   <div className="animate-pop-in rounded-xl bg-clay-50 px-3 py-2 text-center dark:bg-coffee-900">
                     <p className="text-xs font-bold text-clay-600 dark:text-clay-400">
-                      {gen.emoji} អ្នកគឺជា {gen.km} ({gen.label})!
+                      {gen.emoji} {t("auth.youAre")} {lang === "km" ? gen.km : gen.label}!
                     </p>
                     <p className="mt-0.5 text-[11px] leading-relaxed text-coffee-600 dark:text-cream-200">
                       {gen.slang}
@@ -147,7 +149,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
               <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-coffee-400" />
               <input
                 required
-                placeholder="អ៊ីមែល ឬ Username"
+                placeholder={t("auth.identifier")}
                 value={form.identifier}
                 onChange={(e) => set("identifier", e.target.value)}
                 className={inputCls}
@@ -160,7 +162,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
                 <input
                   required
                   type="email"
-                  placeholder="អ៊ីមែល / Email"
+                  placeholder={t("auth.email")}
                   value={form.email}
                   onChange={(e) => set("email", e.target.value)}
                   className={inputCls}
@@ -169,7 +171,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
               <div className="relative">
                 <Phone size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-coffee-400" />
                 <input
-                  placeholder="លេខទូរស័ព្ទ (មិនចាំបាច់)"
+                  placeholder={t("auth.phone")}
                   value={form.phone}
                   onChange={(e) => set("phone", e.target.value)}
                   className={inputCls}
@@ -183,7 +185,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
             <input
               required
               type="password"
-              placeholder="ពាក្យសម្ងាត់ / Password"
+              placeholder={t("auth.password")}
               value={form.password}
               onChange={(e) => set("password", e.target.value)}
               className={inputCls}
@@ -201,14 +203,18 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
             disabled={busy}
             className="w-full rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 py-3 text-sm font-bold text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
           >
-            {busy ? "កំពុងដំណើរការ..." : mode === "login" ? "ចូល 💖" : "បង្កើតគណនី 🎉"}
+            {busy
+              ? t("auth.processing")
+              : mode === "login"
+                ? t("auth.loginBtn")
+                : t("auth.registerBtn")}
           </button>
         </form>
 
         {/* 🔮 Social login slots — wired once OAuth credentials are added */}
         <div className="mt-4">
           <p className="mb-2 text-center text-[10px] uppercase tracking-widest text-coffee-400 dark:text-cream-400">
-            ឬចូលដោយ · or continue with
+            {t("auth.orContinue")}
           </p>
           <div className="grid grid-cols-3 gap-2">
             {SOCIALS.map((s) => (
@@ -225,7 +231,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
             ))}
           </div>
           <p className="mt-1.5 text-center text-[10px] text-coffee-400 dark:text-cream-400">
-            ឆាប់ៗនេះ · coming soon
+            {t("auth.comingSoon")}
           </p>
         </div>
       </div>

@@ -3,16 +3,17 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import type { TranslationKey } from "@/lib/i18n";
 import OrderTimeline from "@/components/OrderTimeline";
 import type { OrderHistoryItemDTO, OrderStatus } from "@/lib/types";
 
-const STATUS_STYLE: Record<OrderStatus, { km: string; cls: string }> = {
-  PENDING: { km: "រង់ចាំ", cls: "bg-coffee-100 text-coffee-600 dark:bg-coffee-800 dark:text-cream-300" },
-  AWAITING_VERIFICATION: { km: "ផ្ទៀងផ្ទាត់", cls: "bg-amber-100 text-amber-700" },
-  PREPARING: { km: "កំពុងឆុង", cls: "bg-clay-100 text-clay-600" },
-  READY: { km: "រួចរាល់", cls: "bg-matcha-100 text-matcha-700" },
-  COMPLETED: { km: "បានបញ្ចប់", cls: "bg-matcha-500 text-white" },
-  CANCELLED: { km: "បោះបង់", cls: "bg-crimson-100 text-crimson-600" },
+const STATUS_STYLE: Record<OrderStatus, { key: TranslationKey; cls: string }> = {
+  PENDING: { key: "orderHistory.status.pending", cls: "bg-coffee-100 text-coffee-600 dark:bg-coffee-800 dark:text-cream-300" },
+  AWAITING_VERIFICATION: { key: "orderHistory.status.verifying", cls: "bg-amber-100 text-amber-700" },
+  PREPARING: { key: "orderHistory.status.preparing", cls: "bg-clay-100 text-clay-600" },
+  READY: { key: "orderHistory.status.ready", cls: "bg-matcha-100 text-matcha-700" },
+  COMPLETED: { key: "orderHistory.status.completed", cls: "bg-matcha-500 text-white" },
+  CANCELLED: { key: "orderHistory.status.cancelled", cls: "bg-crimson-100 text-crimson-600" },
 };
 
 function formatDate(iso: string) {
@@ -27,18 +28,18 @@ function formatDate(iso: string) {
 
 export default function OrderHistoryList({
   orders,
-  emptyLabel = "មិនទាន់មានការកម្ម៉ង់ទេ 🥺",
+  emptyLabel,
 }: {
   orders: OrderHistoryItemDTO[];
   emptyLabel?: string;
 }) {
-  const { lang } = useLanguage();
+  const { lang, t } = useLanguage();
   const [openId, setOpenId] = useState<string | null>(null);
 
   if (orders.length === 0) {
     return (
       <p className="rounded-2xl border-2 border-dashed border-coffee-300 px-6 py-10 text-center text-sm text-coffee-500 dark:border-coffee-600 dark:text-cream-300">
-        {emptyLabel}
+        {emptyLabel ?? t("orderHistory.empty")}
       </p>
     );
   }
@@ -62,7 +63,7 @@ export default function OrderHistoryList({
                 </p>
               </div>
               <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${status.cls}`}>
-                {status.km}
+                {t(status.key)}
               </span>
             </div>
 
@@ -79,7 +80,7 @@ export default function OrderHistoryList({
 
             <div className="mt-2 flex items-center justify-between border-t border-coffee-100 pt-2 dark:border-coffee-700">
               <span className="text-[11px] text-coffee-400 dark:text-cream-400">
-                {order.orderType === "Delivery" ? "🛵 ដឹកជញ្ជូន" : "🏠 មកយកខ្លួនឯង"}
+                {order.orderType === "Delivery" ? t("orderHistory.delivery") : t("orderHistory.pickup")}
                 {" · "}
                 {order.paymentMethod ?? "KHQR"}
                 {order.paymentStatus === "PAID" ? " ✅" : ""}
@@ -96,7 +97,7 @@ export default function OrderHistoryList({
               className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg py-1.5 text-[11px] font-bold text-clay-600 hover:bg-clay-50 dark:text-clay-400 dark:hover:bg-coffee-900"
             >
               {openId === order.id ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-              {openId === order.id ? "លាក់" : "មើលដំណើរការ · Timeline"}
+              {openId === order.id ? t("orderHistory.hide") : t("orderHistory.viewTimeline")}
             </button>
             {openId === order.id && (
               <div className="mt-2 rounded-2xl bg-cream-100 p-3 dark:bg-coffee-900">

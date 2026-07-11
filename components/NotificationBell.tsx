@@ -5,18 +5,20 @@ import Link from "next/link";
 import { Bell, Gift } from "lucide-react";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
 import { useAuthModal } from "@/contexts/AuthModalContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import type { TranslationKey } from "@/lib/i18n";
 import type { NotificationDTO, OrderHistoryItemDTO, OrderStatus } from "@/lib/types";
 
 const SEEN_KEY = "cafe-notif-seen";
 const POLL_MS = 60000;
 
-const STATUS_ALERT: Record<OrderStatus, { emoji: string; text: string }> = {
-  PENDING: { emoji: "⏳", text: "កំពុងរង់ចាំការទូទាត់" },
-  AWAITING_VERIFICATION: { emoji: "👀", text: "កំពុងផ្ទៀងផ្ទាត់ការទូទាត់" },
-  PREPARING: { emoji: "☕", text: "កំពុងឆុងដោយស្នេហ៍!" },
-  READY: { emoji: "🛵", text: "រួចរាល់ហើយ មកយកបាន!" },
-  COMPLETED: { emoji: "✅", text: "បានបញ្ចប់ — អរគុណ Bestie!" },
-  CANCELLED: { emoji: "🥺", text: "ត្រូវបានបោះបង់ចោល" },
+const STATUS_ALERT: Record<OrderStatus, { emoji: string; key: TranslationKey }> = {
+  PENDING: { emoji: "⏳", key: "notif.status.pending" },
+  AWAITING_VERIFICATION: { emoji: "👀", key: "notif.status.awaiting" },
+  PREPARING: { emoji: "☕", key: "notif.status.preparing" },
+  READY: { emoji: "🛵", key: "notif.status.ready" },
+  COMPLETED: { emoji: "✅", key: "notif.status.completed" },
+  CANCELLED: { emoji: "🥺", key: "notif.status.cancelled" },
 };
 
 interface Alert {
@@ -31,6 +33,7 @@ interface Alert {
 export default function NotificationBell() {
   const { user } = useCustomerSession();
   const { openAuth } = useAuthModal();
+  const { t } = useLanguage();
   const [orders, setOrders] = useState<OrderHistoryItemDTO[]>([]);
   const [notifs, setNotifs] = useState<NotificationDTO[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -109,8 +112,8 @@ export default function NotificationBell() {
       return {
         id: `o-${o.id}`,
         emoji: s.emoji,
-        title: `ការកម្ម៉ង់ #${o.id.slice(0, 8).toUpperCase()}`,
-        body: s.text,
+        title: `${t("notif.orderLabel")} #${o.id.slice(0, 8).toUpperCase()}`,
+        body: t(s.key),
         ts: new Date(o.updatedAt).getTime(),
         href: "/orders",
       };
@@ -124,7 +127,7 @@ export default function NotificationBell() {
       href: n.href,
     }));
     return [...orderAlerts, ...notifAlerts].sort((a, b) => b.ts - a.ts).slice(0, 15);
-  }, [user, orders, notifs]);
+  }, [user, orders, notifs, t]);
 
   const unread = useMemo(
     () => alerts.filter((a) => a.ts > lastSeen).length,
@@ -150,7 +153,7 @@ export default function NotificationBell() {
       <button
         type="button"
         onClick={toggle}
-        aria-label="ការជូនដំណឹង / Notifications"
+        aria-label={t("notif.aria")}
         aria-expanded={isOpen}
         className="relative flex h-10 w-10 items-center justify-center rounded-full text-coffee-800 transition-transform hover:scale-110 hover:bg-coffee-100 active:scale-95 dark:text-cream-100 dark:hover:bg-coffee-800"
       >
@@ -166,7 +169,7 @@ export default function NotificationBell() {
         <div className="animate-pop-in absolute right-0 top-12 z-50 w-80 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-gold-500/50 bg-cream-50 shadow-xl dark:bg-coffee-800">
           <div className="border-b border-coffee-100 px-4 py-3 dark:border-coffee-700">
             <p className="font-heading text-sm font-extrabold text-coffee-900 dark:text-cream-50">
-              🔔 ការជូនដំណឹង
+              {t("notif.title")}
             </p>
           </div>
 
@@ -175,7 +178,7 @@ export default function NotificationBell() {
               !user ? (
                 <div className="px-4 py-6 text-center">
                   <p className="text-sm text-coffee-500 dark:text-cream-300">
-                    ចូលគណនីដើម្បីទទួលការជូនដំណឹងអំពីការកម្ម៉ង់ 💖
+                    {t("notif.loginPrompt")}
                   </p>
                   <button
                     type="button"
@@ -185,12 +188,12 @@ export default function NotificationBell() {
                     }}
                     className="mt-3 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-5 py-2 text-xs font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95"
                   >
-                    ចូល / ចុះឈ្មោះ
+                    {t("notif.loginBtn")}
                   </button>
                 </div>
               ) : (
                 <p className="px-4 py-6 text-center text-sm text-coffee-400 dark:text-cream-400">
-                  គ្មានការជូនដំណឹងថ្មីទេ 🌈
+                  {t("notif.empty")}
                 </p>
               )
             ) : (
@@ -237,7 +240,7 @@ export default function NotificationBell() {
             >
               <Gift size={16} className="shrink-0 text-crimson-500" />
               <p className="text-[11px] font-semibold leading-snug text-coffee-700 dark:text-cream-200">
-                🎁 សន្សំពិន្ទុរាល់ការកម្ម៉ង់ + ចាប់រង្វាន់ប្រចាំខែតាមកម្រិត Tier!
+                {t("notif.promo")}
               </p>
             </Link>
           </div>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Truck } from "lucide-react";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
 import { useAuthModal } from "@/contexts/AuthModalContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import OrderHistoryList from "@/components/OrderHistoryList";
 import type { OrderHistoryItemDTO } from "@/lib/types";
 
@@ -13,6 +14,7 @@ import type { OrderHistoryItemDTO } from "@/lib/types";
 export default function OrdersPage() {
   const { user, isLoading } = useCustomerSession();
   const { openAuth } = useAuthModal();
+  const { t } = useLanguage();
   const [orders, setOrders] = useState<OrderHistoryItemDTO[] | null>(null);
 
   useEffect(() => {
@@ -39,7 +41,7 @@ export default function OrdersPage() {
   if (isLoading) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-lg items-center justify-center px-4">
-        <p className="text-coffee-400 dark:text-cream-400">កំពុងផ្ទុក...</p>
+        <p className="text-coffee-400 dark:text-cream-400">{t("account.loading")}</p>
       </div>
     );
   }
@@ -49,17 +51,17 @@ export default function OrdersPage() {
       <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-4 text-center">
         <div className="animate-bounce-cute text-5xl">🚚</div>
         <h1 className="mt-3 font-heading text-2xl text-coffee-900 dark:text-cream-50">
-          តាមដានការកុម្ម៉ង់របស់អ្នក
+          {t("ordersPage.lockedTitle")}
         </h1>
         <p className="mt-2 text-sm text-coffee-500 dark:text-cream-300">
-          ចូលគណនីដើម្បីមើលស្ថានភាពការកម្ម៉ង់ទាំងអស់របស់អ្នក 💖
+          {t("ordersPage.lockedSubtitle")}
         </p>
         <button
           type="button"
           onClick={openAuth}
           className="mt-6 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
         >
-          ចូល / ចុះឈ្មោះ
+          {t("notif.loginBtn")}
         </button>
       </div>
     );
@@ -73,16 +75,16 @@ export default function OrdersPage() {
         </span>
         <div>
           <h1 className="font-heading text-2xl text-coffee-900 dark:text-cream-50">
-            តាមដានការកុម្ម៉ង់ 🚚
+            {t("ordersPage.title")}
           </h1>
           <p className="text-sm text-coffee-500 dark:text-cream-300">
-            ស្ថានភាពការកម្ម៉ង់ទាំងអស់ — update ស្វ័យប្រវត្តិ
+            {t("ordersPage.subtitle")}
           </p>
         </div>
       </div>
 
       {orders === null ? (
-        <p className="text-sm text-coffee-400 dark:text-cream-400">កំពុងផ្ទុកការកម្ម៉ង់...</p>
+        <p className="text-sm text-coffee-400 dark:text-cream-400">{t("account.loadingOrders")}</p>
       ) : (
         <OrderHistoryList orders={orders} />
       )}
@@ -92,7 +94,7 @@ export default function OrdersPage() {
           href="/account"
           className="text-xs font-semibold text-clay-600 underline decoration-dotted dark:text-clay-400"
         >
-          មើលពិន្ទុ + ព័ត៌មានគណនី →
+          {t("ordersPage.viewPoints")}
         </Link>
       </div>
     </div>
