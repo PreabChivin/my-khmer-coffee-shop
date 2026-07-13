@@ -11,5 +11,6 @@ export function toUserDTO(user: User): UserDTO {
     phone: user.phone,
     loyaltyPoints: user.loyaltyPoints,
     dateOfBirth: user.dateOfBirth ? user.dateOfBirth.toISOString() : null,
+    role: user.role,
   };
 }

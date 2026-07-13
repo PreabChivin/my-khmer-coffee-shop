@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
-import { useCustomerSession } from "@/contexts/CustomerSessionContext";
+import { useSession } from "@/contexts/SessionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { RedemptionDTO, RewardDTO } from "@/lib/types";
 
 export default function RewardStore() {
-  const { user, refresh } = useCustomerSession();
+  const { user, refresh } = useSession();
   const { lang, t } = useLanguage();
   const [rewards, setRewards] = useState<RewardDTO[]>([]);
   const [redemptions, setRedemptions] = useState<RedemptionDTO[]>([]);

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Cake, Lock, Mail, Phone, User as UserIcon, X } from "lucide-react";
-import { useCustomerSession } from "@/contexts/CustomerSessionContext";
+import { useSession } from "@/contexts/SessionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { generationFromDOB } from "@/lib/generation";
 
@@ -15,8 +16,9 @@ const SOCIALS = [
 ];
 
 export default function AuthModal({ onClose }: { onClose: () => void }) {
-  const { login, register } = useCustomerSession();
+  const { login, register } = useSession();
   const { lang, t } = useLanguage();
+  const router = useRouter();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [form, setForm] = useState({
     identifier: "",
@@ -50,8 +52,18 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
             phone: form.phone || undefined,
           });
     setBusy(false);
-    if (res.ok) onClose();
-    else setError(res.error ?? t("auth.genericError"));
+    if (res.ok) {
+      onClose();
+      // 🔐 Staff/Admin always land on the Admin Dashboard, no matter where
+      // this modal was opened from. Customers just close the modal and stay
+      // put (e.g. mid-checkout) — the dedicated /login page handles their
+      // redirect to the storefront itself.
+      if (res.role === "STAFF" || res.role === "ADMIN") {
+        router.push("/admin");
+      }
+    } else {
+      setError(res.error ?? t("auth.genericError"));
+    }
   }
 
   const inputCls =

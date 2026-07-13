@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Gift, Sparkles, X } from "lucide-react";
-import { useCustomerSession } from "@/contexts/CustomerSessionContext";
+import { useSession } from "@/contexts/SessionContext";
 import { useAuthModal } from "@/contexts/AuthModalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -15,7 +15,7 @@ const SEEN_KEY = "cafe-welcome-seen";
  * localStorage so it never nags a returning guest.
  */
 export default function WelcomePopup() {
-  const { user, isLoading } = useCustomerSession();
+  const { user, isLoading } = useSession();
   const { openAuth } = useAuthModal();
   const { t } = useLanguage();
   const [show, setShow] = useState(false);

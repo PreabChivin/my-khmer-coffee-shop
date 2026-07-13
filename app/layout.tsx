@@ -5,8 +5,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { FulfillmentProvider } from "@/contexts/FulfillmentContext";
 import { GroupCartProvider } from "@/contexts/GroupCartContext";
-import { AdminSessionProvider } from "@/contexts/AdminSessionContext";
-import { CustomerSessionProvider } from "@/contexts/CustomerSessionContext";
+import { SessionProvider } from "@/contexts/SessionContext";
 import { AuthModalProvider } from "@/contexts/AuthModalContext";
 import "./globals.css";
 
@@ -42,17 +41,15 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-cream-100 text-coffee-900 dark:bg-coffee-900 dark:text-cream-50">
         <ThemeProvider>
           <LanguageProvider>
-            <AdminSessionProvider>
-              <CustomerSessionProvider>
-                <AuthModalProvider>
-                  <FulfillmentProvider>
-                    <GroupCartProvider>
-                      <CartProvider>{children}</CartProvider>
-                    </GroupCartProvider>
-                  </FulfillmentProvider>
-                </AuthModalProvider>
-              </CustomerSessionProvider>
-            </AdminSessionProvider>
+            <SessionProvider>
+              <AuthModalProvider>
+                <FulfillmentProvider>
+                  <GroupCartProvider>
+                    <CartProvider>{children}</CartProvider>
+                  </GroupCartProvider>
+                </FulfillmentProvider>
+              </AuthModalProvider>
+            </SessionProvider>
           </LanguageProvider>
         </ThemeProvider>
       </body>

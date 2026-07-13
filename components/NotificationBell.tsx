@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, Gift } from "lucide-react";
-import { useCustomerSession } from "@/contexts/CustomerSessionContext";
+import { useSession } from "@/contexts/SessionContext";
 import { useAuthModal } from "@/contexts/AuthModalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { TranslationKey } from "@/lib/i18n";
@@ -31,7 +31,7 @@ interface Alert {
 }
 
 export default function NotificationBell() {
-  const { user } = useCustomerSession();
+  const { user } = useSession();
   const { openAuth } = useAuthModal();
   const { t } = useLanguage();
   const [orders, setOrders] = useState<OrderHistoryItemDTO[]>([]);

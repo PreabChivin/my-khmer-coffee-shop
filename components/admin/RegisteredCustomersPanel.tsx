@@ -35,14 +35,21 @@ export default function RegisteredCustomersPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
+  // Staff/Admin accounts live in the same table now (role) — this roster
+  // stays customer-only; STAFF/ADMIN accounts are managed in the separate
+  // User Management panel (ADMIN only).
+  const customers = useMemo(
+    () => (rows ?? []).filter((r) => r.role === "CUSTOMER"),
+    [rows]
+  );
+
   const visible = useMemo(() => {
-    if (!rows) return [];
     const q = query.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter(
+    if (!q) return customers;
+    return customers.filter(
       (r) => r.name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q)
     );
-  }, [rows, query]);
+  }, [customers, query]);
 
   return (
     <div className="khmer-card mx-auto mt-4 max-w-[1600px] rounded-2xl bg-cream-50/60 dark:bg-coffee-800/40">
@@ -55,7 +62,7 @@ export default function RegisteredCustomersPanel({
           <Users size={18} /> អតិថិជនដែលបានចុះឈ្មោះ · Registered Customers
           {rows && (
             <span className="rounded-full bg-coffee-100 px-2 py-0.5 text-xs font-bold text-coffee-600 dark:bg-coffee-900 dark:text-cream-200">
-              {rows.length}
+              {customers.length}
             </span>
           )}
         </span>

@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   const response = NextResponse.json(body);
   response.cookies.set(
     USER_COOKIE_NAME,
-    signUserToken({ id: user.id, email: user.email, name: user.name }),
+    signUserToken({ id: user.id, email: user.email, name: user.name, role: user.role }),
     {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

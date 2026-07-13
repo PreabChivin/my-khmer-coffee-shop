@@ -1,7 +1,6 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartSidebar from "@/components/CartSidebar";
-import StaffPortalShortcut from "@/components/StaffPortalShortcut";
 
 export default function SiteLayout({
   children,
@@ -14,8 +13,6 @@ export default function SiteLayout({
       <main className="flex-1">{children}</main>
       <Footer />
       <CartSidebar />
-      {/* 🔐 Hidden staff login — summoned with Ctrl+S / ⌘+S */}
-      <StaffPortalShortcut />
     </div>
   );
 }

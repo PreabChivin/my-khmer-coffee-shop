@@ -25,6 +25,10 @@ export interface ProductDTO {
 }
 
 /** 👤 Public-safe customer account shape (never includes passwordHash). */
+/** 🔐 CUSTOMER (default), STAFF (kitchen/menu/marketing access), or ADMIN
+ *  (also User Management — role changes, password resets). */
+export type Role = "CUSTOMER" | "STAFF" | "ADMIN";
+
 export interface UserDTO {
   id: string;
   email: string;
@@ -34,17 +38,20 @@ export interface UserDTO {
   loyaltyPoints: number;
   /** ISO date string, or null if not on file. Generation is derived from it. */
   dateOfBirth: string | null;
+  role: Role;
 }
 
-/** 👑 One row in the admin "Registered Customers" table. */
+/** 👑 One row in the admin "Registered Customers" / User Management table. */
 export interface AdminCustomerRowDTO {
   id: string;
   name: string;
   email: string;
+  username: string | null;
   dateOfBirth: string | null;
   loyaltyPoints: number;
   joinedAt: string;
   orderCount: number;
+  role: Role;
 }
 
 /** 🧾 One row in a customer's / admin's order-history view. */

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Minus, Plus, ShoppingBag, Trash2, Users, X } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useGroupCart } from "@/contexts/GroupCartContext";
-import { useAdminSession } from "@/contexts/AdminSessionContext";
+import { useSession } from "@/contexts/SessionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { customizationSurcharge, describeCustomization } from "@/lib/customization";
 import { localizedName } from "@/lib/i18n";
@@ -26,11 +26,11 @@ export default function CartSidebar() {
   } = useCart();
   const { isGroupMode, state: groupState, updateGroupItemQuantity, removeGroupItem } =
     useGroupCart();
-  const { isAdmin } = useAdminSession();
+  const { isStaff } = useSession();
   const { lang, t } = useLanguage();
 
   // Strict world-separation: the cart never renders while Staff View is active.
-  if (!isCartOpen || isAdmin) return null;
+  if (!isCartOpen || isStaff) return null;
 
   const groupItems = groupState?.items ?? [];
   const groupSubtotal = groupItems.reduce((sum, item) => {

@@ -14,7 +14,7 @@ const AuthModalContext = createContext<AuthModalValue | undefined>(undefined);
 /**
  * Centralises the login/register modal so any component (header button,
  * first-visit welcome popup, checkout, …) can summon it with `openAuth()`.
- * Rendered once, portaled to body. Must live inside CustomerSessionProvider.
+ * Rendered once, portaled to body. Must live inside SessionProvider.
  */
 export function AuthModalProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);

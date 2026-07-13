@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LogOut } from "lucide-react";
-import { useCustomerSession } from "@/contexts/CustomerSessionContext";
+import { useSession } from "@/contexts/SessionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LoyaltyProgress from "@/components/LoyaltyProgress";
 import RewardStore from "@/components/RewardStore";
@@ -12,7 +12,7 @@ import { generationFromDOB } from "@/lib/generation";
 import type { OrderHistoryItemDTO } from "@/lib/types";
 
 export default function AccountPage() {
-  const { user, isLoading, logout } = useCustomerSession();
+  const { user, isLoading, logout } = useSession();
   const { lang, t } = useLanguage();
   const [orders, setOrders] = useState<OrderHistoryItemDTO[] | null>(null);
 

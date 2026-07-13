@@ -288,14 +288,17 @@ async function main() {
     });
   }
 
+  // 🔐 Admin accounts are now just User rows with role=ADMIN (unified login).
   const adminPassword = await bcrypt.hash("admin123", 10);
-  await prisma.admin.upsert({
+  await prisma.user.upsert({
     where: { username: "admin" },
     update: {},
     create: {
       username: "admin",
-      password: adminPassword,
+      email: "admin@benchimin.cafe",
+      passwordHash: adminPassword,
       name: "Cafe Manager",
+      role: "ADMIN",
     },
   });
 

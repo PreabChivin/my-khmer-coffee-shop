@@ -1,32 +1,26 @@
-import jwt from "jsonwebtoken";
 import { NextRequest } from "next/server";
+import { getSessionFromRequest, type SessionPayload } from "@/lib/session";
 
-const JWT_SECRET = process.env.JWT_SECRET ?? "dev-secret-change-me";
-export const ADMIN_COOKIE_NAME = "admin_token";
-export const ADMIN_COOKIE_MAX_AGE = 60 * 60 * 8; // 8 hours
+// Back-compat alias — every existing app/api/admin/** and
+// app/api/categories/** route imports this exact name/shape.
+export type AdminTokenPayload = SessionPayload;
 
-export interface AdminTokenPayload {
-  id: string;
-  username: string;
-  name: string;
-}
-
-export function signAdminToken(payload: AdminTokenPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: ADMIN_COOKIE_MAX_AGE });
-}
-
-export function verifyAdminToken(token: string): AdminTokenPayload | null {
-  try {
-    return jwt.verify(token, JWT_SECRET) as AdminTokenPayload;
-  } catch {
-    return null;
-  }
-}
-
+/** Staff or Admin — the same "can use the staff dashboard" check every
+ *  existing admin API route already calls. */
 export function getAdminFromRequest(
   request: NextRequest
 ): AdminTokenPayload | null {
-  const token = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
-  if (!token) return null;
-  return verifyAdminToken(token);
+  const session = getSessionFromRequest(request);
+  if (!session) return null;
+  return session.role === "STAFF" || session.role === "ADMIN" ? session : null;
+}
+
+/** Admin only — used by the User Management routes (role changes, password
+ *  resets). STAFF cannot manage other accounts. */
+export function requireAdminRole(
+  request: NextRequest
+): AdminTokenPayload | null {
+  const session = getSessionFromRequest(request);
+  if (!session) return null;
+  return session.role === "ADMIN" ? session : null;
 }

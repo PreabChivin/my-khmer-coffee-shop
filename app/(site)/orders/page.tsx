@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Truck } from "lucide-react";
-import { useCustomerSession } from "@/contexts/CustomerSessionContext";
+import { useSession } from "@/contexts/SessionContext";
 import { useAuthModal } from "@/contexts/AuthModalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import OrderHistoryList from "@/components/OrderHistoryList";
@@ -12,7 +12,7 @@ import type { OrderHistoryItemDTO } from "@/lib/types";
 // 🚚 Dedicated Order History / Live Tracking dashboard (linked from the header
 // truck icon). Auth-gated: prompts sign-in for guests.
 export default function OrdersPage() {
-  const { user, isLoading } = useCustomerSession();
+  const { user, isLoading } = useSession();
   const { openAuth } = useAuthModal();
   const { t } = useLanguage();
   const [orders, setOrders] = useState<OrderHistoryItemDTO[] | null>(null);

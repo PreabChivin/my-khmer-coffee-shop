@@ -1,17 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Coffee, ShoppingCart, Truck, User, Users } from "lucide-react";
+import { Coffee, Crown, LogOut, ShoppingCart, Truck, User, Users } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useGroupCart } from "@/contexts/GroupCartContext";
-import { useAdminSession } from "@/contexts/AdminSessionContext";
-import { useCustomerSession } from "@/contexts/CustomerSessionContext";
+import { useSession } from "@/contexts/SessionContext";
 import { useAuthModal } from "@/contexts/AuthModalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getOrCreateTelegramSessionToken } from "@/lib/telegramSession";
 import LanguageToggle from "@/components/LanguageToggle";
 import AppearanceSettings from "@/components/AppearanceSettings";
-import StaffPortalButton from "@/components/StaffPortalButton";
 import NotificationBell from "@/components/NotificationBell";
 
 const TELEGRAM_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
@@ -19,8 +17,7 @@ const TELEGRAM_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
 export default function Header() {
   const { totalItems, openCart } = useCart();
   const { isGroupMode, state: groupState } = useGroupCart();
-  const { isAdmin } = useAdminSession();
-  const { user } = useCustomerSession();
+  const { user, isStaff, isLoading, logout } = useSession();
   const { openAuth } = useAuthModal();
   const groupItemCount =
     groupState?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
@@ -56,11 +53,27 @@ export default function Header() {
         </Link>
 
         <div className="flex items-center gap-2">
-          <StaffPortalButton />
+          {/* 🔐 Staff badge — replaces the old floating StaffPortalButton.
+              Only ever shown once a STAFF/ADMIN session is confirmed. */}
+          {!isLoading && isStaff && (
+            <div className="flex animate-pulse items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-matcha-300 to-matcha-500 px-3 py-1.5 text-[11px] font-bold text-white shadow-[0_0_14px_rgba(127,209,174,0.8)]">
+              <Crown size={12} />
+              🧑‍🍳 បុគ្គលិកហាងកាហ្វេ: Active {user?.name}
+              <span className="mx-0.5 opacity-60">|</span>
+              <button
+                type="button"
+                onClick={logout}
+                className="flex items-center gap-1 underline decoration-dotted underline-offset-2"
+              >
+                <LogOut size={11} />
+                ចុចចេញ/Logout
+              </button>
+            </div>
+          )}
 
           {/* 🔔 Connect Telegram anytime — links this device so future orders
               get live status DMs. Hidden for staff and until the bot is set. */}
-          {!isAdmin && TELEGRAM_BOT_USERNAME && (
+          {!isStaff && TELEGRAM_BOT_USERNAME && (
             <button
               type="button"
               onClick={handleConnectTelegram}
@@ -77,7 +90,7 @@ export default function Header() {
 
           {/* 👤 Customer account — logged out opens the auth modal; logged in
               shows a points pill linking to My Orders. Hidden for staff. */}
-          {!isAdmin &&
+          {!isStaff &&
             (user ? (
               <Link
                 href="/account"
@@ -99,10 +112,10 @@ export default function Header() {
             ))}
 
           {/* 🔔 In-app notifications (live order-status alerts + promos) */}
-          {!isAdmin && <NotificationBell />}
+          {!isStaff && <NotificationBell />}
 
           {/* 🚚 Order tracking — jumps to the live tracking dashboard */}
-          {!isAdmin && (
+          {!isStaff && (
             <Link
               href="/orders"
               aria-label="តាមដានការកុម្ម៉ង់"
@@ -117,7 +130,7 @@ export default function Header() {
             </Link>
           )}
 
-          {!isAdmin && (
+          {!isStaff && (
             <button
               type="button"
               onClick={openCart}

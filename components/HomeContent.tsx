@@ -1,16 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Bike, Clock, QrCode, Sprout, Store } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import HeroSlideshow from "@/components/HeroSlideshow";
 import PromoBannerCarousel from "@/components/PromoBannerCarousel";
 import CategoryScroller, { ALL_CATEGORIES_ID } from "@/components/CategoryScroller";
 import HomeSidebar from "@/components/HomeSidebar";
-import StaffKitchenView from "@/components/StaffKitchenView";
 import WelcomePopup from "@/components/WelcomePopup";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useAdminSession } from "@/contexts/AdminSessionContext";
+import { useSession } from "@/contexts/SessionContext";
 import type { CategoryDTO, ProductDTO } from "@/lib/types";
 import type { TranslationKey } from "@/lib/i18n";
 
@@ -44,8 +44,9 @@ export default function HomeContent({
   initialCategories: CategoryDTO[];
 }) {
   const { t } = useLanguage();
-  const { isAdmin } = useAdminSession();
-  const [products, setProducts] = useState(initialProducts);
+  const { isStaff } = useSession();
+  const router = useRouter();
+  const [products] = useState(initialProducts);
   const [categories] = useState(initialCategories);
   const [activeCategoryId, setActiveCategoryId] = useState(ALL_CATEGORIES_ID);
   const [searchQuery, setSearchQuery] = useState("");
@@ -66,35 +67,15 @@ export default function HomeContent({
       : products.filter((p) => p.categoryId === activeCategoryId);
   }, [products, activeCategoryId, normalizedQuery]);
 
-  function handleProductCreated(created: ProductDTO) {
-    setProducts((prev) => [...prev, created]);
-  }
-  function handleProductUpdated(updated: ProductDTO) {
-    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-  }
-  function handleProductDeleted(id: string) {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-  }
+  // 🧑‍🍳 The Staff/Admin dashboard now lives at its own /admin route (not
+  // inline here). This is just a safety net for a stray staff session
+  // landing on the storefront directly (e.g. a stale bookmark) — login
+  // itself already redirects straight to /admin.
+  useEffect(() => {
+    if (isStaff) router.replace("/admin");
+  }, [isStaff, router]);
 
-  // Note: the customer view renders immediately by default (matching SSR
-  // output, so every visitor gets instant content with no loading flash).
-  // A returning staff session flips to the Staff view a moment later, once
-  // the client-side session check resolves — a brief, harmless flash of
-  // public menu content for the rare staff reload beats a loading spinner
-  // for 100% of customer traffic.
-
-  // 🧑‍🍳 Strict world separation: logging in swaps the ENTIRE main viewport
-  // to the Staff Kitchen View. No customer banners, menu grid, or cart.
-  if (isAdmin) {
-    return (
-      <StaffKitchenView
-        products={products}
-        onProductCreated={handleProductCreated}
-        onProductUpdated={handleProductUpdated}
-        onProductDeleted={handleProductDeleted}
-      />
-    );
-  }
+  if (isStaff) return null;
 
   return (
     <div>

@@ -122,10 +122,23 @@ model Order {
   @@index([userId])
 }
 
-// 👤 Customer account — multi-provider ready. Today: email/username + bcrypt
-// password. The google/facebook/telegram id columns are scaffolded now so the
-// social providers can be wired later without another migration (they stay
-// null until then). Distinct from the staff `Admin` model.
+// 🔐 Role-based access control. CUSTOMER is the default for every new
+// sign-up; STAFF/ADMIN are granted by an existing ADMIN via the User
+// Management panel (see AdminUserManagementPanel). ADMIN is the only role
+// that can change roles or reset passwords for other accounts.
+enum Role {
+  CUSTOMER
+  STAFF
+  ADMIN
+}
+
+// 👤 One unified account table for customers AND staff/admins — login,
+// loyalty, and access control all key off `role`. Today: email/username +
+// bcrypt password. The google/facebook/telegram id columns are scaffolded
+// now so the social providers can be wired later without another migration
+// (they stay null until then). The legacy `Admin` model below is retired
+// (its one row was migrated in here) and kept only as an inert table until
+// a later cleanup migration drops it.
 model User {
   id            String   @id @default(uuid())
   email         String   @unique
@@ -133,6 +146,7 @@ model User {
   passwordHash  String? // null only for future pure-OAuth accounts
   name          String
   phone         String?
+  role          Role     @default(CUSTOMER)
   // 🎂 Date of birth — used to derive the customer's generation tier
   // (lib/generation.ts). Nullable so pre-existing accounts stay valid; the
   // registration form requires it for all new sign-ups.
@@ -293,6 +307,12 @@ model Payment {
   updatedAt     DateTime  @updatedAt
 }
 
+// ⚠️ RETIRED — no longer read or written by application code. Its one row
+// was copied into User (role=ADMIN) by the 20260713_add_role_merge_admin
+// migration. Kept in the schema/DB only so the table isn't dropped in the
+// same deploy as the cutover (trivial manual rollback path); a later cleanup
+// migration removes this model and DROPs the table once the new system has
+// run cleanly for a few days.
 model Admin {
   id        String   @id @default(uuid())
   username  String   @unique
