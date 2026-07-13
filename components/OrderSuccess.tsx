@@ -8,6 +8,7 @@ import Confetti from "@/components/Confetti";
 import BongBear, { type BongBearPose } from "@/components/mascots/BongBear";
 import RatingPicker from "@/components/RatingPicker";
 import OrderTimeline from "@/components/OrderTimeline";
+import DeliveryTrackingMap from "@/components/DeliveryTrackingMap";
 import { prizeById } from "@/lib/wheel";
 import type { Fortune } from "@/lib/fortunes";
 import type {
@@ -160,8 +161,8 @@ export default function OrderSuccess({
       <h1 className="mt-3 font-heading text-2xl font-extrabold leading-snug text-coffee-900 dark:text-cream-50 sm:text-3xl">
         {t("success.headline")}
       </h1>
-      <span className="mt-3 rounded-full bg-matcha-200 px-4 py-1 text-xs font-bold uppercase tracking-widest text-matcha-700">
-        {t("track.orderLabel")} {shortId}
+      <span className="mt-3 rounded-full bg-matcha-200 px-5 py-1.5 text-sm font-extrabold uppercase tracking-widest text-matcha-700 shadow-sm">
+        {t("track.orderLabel")} <span className="tabular-nums">{shortId}</span>
       </span>
       <p className="mt-4 max-w-md text-sm leading-relaxed text-coffee-600 dark:text-cream-200">
         {t("success.gratitude")}
@@ -214,12 +215,22 @@ export default function OrderSuccess({
           <div className={phase === 2 ? "animate-leap" : "animate-float-cute"}>
             <BongBear pose={pose} size={52} />
           </div>
-          <p className="font-heading text-base font-extrabold text-coffee-900 dark:text-cream-50">
+          <p className="font-heading text-lg font-extrabold leading-snug text-coffee-900 dark:text-cream-50">
             ស្ថានភាពការកម្ម៉ង់ · Order Timeline
           </p>
         </div>
         {timeline && (
           <OrderTimeline status={status} orderType={orderType} timeline={timeline} />
+        )}
+
+        {/* 🛵 Live delivery route + distance/ETA (Delivery orders only) */}
+        {timeline && (
+          <DeliveryTrackingMap
+            orderId={orderId}
+            orderType={orderType}
+            status={status}
+            timeline={timeline}
+          />
         )}
       </div>
 

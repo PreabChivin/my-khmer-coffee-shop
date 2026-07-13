@@ -55,14 +55,14 @@ export default function OrderHistoryList({
           >
             <div className="flex items-center justify-between gap-2">
               <div>
-                <p className="text-sm font-bold text-coffee-900 dark:text-cream-50">
+                <p className="font-heading text-base font-extrabold tabular-nums leading-snug text-coffee-900 dark:text-cream-50">
                   #{order.id.slice(0, 8).toUpperCase()}
                 </p>
-                <p className="text-[11px] text-coffee-400 dark:text-cream-400">
+                <p className="text-[11px] font-medium text-coffee-400 dark:text-cream-400">
                   {formatDate(order.createdAt)}
                 </p>
               </div>
-              <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${status.cls}`}>
+              <span className={`rounded-full px-3 py-1 text-xs font-extrabold shadow-sm ${status.cls}`}>
                 {t(status.key)}
               </span>
             </div>

@@ -384,6 +384,16 @@ const dictionary = {
     "ordersPage.title": "Track Orders 🚚",
     "ordersPage.subtitle": "All your order statuses — auto-updating",
     "ordersPage.viewPoints": "View points + account info →",
+
+    "trackMap.title": "Live Delivery Tracking",
+    "trackMap.distanceLabel": "Delivery Distance",
+    "trackMap.etaLabel": "Estimated Time of Arrival",
+    "trackMap.minutesShort": "min",
+    "trackMap.kmShort": "km",
+    "trackMap.destLabel": "Your Address",
+    "trackMap.packing": "Packing your order at the store",
+    "trackMap.onTheWay": "Your rider is on the way!",
+    "trackMap.arriving": "Arriving very soon 🎉",
   },
   km: {
     "cart.openAria": "បើកកន្ត្រក",
@@ -761,6 +771,16 @@ const dictionary = {
     "ordersPage.title": "តាមដានការកម្ម៉ង់ 🚚",
     "ordersPage.subtitle": "ស្ថានភាពការកម្ម៉ង់ទាំងអស់ — ធ្វើបច្ចុប្បន្នភាពស្វ័យប្រវត្តិ",
     "ordersPage.viewPoints": "មើលពិន្ទុ + ព័ត៌មានគណនី →",
+
+    "trackMap.title": "តាមដានការដឹកជញ្ជូនផ្ទាល់",
+    "trackMap.distanceLabel": "ចម្ងាយដឹកជញ្ជូន",
+    "trackMap.etaLabel": "រយៈពេលប៉ាន់ស្មាន",
+    "trackMap.minutesShort": "នាទី",
+    "trackMap.kmShort": "គ.ម",
+    "trackMap.destLabel": "អាសយដ្ឋានអ្នក",
+    "trackMap.packing": "កំពុងវេចខ្ចប់ការកម្ម៉ង់នៅហាង",
+    "trackMap.onTheWay": "អ្នកដឹកកំពុងធ្វើដំណើរមកអ្នក!",
+    "trackMap.arriving": "ជិតដល់ហើយ 🎉",
   },
 } as const;
 

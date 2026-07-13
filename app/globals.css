@@ -416,6 +416,75 @@ body {
   animation: urgent-pulse 1.8s ease-in-out infinite;
 }
 
+/* ===== Premium order-tracking stepper + live delivery map ===== */
+
+/* Rich two-tone glow ring for the current/active stepper node */
+@keyframes stage-glow-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--color-gold-500) 55%, transparent),
+      0 0 10px 1px color-mix(in srgb, var(--color-gold-500) 45%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 9px color-mix(in srgb, var(--color-gold-500) 0%, transparent),
+      0 0 22px 6px color-mix(in srgb, var(--color-gold-500) 80%, transparent);
+  }
+}
+
+.animate-stage-glow {
+  animation: stage-glow-pulse 1.7s ease-in-out infinite;
+}
+
+/* Liquid fill sweeping down the connector rail into the active stage */
+@keyframes flow-fill {
+  0% {
+    background-position: 0 -140%;
+  }
+  100% {
+    background-position: 0 140%;
+  }
+}
+
+.animate-flow-fill {
+  background-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--color-cream-50) 85%, transparent) 45%,
+    color-mix(in srgb, var(--color-cream-50) 85%, transparent) 55%,
+    transparent 100%
+  );
+  background-size: 100% 240%;
+  animation: flow-fill 1.6s linear infinite;
+}
+
+/* Dashed route line flowing to imply forward motion */
+@keyframes road-dash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.animate-road-dash {
+  animation: road-dash 0.7s linear infinite;
+}
+
+/* Gentle scooter bob while "in delivery" */
+@keyframes scooter-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(2deg);
+  }
+}
+
+.animate-scooter-bob {
+  animation: scooter-bob 0.6s ease-in-out infinite;
+}
+
 /* Photo-hero legibility gradient texture */
 .stone-texture {
   background-color: var(--color-stone-700);

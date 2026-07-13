@@ -83,11 +83,11 @@ export default function OrderTimeline({
             {/* Node + connector rail */}
             <div className="flex flex-col items-center">
               <span
-                className={`flex ${nodeSize} shrink-0 items-center justify-center rounded-full border-2 transition-all ${
+                className={`relative flex ${nodeSize} shrink-0 items-center justify-center rounded-full border-2 transition-all duration-500 ${
                   isDone
-                    ? "border-matcha-500 bg-matcha-500 text-white shadow"
+                    ? "border-matcha-500 bg-matcha-500 text-white shadow-md shadow-matcha-500/30"
                     : isActive
-                      ? "animate-urgent-pulse border-gold-500 bg-gold-100 text-gold-700"
+                      ? "animate-stage-glow border-gold-500 bg-gradient-to-br from-gold-100 to-gold-200 text-gold-700"
                       : "border-coffee-200 bg-cream-100 text-coffee-300 dark:border-coffee-700 dark:bg-coffee-800 dark:text-coffee-500"
                 }`}
               >
@@ -95,36 +95,45 @@ export default function OrderTimeline({
               </span>
               {!isLast && (
                 <span
-                  className={`w-0.5 flex-1 ${compact ? "min-h-[1.25rem]" : "min-h-[1.75rem]"} ${
-                    i < reached ? "bg-matcha-500" : "bg-coffee-200 dark:bg-coffee-700"
+                  className={`relative w-1 flex-1 overflow-hidden rounded-full ${compact ? "min-h-[1.25rem]" : "min-h-[1.75rem]"} ${
+                    i < reached
+                      ? "bg-gradient-to-b from-matcha-500 to-matcha-400"
+                      : "bg-coffee-200 dark:bg-coffee-700"
                   }`}
-                />
+                >
+                  {/* Liquid-fill shimmer traveling into the currently-active stage */}
+                  {i === reached - 1 && status !== "COMPLETED" && (
+                    <span className="animate-flow-fill absolute inset-0" />
+                  )}
+                </span>
               )}
             </div>
 
             {/* Label + timestamp */}
             <div className={`min-w-0 flex-1 ${isLast ? "" : compact ? "pb-3" : "pb-5"}`}>
               <p
-                className={`font-heading ${compact ? "text-sm" : "text-base"} font-bold leading-tight ${
-                  isReached
-                    ? "text-coffee-900 dark:text-cream-50"
-                    : "text-coffee-400 dark:text-cream-400"
+                className={`font-heading ${compact ? "text-sm" : "text-base sm:text-lg"} leading-snug transition-colors ${
+                  isActive
+                    ? "font-extrabold text-coffee-900 dark:text-cream-50"
+                    : isReached
+                      ? "font-bold text-coffee-900 dark:text-cream-50"
+                      : "font-semibold text-coffee-400 dark:text-cream-400"
                 }`}
               >
                 {stage.emoji} {t(stage.key)}
               </p>
-              <div className="mt-0.5 flex items-center gap-2">
+              <div className="mt-1 flex items-center gap-2">
                 {time ? (
-                  <span className="rounded-full bg-clay-100 px-2 py-0.5 text-[11px] font-bold text-clay-600 dark:bg-coffee-900 dark:text-clay-400">
+                  <span className="rounded-full bg-clay-100 px-2.5 py-0.5 text-[11px] font-bold tabular-nums text-clay-600 dark:bg-coffee-900 dark:text-clay-400">
                     🕒 {time}
                   </span>
                 ) : (
-                  <span className="text-[11px] text-coffee-300 dark:text-coffee-500">
+                  <span className="text-[11px] font-medium text-coffee-300 dark:text-coffee-500">
                     {isActive ? t("timeline.inProgress") : t("timeline.waiting")}
                   </span>
                 )}
                 {isActive && (
-                  <span className="text-[10px] font-bold uppercase tracking-wide text-gold-600">
+                  <span className="animate-urgent-pulse flex items-center gap-1 rounded-full bg-gold-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-gold-700 dark:bg-coffee-900 dark:text-gold-400">
                     ● Now
                   </span>
                 )}
