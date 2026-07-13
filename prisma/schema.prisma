@@ -72,6 +72,11 @@ model Order {
   orderStatus   String      @default("PENDING") // 'PENDING' | 'AWAITING_VERIFICATION' | 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED'
   note          String?
   address       String?
+  // 📍 Exact pin dropped in the delivery-address map picker (nullable — a
+  // PickUp order, or a Delivery order whose address was typed manually via
+  // the map picker's fallback, has no coordinates).
+  latitude      Float?
+  longitude     Float?
   fortune       String? // "Destiny Cup" coffee fortune assigned at checkout
 
   // 🎡 Wheel of Coffee prize won at checkout (label, redeemed at counter).
@@ -164,6 +169,24 @@ model User {
   orders        Order[]
   redemptions   RedemptionHistory[]
   notifications Notification[]
+  savedAddresses SavedAddress[]
+}
+
+// 📍 Address book — a logged-in customer's saved delivery locations, each
+// with a free-text alias (e.g. "ផ្ទះ", "កន្លែងធ្វើការ", "ខុនដូ") and the
+// exact pin dropped in the map picker at save time.
+model SavedAddress {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label     String
+  address   String
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 // 🔔 Targeted Notification Engine. userId null = a broadcast shown to every

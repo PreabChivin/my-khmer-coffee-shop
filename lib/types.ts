@@ -164,6 +164,10 @@ export interface CheckoutRequestBody {
   customerPhone: string;
   orderType: OrderType;
   address?: string;
+  /** 📍 Exact pin dropped in the delivery-address map picker (optional —
+   *  absent for PickUp orders or a manually-typed fallback address). */
+  latitude?: number;
+  longitude?: number;
   note?: string;
   /** "Destiny Cup" fortune revealed to the customer, stored with the order. */
   fortune?: string | null;
@@ -187,6 +191,23 @@ export interface CheckoutResponseBody {
   orderId: string;
   totalAmount: number;
   isGift: boolean;
+}
+
+/** 📍 One entry in a logged-in customer's address book. */
+export interface SavedAddressDTO {
+  id: string;
+  label: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+}
+
+/** A single geocoding result — either a forward search hit or a reverse
+ *  lookup's resolved label. */
+export interface GeocodeResult {
+  label: string;
+  lat: number;
+  lng: number;
 }
 
 /** 🕒 Per-stage timeline timestamps (ISO strings, null = not reached yet). */

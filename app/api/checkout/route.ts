@@ -7,7 +7,7 @@ import {
   sanitizeCustomization,
 } from "@/lib/customization";
 import { computeDiscountedPrice } from "@/lib/pricing";
-import { computeAvailableFreeDrinks, normalizePhone } from "@/lib/loyalty";
+import { computeAvailableFreeDrinks, isValidPhone, normalizePhone } from "@/lib/loyalty";
 import { prizeById } from "@/lib/wheel";
 import { sendStaffGroupAlert } from "@/lib/telegram";
 import { getUserFromRequest } from "@/lib/customerAuth";
@@ -34,6 +34,8 @@ export async function POST(request: NextRequest) {
     orderType,
     items,
     address,
+    latitude,
+    longitude,
     note,
     fortune,
     spinPrize,
@@ -49,9 +51,30 @@ export async function POST(request: NextRequest) {
   const validSpinPrize =
     typeof spinPrize === "string" && prizeById(spinPrize) ? spinPrize : null;
 
+  // 📍 The pin dropped in the map picker — optional (absent for PickUp
+  // orders or an address typed via the picker's manual-entry fallback).
+  const validLatitude =
+    typeof latitude === "number" && Number.isFinite(latitude) && Math.abs(latitude) <= 90
+      ? latitude
+      : null;
+  const validLongitude =
+    typeof longitude === "number" && Number.isFinite(longitude) && Math.abs(longitude) <= 180
+      ? longitude
+      : null;
+
   if (!customerName?.trim() || !customerPhone?.trim()) {
     return NextResponse.json(
       { error: "customerName and customerPhone are required" },
+      { status: 400 }
+    );
+  }
+
+  // 📱 Latin digits only, 8-15 of them — mirrors the client-side sanitizer
+  // (lib/loyalty.ts) but re-checked server-side since that's trivially
+  // bypassable from a raw request.
+  if (!isValidPhone(customerPhone)) {
+    return NextResponse.json(
+      { error: "customerPhone must be 8-15 digits (0-9 only)" },
       { status: 400 }
     );
   }
@@ -252,6 +275,8 @@ export async function POST(request: NextRequest) {
           customerPhone: customerPhone.trim(),
           orderType,
           address: address?.trim() || null,
+          latitude: validLatitude,
+          longitude: validLongitude,
           note: note?.trim() || null,
           fortune:
             typeof fortune === "string" && fortune.trim()

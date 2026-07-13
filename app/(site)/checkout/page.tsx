@@ -2,17 +2,19 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Gift, Sparkles } from "lucide-react";
+import { Gift, MapPin, Sparkles } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useGroupCart } from "@/contexts/GroupCartContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useFulfillment } from "@/contexts/FulfillmentContext";
+import { useSession } from "@/contexts/SessionContext";
 import StaticPaymentModal from "@/components/StaticPaymentModal";
 import OrderSuccess from "@/components/OrderSuccess";
 import StampCard from "@/components/StampCard";
+import AddressMapPicker, { type PickedLocation } from "@/components/AddressMapPicker";
 import { customizationSurcharge, describeCustomization } from "@/lib/customization";
 import { randomFortune, type Fortune } from "@/lib/fortunes";
-import { normalizePhone } from "@/lib/loyalty";
+import { normalizePhone, sanitizePhoneInput } from "@/lib/loyalty";
 import { getTelegramSessionToken } from "@/lib/telegramSession";
 import { localizedName } from "@/lib/i18n";
 import type {
@@ -20,7 +22,13 @@ import type {
   DrinkCustomization,
   LoyaltyStatusResponseBody,
   OrderType,
+  SavedAddressDTO,
 } from "@/lib/types";
+
+/** Required-field marker — reused across every mandatory label in this form. */
+function RequiredMark() {
+  return <span className="text-crimson-500"> *</span>;
+}
 
 interface CheckoutState {
   orderId: string;
@@ -49,6 +57,7 @@ export default function CheckoutPage() {
     leaveGroupSession,
   } = useGroupCart();
   const { lang, t } = useLanguage();
+  const { user } = useSession();
   // Fulfillment choice (Delivery/Pick-up + address) carries over from the
   // homepage fulfillment bar so the customer doesn't re-enter it here.
   const { orderType, address, setOrderType, setAddress } = useFulfillment();
@@ -63,6 +72,52 @@ export default function CheckoutPage() {
   const [fortune, setFortune] = useState<Fortune | null>(null);
   // 🎡 Wheel prize captured at submit (cart clears on approval).
   const [submittedPrize, setSubmittedPrize] = useState<string | null>(null);
+
+  // 👤 Auto-populate the name field from the logged-in session, once, without
+  // ever clobbering something the guest already typed before it resolved.
+  useEffect(() => {
+    if (user?.name && !customerName) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing from the async session, not derivable at render time
+      setCustomerName(user.name);
+    }
+  }, [user, customerName]);
+
+  // 📍 Delivery-address map picker: the exact pin (if any) behind the
+  // address text living in FulfillmentContext, plus this customer's saved
+  // address book (logged-in only).
+  const [addressLat, setAddressLat] = useState<number | null>(null);
+  const [addressLng, setAddressLng] = useState<number | null>(null);
+  const [isMapOpen, setIsMapOpen] = useState(false);
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddressDTO[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    fetch("/api/saved-addresses")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: SavedAddressDTO[]) => {
+        if (!cancelled) setSavedAddresses(data);
+      })
+      .catch(() => {
+        if (!cancelled) setSavedAddresses([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  function applyPickedLocation(loc: PickedLocation) {
+    setAddress(loc.address);
+    setAddressLat(loc.latitude);
+    setAddressLng(loc.longitude);
+    setIsMapOpen(false);
+  }
+
+  function selectSavedAddress(saved: SavedAddressDTO) {
+    setAddress(saved.address);
+    setAddressLat(saved.latitude);
+    setAddressLng(saved.longitude);
+  }
 
   // 🐻 Loyalty status, fetched (debounced) as the phone number is typed —
   // not available for Bestie Cart group orders (ambiguous whose stamps).
@@ -128,6 +183,14 @@ export default function CheckoutPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    // The delivery address is now a custom picker (not a plain <input>), so
+    // native `required` validation doesn't cover it — check explicitly.
+    if (orderType === "Delivery" && !address.trim()) {
+      setError(t("checkout.addressRequired"));
+      return;
+    }
+
     setIsSubmitting(true);
 
     // Prefer the "Daily Vibe Check" the customer already shook in the cart.
@@ -144,6 +207,8 @@ export default function CheckoutPage() {
           customerPhone,
           orderType,
           address: orderType === "Delivery" ? address : undefined,
+          latitude: orderType === "Delivery" ? addressLat ?? undefined : undefined,
+          longitude: orderType === "Delivery" ? addressLng ?? undefined : undefined,
           note: note || undefined,
           fortune: chosenFortune.km,
           spinPrize: !isGroupMode ? spinPrize : null,
@@ -243,6 +308,7 @@ export default function CheckoutPage() {
           <div>
             <label className="mb-1 block text-sm font-medium text-coffee-700 dark:text-cream-200">
               {t("checkout.fullName")}
+              <RequiredMark />
             </label>
             <input
               required
@@ -256,11 +322,14 @@ export default function CheckoutPage() {
           <div>
             <label className="mb-1 block text-sm font-medium text-coffee-700 dark:text-cream-200">
               {t("checkout.phone")}
+              <RequiredMark />
             </label>
             <input
               required
+              type="tel"
+              inputMode="numeric"
               value={customerPhone}
-              onChange={(e) => setCustomerPhone(e.target.value)}
+              onChange={(e) => setCustomerPhone(sanitizePhoneInput(e.target.value))}
               className="w-full rounded-xl border border-coffee-300 bg-cream-50 px-4 py-2.5 text-coffee-900 outline-none focus:border-gold-500 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
               placeholder={t("checkout.phonePlaceholder")}
             />
@@ -332,15 +401,61 @@ export default function CheckoutPage() {
             <div>
               <label className="mb-1 block text-sm font-medium text-coffee-700 dark:text-cream-200">
                 {t("checkout.address")}
+                <RequiredMark />
               </label>
-              <input
-                required
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="w-full rounded-xl border border-coffee-300 bg-cream-50 px-4 py-2.5 text-coffee-900 outline-none focus:border-gold-500 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
-                placeholder={t("checkout.addressPlaceholder")}
-              />
+
+              {/* 📍 Saved-address quick-select (logged-in users only) */}
+              {user && savedAddresses.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  {savedAddresses.map((saved) => (
+                    <button
+                      key={saved.id}
+                      type="button"
+                      onClick={() => selectSavedAddress(saved)}
+                      className={`rounded-full border px-3 py-1 text-xs font-bold transition-colors ${
+                        address === saved.address
+                          ? "border-gold-500 bg-coffee-800 text-gold-400"
+                          : "border-coffee-300 text-coffee-600 hover:bg-coffee-100 dark:border-coffee-600 dark:text-cream-200 dark:hover:bg-coffee-700"
+                      }`}
+                    >
+                      📍 {saved.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {address ? (
+                <div className="flex items-start justify-between gap-3 rounded-xl border border-coffee-300 bg-cream-50 px-4 py-2.5 dark:border-coffee-600 dark:bg-coffee-900">
+                  <span className="flex items-start gap-2 text-sm text-coffee-800 dark:text-cream-100">
+                    <MapPin size={15} className="mt-0.5 shrink-0 text-crimson-500" />
+                    {address}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsMapOpen(true)}
+                    className="shrink-0 text-xs font-bold text-clay-600 underline decoration-dotted dark:text-clay-400"
+                  >
+                    {t("map.changeAddress")}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsMapOpen(true)}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-coffee-300 px-4 py-3 text-sm font-bold text-coffee-600 transition-colors hover:bg-coffee-100 dark:border-coffee-600 dark:text-cream-200 dark:hover:bg-coffee-800"
+                >
+                  {t("map.pickOnMap")}
+                </button>
+              )}
             </div>
+          )}
+
+          {isMapOpen && (
+            <AddressMapPicker
+              initial={address ? { address, latitude: addressLat, longitude: addressLng } : null}
+              onClose={() => setIsMapOpen(false)}
+              onConfirm={applyPickedLocation}
+            />
           )}
 
           <div>
