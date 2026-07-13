@@ -3,6 +3,8 @@
 import { Bike, Clock, Gift, Printer, Store, Users } from "lucide-react";
 import { localizedName, type Lang, type TranslationKey } from "@/lib/i18n";
 import { describeCustomization } from "@/lib/customization";
+import { generationFromDOB } from "@/lib/generation";
+import { pointsForAmount } from "@/lib/loyaltyPoints";
 import QrZoomThumbnail from "@/components/admin/QrZoomThumbnail";
 import type { DrinkCustomization, OrderStatus, PaymentStatus } from "@/lib/types";
 
@@ -33,7 +35,7 @@ export interface AdminOrder {
   isGroupOrder: boolean;
   // 👤 Linked customer account (null for guest orders).
   userId: string | null;
-  user: { id: string; name: string; loyaltyPoints: number } | null;
+  user: { id: string; name: string; loyaltyPoints: number; dateOfBirth: string | null } | null;
 }
 
 function formatTime(iso: string) {
@@ -41,6 +43,18 @@ function formatTime(iso: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/** "Just now" / "5m ago" / "1h 12m ago" — a live urgency signal, not just a
+ *  clock. `now` is passed down from OrdersBoard's single shared ticker so 20
+ *  cards don't each run their own interval. */
+function formatElapsed(createdAtIso: string, now: number): string {
+  const elapsedMs = Math.max(0, now - new Date(createdAtIso).getTime());
+  const minutes = Math.floor(elapsedMs / 60000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ${minutes % 60}m ago`;
 }
 
 const ACTIVE_STATUSES: OrderStatus[] = [
@@ -54,6 +68,7 @@ export default function OrderCard({
   order,
   lang,
   t,
+  now,
   isUpdating,
   onAdvance,
   onCancel,
@@ -64,6 +79,8 @@ export default function OrderCard({
   order: AdminOrder;
   lang: Lang;
   t: (key: TranslationKey) => string;
+  /** Date.now() ms, ticked once/sec by OrdersBoard's shared clock. */
+  now: number;
   isUpdating: boolean;
   onAdvance: (order: AdminOrder) => void;
   onCancel: (order: AdminOrder) => void;
@@ -83,17 +100,31 @@ export default function OrderCard({
       ? "border-matcha-500 shadow-[0_0_0_1px_rgba(127,209,174,0.6)]"
       : "border-coffee-200 dark:border-coffee-700";
 
+  // ⏱️ Urgency escalates the elapsed-time chip for anything still waiting on
+  // staff action — a plain clock doesn't communicate "this is getting old".
+  const elapsedMin = Math.max(0, now - new Date(order.createdAt).getTime()) / 60000;
+  const timeTone = !isPending
+    ? "text-coffee-400 dark:text-cream-400"
+    : elapsedMin >= 10
+      ? "animate-urgent-pulse rounded-full bg-crimson-100 px-1.5 py-0.5 font-bold text-crimson-700 dark:bg-coffee-950 dark:text-crimson-400"
+      : elapsedMin >= 5
+        ? "rounded-full bg-gold-100 px-1.5 py-0.5 font-bold text-gold-700 dark:bg-coffee-900 dark:text-gold-400"
+        : "text-coffee-400 dark:text-cream-400";
+
+  const generation = generationFromDOB(order.user?.dateOfBirth ?? null);
+  const pointsEarned = order.user ? pointsForAmount(order.totalAmount) : 0;
+
   return (
     <div
-      className={`rounded-xl border-2 bg-cream-50 p-3 shadow-sm dark:bg-coffee-900 ${cardTone}`}
+      className={`glass-card rounded-xl border-2 p-3 shadow-sm ${cardTone}`}
     >
       <div className="mb-1 flex items-center justify-between">
         <p className="text-sm font-bold text-coffee-900 dark:text-cream-50">
           #{order.id.slice(0, 8).toUpperCase()}
         </p>
-        <span className="flex items-center gap-1 text-xs text-coffee-400 dark:text-cream-400">
+        <span className={`flex items-center gap-1 text-xs ${timeTone}`} title={formatTime(order.createdAt)}>
           <Clock size={12} />
-          {formatTime(order.createdAt)}
+          {formatElapsed(order.createdAt, now)}
         </span>
       </div>
 
@@ -127,15 +158,31 @@ export default function OrderCard({
           <p className="text-xs text-coffee-500 dark:text-cream-300">
             {order.customerPhone}
           </p>
-          {/* 👤 Registered member — click to inspect lifetime history + LTV */}
+          {/* 👤 Registered member — click to inspect lifetime history + LTV.
+              Generation + points-this-order badges ride alongside it. */}
           {order.userId && order.user && (
-            <button
-              type="button"
-              onClick={() => onViewCustomer(order.userId!)}
-              className="mt-1 inline-flex items-center gap-1 rounded-full bg-gold-100 px-2 py-0.5 text-[10px] font-bold text-gold-700 transition-colors hover:bg-gold-200 dark:bg-coffee-900 dark:text-gold-400"
-            >
-              👤 {order.user.name} · {order.user.loyaltyPoints.toLocaleString()}💎
-            </button>
+            <div className="mt-1 flex flex-wrap items-center gap-1">
+              <button
+                type="button"
+                onClick={() => onViewCustomer(order.userId!)}
+                className="inline-flex items-center gap-1 rounded-full bg-gold-100 px-2 py-0.5 text-[10px] font-bold text-gold-700 transition-colors hover:bg-gold-200 dark:bg-coffee-900 dark:text-gold-400"
+              >
+                👤 {order.user.name} · {order.user.loyaltyPoints.toLocaleString()}💎
+              </button>
+              {generation && (
+                <span
+                  title={generation.label}
+                  className="inline-flex items-center rounded-full bg-clay-100 px-1.5 py-0.5 text-[10px] font-bold text-clay-700 dark:bg-coffee-900 dark:text-clay-400"
+                >
+                  {generation.emoji} {generation.km}
+                </span>
+              )}
+              {pointsEarned > 0 && (
+                <span className="inline-flex items-center rounded-full bg-matcha-100 px-1.5 py-0.5 text-[10px] font-bold text-matcha-700">
+                  +{pointsEarned} 💎
+                </span>
+              )}
+            </div>
           )}
         </div>
         {/* 🔍 Zoomable shop QR — the exact code this customer was shown */}

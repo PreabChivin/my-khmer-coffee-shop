@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
         payment: true,
         // 👤 Linked customer account (null for guest orders) so the dashboard
         // can offer a click-through to their lifetime history + LTV.
-        user: { select: { id: true, name: true, loyaltyPoints: true } },
+        user: { select: { id: true, name: true, loyaltyPoints: true, dateOfBirth: true } },
       },
     });
     return NextResponse.json(orders);

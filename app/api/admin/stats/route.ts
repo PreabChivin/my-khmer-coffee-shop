@@ -4,10 +4,13 @@ import { getAdminFromRequest } from "@/lib/auth";
 
 export interface AdminStatsResponseBody {
   dailyEarnings: number;
+  activeOrders: number;
   activeGroupCarts: number;
   topSellers: { productId: string; nameEn: string; nameKh: string; totalSold: number }[];
   topSpins: { prizeId: string; count: number }[];
 }
+
+const ACTIVE_ORDER_STATUSES = ["PENDING", "AWAITING_VERIFICATION", "PREPARING", "READY"];
 
 export async function GET(request: NextRequest) {
   if (!getAdminFromRequest(request)) {
@@ -17,7 +20,7 @@ export async function GET(request: NextRequest) {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
-  const [todaysOrders, activeGroupCarts, topSellerRows, topSpinRows] =
+  const [todaysOrders, activeOrders, activeGroupCarts, topSellerRows, topSpinRows] =
     await Promise.all([
       prisma.order.findMany({
         where: {
@@ -26,6 +29,7 @@ export async function GET(request: NextRequest) {
         },
         select: { totalAmount: true },
       }),
+      prisma.order.count({ where: { orderStatus: { in: ACTIVE_ORDER_STATUSES } } }),
       prisma.groupCart.count({ where: { status: "OPEN" } }),
       prisma.orderItem.groupBy({
         by: ["productId"],
@@ -72,6 +76,7 @@ export async function GET(request: NextRequest) {
 
   const body: AdminStatsResponseBody = {
     dailyEarnings,
+    activeOrders,
     activeGroupCarts,
     topSellers,
     topSpins,

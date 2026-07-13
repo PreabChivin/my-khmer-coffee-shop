@@ -299,6 +299,35 @@ const dictionary = {
     "adminStats.noSales": "No sales yet",
     "adminStats.mostSpun": "Most Spun Rewards 🎡",
     "adminStats.noSpins": "No spins yet",
+
+    // — Live Performance Metrics strip —
+    "metrics.todayRevenue": "Today's Total Revenue",
+    "metrics.activeOrders": "Active Orders",
+    "metrics.topProduct": "Top Selling Product",
+    "metrics.none": "—",
+
+    // — Order board filter bar —
+    "filter.all": "All",
+    "filter.pickup": "Pickup",
+    "filter.delivery": "Delivery",
+    "filter.searchPlaceholder": "Search order #, name, or phone…",
+    "filter.noMatches": "No orders match your filters.",
+
+    // — Account lifecycle (deactivate / reactivate / purge / create staff) —
+    "account.deactivated": "Deactivated",
+    "account.deactivate": "Deactivate",
+    "account.reactivate": "Reactivate",
+    "account.deactivateConfirmTitle": "Deactivate this account?",
+    "account.deactivateConfirmBody": "They won't be able to log in until reactivated. Nothing is deleted.",
+    "account.purge": "Permanently Delete",
+    "account.purgeConfirmTitle": "Permanently delete this account?",
+    "account.purgeConfirmBody": "This cannot be undone. Their redemption history and saved addresses are erased; their past orders are kept but unlinked from any account.",
+    "account.purgeConfirmLabel": "Type the account's email to confirm",
+    "account.purgeButton": "Delete Forever",
+    "account.addStaff": "+ Add Staff",
+    "account.addStaffTitle": "Provision a new Staff/Admin account",
+    "account.addressesTitle": "📍 Saved Addresses",
+    "account.noAddresses": "No saved addresses.",
     "adminOrder.giftBadge": "🎁 Gift",
     "adminOrder.groupBadge": "👯 Bestie Cart",
     "adminAction.markGiftRedeemed": "Mark Gift Redeemed 🎁",
@@ -709,6 +738,35 @@ const dictionary = {
     "adminStats.noSales": "មិនទាន់មានការលក់ទេ",
     "adminStats.mostSpun": "រង្វាន់បង្វិលច្រើនបំផុត 🎡",
     "adminStats.noSpins": "មិនទាន់មានការបង្វិលទេ",
+
+    // — ជួរម៉ែត្រិកសមិទ្ធផលផ្ទាល់ —
+    "metrics.todayRevenue": "ការលក់សរុបថ្ងៃនេះ",
+    "metrics.activeOrders": "ចំនួនកុម្ម៉ង់កំពុងរៀបចំ",
+    "metrics.topProduct": "មុខម្ហូបលក់ដាច់បំផុត",
+    "metrics.none": "—",
+
+    // — របាររំកិលការកម្ម៉ង់ —
+    "filter.all": "ទាំងអស់",
+    "filter.pickup": "មកយកខ្លួនឯង",
+    "filter.delivery": "ដឹកជញ្ជូន",
+    "filter.searchPlaceholder": "ស្វែងរកលេខការកម្ម៉ង់ ឈ្មោះ ឬលេខទូរស័ព្ទ...",
+    "filter.noMatches": "គ្មានការកម្ម៉ង់ត្រូវនឹងតម្រងរបស់អ្នកទេ។",
+
+    // — គ្រប់គ្រងគណនី (បិទដំណើរការ / បើកឡើងវិញ / លុបជាអចិន្ត្រៃយ៍ / បង្កើតបុគ្គលិក) —
+    "account.deactivated": "បិទដំណើរការ",
+    "account.deactivate": "បិទដំណើរការ",
+    "account.reactivate": "បើកឡើងវិញ",
+    "account.deactivateConfirmTitle": "បិទដំណើរការគណនីនេះ?",
+    "account.deactivateConfirmBody": "គេនឹងមិនអាចចូលគណនីបានទេ រហូតដល់បើកឡើងវិញ។ គ្មានទិន្នន័យត្រូវបានលុបទេ។",
+    "account.purge": "លុបជាអចិន្ត្រៃយ៍",
+    "account.purgeConfirmTitle": "លុបគណនីនេះជាអចិន្ត្រៃយ៍?",
+    "account.purgeConfirmBody": "សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។ ប្រវត្តិប្ដូររង្វាន់ និងអាសយដ្ឋានដែលបានរក្សាទុកនឹងត្រូវលុប។ ការកម្ម៉ង់ចាស់ៗនៅតែរក្សាទុក ប៉ុន្តែផ្ដាច់ចេញពីគណនី។",
+    "account.purgeConfirmLabel": "វាយអ៊ីមែលរបស់គណនីនេះ ដើម្បីបញ្ជាក់",
+    "account.purgeButton": "លុបជារៀងរហូត",
+    "account.addStaff": "+ បន្ថែមបុគ្គលិក",
+    "account.addStaffTitle": "បង្កើតគណនីបុគ្គលិក/អ្នកគ្រប់គ្រងថ្មី",
+    "account.addressesTitle": "📍 អាសយដ្ឋានដែលបានរក្សាទុក",
+    "account.noAddresses": "គ្មានអាសយដ្ឋានបានរក្សាទុកទេ។",
     "adminOrder.giftBadge": "🎁 កាដូ",
     "adminOrder.groupBadge": "👯 កន្ត្រកមិត្តភ័ក្តិ",
     "adminAction.markGiftRedeemed": "សម្គាល់ថាបានទទួលកាដូ 🎁",

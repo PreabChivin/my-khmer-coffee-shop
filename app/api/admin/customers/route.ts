@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
       joinedAt: u.createdAt.toISOString(),
       orderCount: u._count.orders,
       role: u.role,
+      deactivatedAt: u.deactivatedAt ? u.deactivatedAt.toISOString() : null,
     }));
     return NextResponse.json(body);
   } catch {

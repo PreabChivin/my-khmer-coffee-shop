@@ -132,6 +132,24 @@ body {
     0 10px 24px -10px color-mix(in srgb, var(--color-clay-500) 55%, transparent);
 }
 
+/* 🥂 Frosted-glass surface for the admin dashboard — translucent + blurred
+ * background only. Deliberately does NOT declare `border` (shorthand would
+ * beat Tailwind's per-property border-width and border-color utilities in
+ * the cascade, since this file loads after "@import tailwindcss" — that
+ * would silently kill any background or border utility classes applied
+ * alongside glass-card, e.g. OrderCard's urgency-colored borders). Callers
+ * add their own border utilities; this class only owns the frosted
+ * background and blur. */
+.glass-card {
+  background: color-mix(in srgb, var(--color-cream-50) 72%, transparent);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+}
+
+.dark .glass-card {
+  background: color-mix(in srgb, var(--color-coffee-800) 65%, transparent);
+}
+
 /* 🌈 Neon glassmorphism lift for menu cards on hover/touch */
 .card-neon {
   transition:

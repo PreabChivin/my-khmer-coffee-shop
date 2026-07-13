@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Coins, Ticket, Trophy, Users } from "lucide-react";
+import { Coins, ShoppingBag, Ticket, Trophy, Users } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { localizedName } from "@/lib/i18n";
 import { prizeById } from "@/lib/wheel";
@@ -34,12 +34,62 @@ export default function AdminStats() {
   }, []);
 
   const maxSold = stats?.topSellers[0]?.totalSold ?? 1;
+  const topProduct = stats?.topSellers[0] ?? null;
 
   return (
-    <div className="khmer-card mb-6 rounded-2xl bg-gradient-to-br from-clay-50 to-cream-100 p-5 dark:from-coffee-800 dark:to-coffee-900">
-      <p className="mb-4 font-heading text-base text-coffee-900 dark:text-cream-50">
-        {t("adminStats.title")}
-      </p>
+    <div>
+      {/* 📊 Live Performance Metrics — 3 headline cards, exact requested
+          labels. The richer panel below (Bestie Carts, full top-3 lists,
+          spins) stays as its own section since it has more detail than
+          these 3 cards are meant to show at a glance. */}
+      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="glass-card khmer-card flex items-center gap-3 rounded-2xl p-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gold-100 text-gold-700 dark:bg-coffee-900 dark:text-gold-400">
+            <Coins size={22} />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-[11px] font-bold uppercase tracking-wide text-coffee-400 dark:text-cream-400">
+              {t("metrics.todayRevenue")}
+            </p>
+            <p className="text-2xl font-extrabold text-coffee-900 dark:text-cream-50">
+              ${(stats?.dailyEarnings ?? 0).toFixed(2)}
+            </p>
+          </div>
+        </div>
+
+        <div className="glass-card khmer-card flex items-center gap-3 rounded-2xl p-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-crimson-100 text-crimson-600 dark:bg-coffee-900 dark:text-crimson-400">
+            <ShoppingBag size={22} />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-[11px] font-bold uppercase tracking-wide text-coffee-400 dark:text-cream-400">
+              {t("metrics.activeOrders")}
+            </p>
+            <p className="text-2xl font-extrabold text-coffee-900 dark:text-cream-50">
+              {stats?.activeOrders ?? 0}
+            </p>
+          </div>
+        </div>
+
+        <div className="glass-card khmer-card flex items-center gap-3 rounded-2xl p-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-matcha-100 text-matcha-700">
+            <Trophy size={22} />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-[11px] font-bold uppercase tracking-wide text-coffee-400 dark:text-cream-400">
+              {t("metrics.topProduct")}
+            </p>
+            <p className="truncate text-lg font-extrabold text-coffee-900 dark:text-cream-50">
+              {topProduct ? localizedName(topProduct, lang) : t("metrics.none")}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="khmer-card mb-6 rounded-2xl bg-gradient-to-br from-clay-50 to-cream-100 p-5 dark:from-coffee-800 dark:to-coffee-900">
+        <p className="mb-4 font-heading text-base text-coffee-900 dark:text-cream-50">
+          {t("adminStats.title")}
+        </p>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="flex items-center gap-3 rounded-2xl bg-white/70 p-3 dark:bg-coffee-800/70">
@@ -130,6 +180,7 @@ export default function AdminStats() {
             </ul>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

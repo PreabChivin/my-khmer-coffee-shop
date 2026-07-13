@@ -52,6 +52,8 @@ export interface AdminCustomerRowDTO {
   joinedAt: string;
   orderCount: number;
   role: Role;
+  /** ISO string when soft-deleted (login blocked), else null. */
+  deactivatedAt: string | null;
 }
 
 /** 🧾 One row in a customer's / admin's order-history view. */
@@ -77,6 +79,7 @@ export interface CustomerProfileDTO {
   lifetimeValue: number;
   orderCount: number;
   orders: OrderHistoryItemDTO[];
+  savedAddresses: SavedAddressDTO[];
 }
 
 /** 📣 A notification shown in the customer's bell (broadcast or targeted). */

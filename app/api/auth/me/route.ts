@@ -12,7 +12,9 @@ export async function GET(request: NextRequest) {
   }
 
   const user = await prisma.user.findUnique({ where: { id: session.id } });
-  if (!user) {
+  // 🚫 A still-valid JWT for an account deactivated after it was issued
+  // (JWTs aren't re-checked per-request otherwise) — treat as signed out.
+  if (!user || user.deactivatedAt) {
     return NextResponse.json({ user: null });
   }
 

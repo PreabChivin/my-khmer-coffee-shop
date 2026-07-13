@@ -23,14 +23,20 @@ export async function GET(
       return NextResponse.json({ error: "Customer not found" }, { status: 404 });
     }
 
-    const orders = await prisma.order.findMany({
-      where: { userId: id },
-      orderBy: { createdAt: "desc" },
-      include: {
-        payment: true,
-        items: { include: { product: true } },
-      },
-    });
+    const [orders, savedAddresses] = await Promise.all([
+      prisma.order.findMany({
+        where: { userId: id },
+        orderBy: { createdAt: "desc" },
+        include: {
+          payment: true,
+          items: { include: { product: true } },
+        },
+      }),
+      prisma.savedAddress.findMany({
+        where: { userId: id },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
 
     // Lifetime value = sum of totals for orders that were actually paid.
     const lifetimeValue = orders
@@ -42,6 +48,13 @@ export async function GET(
       lifetimeValue: Math.round(lifetimeValue * 100) / 100,
       orderCount: orders.length,
       orders: orders.map(toOrderHistoryItem),
+      savedAddresses: savedAddresses.map((a) => ({
+        id: a.id,
+        label: a.label,
+        address: a.address,
+        latitude: a.latitude,
+        longitude: a.longitude,
+      })),
     };
     return NextResponse.json(body);
   } catch {

@@ -164,6 +164,11 @@ model User {
   telegramId    String?  @unique
   // 🏅 Admin-awarded personalized badges (direct gift giver).
   badges        String[] @default([])
+  // 🚫 Soft-delete — set by an ADMIN via the User Management panel. Blocks
+  // login (see app/api/auth/login/route.ts) without erasing any data;
+  // reversible. The separate "Permanently Purge" action does a real DELETE
+  // instead of touching this field.
+  deactivatedAt DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   orders        Order[]

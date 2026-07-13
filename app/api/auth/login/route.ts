@@ -47,6 +47,16 @@ export async function POST(request: NextRequest) {
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) return genericError;
 
+  // 🚫 Soft-deleted account — correct credentials, but login is blocked.
+  // Distinct message is safe to show here (only someone who already knows
+  // the password reaches this branch, so it reveals nothing new).
+  if (user.deactivatedAt) {
+    return NextResponse.json(
+      { error: "This account has been deactivated. Contact an admin for help." },
+      { status: 403 }
+    );
+  }
+
   const body = toUserDTO(user);
   const response = NextResponse.json(body);
   response.cookies.set(

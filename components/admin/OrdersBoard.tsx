@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { AlertTriangle, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Confetti from "@/components/Confetti";
 import OrderCard, { type AdminOrder } from "@/components/admin/OrderCard";
 import ReceiptModal, { type ReceiptOrder } from "@/components/admin/ReceiptModal";
 import CustomerHistoryModal from "@/components/admin/CustomerHistoryModal";
-import type { OrderStatus } from "@/lib/types";
+import type { OrderStatus, OrderType } from "@/lib/types";
 
 // Short two-tone chime generated with the Web Audio API — no external audio
 // asset needed, and it works the moment a new order needs staff attention.
@@ -102,6 +102,21 @@ export default function OrdersBoard({
   // failure on a later background poll doesn't wrongly claim the initial
   // load itself failed (this ref survives across every poll tick).
   const hasLoadedOnce = useRef(false);
+
+  // 🕒 One shared ticking clock for every OrderCard's live urgency timer —
+  // 20 cards each running their own setInterval would be wasteful.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // 🔍 Filter bar — Order Type + text search. Client-side over the
+  // already-polled list, matching RegisteredCustomersPanel's search pattern.
+  // Deliberately does NOT affect the urgent-verification banner below — a
+  // filter should help browsing, never hide a genuine urgency alert.
+  const [typeFilter, setTypeFilter] = useState<"All" | OrderType>("All");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -200,7 +215,22 @@ export default function OrdersBoard({
     (o) => o.orderStatus === "AWAITING_VERIFICATION"
   ).length;
   const activeCount = orders.filter((o) => ACTIVE_STATUSES.includes(o.orderStatus)).length;
-  const historyOrders = orders.filter(
+
+  const filteredOrders = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return orders.filter((o) => {
+      if (typeFilter !== "All" && o.orderType !== typeFilter) return false;
+      if (!q) return true;
+      return (
+        o.id.slice(0, 8).toLowerCase().includes(q) ||
+        o.customerName.toLowerCase().includes(q) ||
+        o.customerPhone.toLowerCase().includes(q)
+      );
+    });
+  }, [orders, typeFilter, searchQuery]);
+
+  const isFiltering = typeFilter !== "All" || searchQuery.trim().length > 0;
+  const historyOrders = filteredOrders.filter(
     (o) => o.orderStatus === "COMPLETED" || o.orderStatus === "CANCELLED"
   );
 
@@ -213,7 +243,7 @@ export default function OrdersBoard({
   }
 
   return (
-    <div className="khmer-card rounded-2xl bg-cream-50/60 p-4 dark:bg-coffee-800/40">
+    <div className="glass-card khmer-card rounded-2xl p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="font-heading text-lg font-extrabold text-coffee-900 dark:text-cream-50">
           តំបន់បញ្ជាការកុម្ម៉ង់ 🛎️
@@ -224,7 +254,7 @@ export default function OrdersBoard({
       </div>
 
       {awaitingCount > 0 && (
-        <div className="animate-amber-glow mb-3 flex items-center gap-2 rounded-xl border-2 border-crimson-400 bg-crimson-50 px-3 py-2 text-crimson-700 dark:bg-coffee-950 dark:text-crimson-300">
+        <div className="animate-amber-glow mb-3 flex items-center gap-2 rounded-xl border-2 border-crimson-400 bg-crimson-50 px-3 py-2 text-crimson-700 dark:bg-coffee-950 dark:text-crimson-400">
           <AlertTriangle size={16} className="shrink-0" />
           <p className="text-xs font-semibold">
             {awaitingCount} — {t("adminAction.urgentBanner")}
@@ -232,9 +262,44 @@ export default function OrdersBoard({
         </div>
       )}
 
+      {/* 🔍 Filter bar — Order Type + search, filters all 3 columns at once */}
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex gap-1.5">
+          {(["All", "PickUp", "Delivery"] as const).map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => setTypeFilter(type)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
+                typeFilter === type
+                  ? "border-gold-500 bg-coffee-800 text-gold-400"
+                  : "border-coffee-300 text-coffee-600 hover:bg-coffee-100 dark:border-coffee-600 dark:text-cream-200 dark:hover:bg-coffee-700"
+              }`}
+            >
+              {type === "All" ? t("filter.all") : type === "PickUp" ? t("filter.pickup") : t("filter.delivery")}
+            </button>
+          ))}
+        </div>
+        <div className="relative flex-1">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-coffee-400" />
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t("filter.searchPlaceholder")}
+            className="w-full rounded-full border border-coffee-300 bg-cream-50 py-1.5 pl-8 pr-3 text-xs text-coffee-900 outline-none focus:border-gold-500 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
+          />
+        </div>
+      </div>
+
+      {isFiltering && filteredOrders.filter((o) => ACTIVE_STATUSES.includes(o.orderStatus)).length === 0 && (
+        <p className="mb-3 rounded-xl bg-coffee-100/60 px-3 py-2 text-center text-xs text-coffee-500 dark:bg-coffee-900/60 dark:text-cream-300">
+          {t("filter.noMatches")}
+        </p>
+      )}
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {STACKS.map((stack) => {
-          const stackOrders = orders.filter((o) => stack.statuses.includes(o.orderStatus));
+          const stackOrders = filteredOrders.filter((o) => stack.statuses.includes(o.orderStatus));
           return (
             <div
               key={stack.key}
@@ -264,6 +329,7 @@ export default function OrdersBoard({
                     order={order}
                     lang={lang}
                     t={t}
+                    now={now}
                     isUpdating={updatingId === order.id}
                     onAdvance={handleAdvance}
                     onCancel={handleCancel}
