@@ -41,7 +41,16 @@ export function verifySessionToken(token: string): SessionPayload | null {
 export function getSessionFromRequest(
   request: NextRequest
 ): SessionPayload | null {
-  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  // 📱 Mobile clients (React Native/Flutter) can't rely on httpOnly cookies
+  // the way a browser does, so a Bearer token is checked first — same JWT,
+  // same signing/verification, just carried differently. Every existing
+  // protected route already calls this one function (via lib/auth.ts and
+  // lib/customerAuth.ts), so this single change makes all of them
+  // Bearer-token-capable with zero edits elsewhere. Cookie remains the
+  // primary path for the web app.
+  const authHeader = request.headers.get("authorization");
+  const bearerToken = authHeader?.match(/^Bearer\s+(.+)$/i)?.[1];
+  const token = bearerToken ?? request.cookies.get(SESSION_COOKIE_NAME)?.value;
   if (!token) return null;
   return verifySessionToken(token);
 }
