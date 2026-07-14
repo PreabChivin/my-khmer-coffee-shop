@@ -8,6 +8,7 @@ import {
   type FontSize,
 } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { LANGUAGES } from "@/lib/i18n";
 
 const THEME_OPTIONS: {
   value: ColorMode;
@@ -30,7 +31,7 @@ const FONT_SIZES: {
 ];
 
 export default function AppearanceSettings() {
-  const { t } = useLanguage();
+  const { t, lang, setLang } = useLanguage();
   const { colorMode, setColorMode, fontSize, setFontSize } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -66,6 +67,27 @@ export default function AppearanceSettings() {
           <p className="mb-3 text-xs font-bold uppercase tracking-wide text-coffee-500 dark:text-cream-300">
             {t("appearance.title")}
           </p>
+
+          <p className="mb-1.5 text-xs font-medium text-coffee-600 dark:text-cream-200">
+            {t("appearance.language")}
+          </p>
+          <div className="mb-4 flex gap-2">
+            {LANGUAGES.map((option) => (
+              <button
+                key={option.code}
+                type="button"
+                onClick={() => setLang(option.code)}
+                aria-pressed={lang === option.code}
+                className={`flex flex-1 items-center justify-center rounded-xl border py-2.5 text-xs font-semibold transition-colors ${
+                  lang === option.code
+                    ? "border-gold-500 bg-coffee-800 text-gold-400"
+                    : "border-coffee-300 text-coffee-600 hover:bg-coffee-100 dark:border-coffee-600 dark:text-cream-200 dark:hover:bg-coffee-700"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
 
           <p className="mb-1.5 text-xs font-medium text-coffee-600 dark:text-cream-200">
             {t("appearance.theme")}

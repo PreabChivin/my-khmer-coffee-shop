@@ -8,7 +8,6 @@ import { useSession } from "@/contexts/SessionContext";
 import { useAuthModal } from "@/contexts/AuthModalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getOrCreateTelegramSessionToken } from "@/lib/telegramSession";
-import LanguageToggle from "@/components/LanguageToggle";
 import AppearanceSettings from "@/components/AppearanceSettings";
 import NotificationBell from "@/components/NotificationBell";
 
@@ -46,13 +45,13 @@ export default function Header() {
           </span>
           <span className="leading-tight">
             <span className="block font-heading text-lg">បេនជីមីន កាហ្វេ</span>
-            <span className="block text-[10px] uppercase tracking-[0.2em] text-coffee-500 dark:text-cream-300">
+            <span className="hidden text-[10px] uppercase tracking-[0.2em] text-coffee-500 dark:text-cream-300 sm:block">
               BenChimin Cafe
             </span>
           </span>
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           {/* 🔐 Staff badge — replaces the old floating StaffPortalButton.
               Only ever shown once a STAFF/ADMIN session is confirmed. */}
           {!isLoading && isStaff && (
@@ -78,14 +77,13 @@ export default function Header() {
               type="button"
               onClick={handleConnectTelegram}
               aria-label="🔔 ទទួលដំណឹងតាម Telegram"
-              className="flex items-center gap-1 whitespace-nowrap rounded-full bg-gradient-to-r from-lavender-400 to-clay-400 px-3 py-1.5 text-[11px] font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95"
+              className="hidden items-center gap-1 whitespace-nowrap rounded-full bg-gradient-to-r from-lavender-400 to-clay-400 p-2 text-[11px] font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95 sm:flex sm:px-3 sm:py-1.5"
             >
               <span className="md:hidden">🔔</span>
               <span className="hidden md:inline">🔔 ទទួលដំណឹងតាម Telegram</span>
             </button>
           )}
 
-          <LanguageToggle />
           <AppearanceSettings />
 
           {/* 👤 Customer account — logged out opens the auth modal; logged in

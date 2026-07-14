@@ -11,6 +11,7 @@ const dictionary = {
 
     "appearance.openAria": "Appearance settings",
     "appearance.title": "Appearance",
+    "appearance.language": "Language",
     "appearance.theme": "Theme",
     "appearance.light": "Light",
     "appearance.dark": "Dark",
@@ -452,6 +453,7 @@ const dictionary = {
 
     "appearance.openAria": "ការកំណត់រូបរាង",
     "appearance.title": "រូបរាង",
+    "appearance.language": "ភាសា",
     "appearance.theme": "រចនាប័ទ្ម",
     "appearance.light": "ភ្លឺ",
     "appearance.dark": "ងងឹត",
