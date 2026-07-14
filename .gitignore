@@ -44,3 +44,23 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# Capacitor / Android build output — the native project itself is committed,
+# but generated build artifacts, local SDK paths, and signing keys are not.
+android/app/build/
+android/build/
+android/.gradle/
+android/captures/
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/*.iml
+*.keystore
+*.jks
+
+# Capacitor / iOS build output
+ios/App/Pods/
+ios/App/build/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/

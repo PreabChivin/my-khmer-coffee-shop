@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BENCHIMIN CAFE</string>
+    <string name="title_activity_main">BENCHIMIN CAFE</string>
+    <string name="package_name">com.benchimincafe.app</string>
+    <string name="custom_url_scheme">com.benchimincafe.app</string>
+</resources>
