@@ -8,6 +8,7 @@ import { useSession } from "@/contexts/SessionContext";
 import { useAuthModal } from "@/contexts/AuthModalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getOrCreateTelegramSessionToken } from "@/lib/telegramSession";
+import { openExternalUrl } from "@/lib/openExternal";
 import AppearanceSettings from "@/components/AppearanceSettings";
 import NotificationBell from "@/components/NotificationBell";
 
@@ -25,15 +26,13 @@ export default function Header() {
 
   // 🔔 Connect this browser to the Telegram bot (device-session token). Opened
   // synchronously in the click handler — a real user gesture, so it isn't
-  // popup-blocked. From then on, every order placed on this device is
-  // auto-notified on status changes, no phone number needed.
+  // popup-blocked. openExternalUrl keeps the new-tab behavior on web but
+  // navigates same-frame inside the Capacitor app (where window.open "_blank"
+  // is swallowed) so the Telegram deep link still launches. From then on,
+  // every order placed on this device is auto-notified on status changes.
   function handleConnectTelegram() {
     const token = getOrCreateTelegramSessionToken();
-    window.open(
-      `https://t.me/${TELEGRAM_BOT_USERNAME}?start=s_${token}`,
-      "_blank",
-      "noopener,noreferrer"
-    );
+    openExternalUrl(`https://t.me/${TELEGRAM_BOT_USERNAME}?start=s_${token}`);
   }
 
   return (
