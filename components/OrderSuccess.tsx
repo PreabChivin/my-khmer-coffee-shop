@@ -10,7 +10,7 @@ import RatingPicker from "@/components/RatingPicker";
 import OrderTimeline from "@/components/OrderTimeline";
 import DeliveryTrackingMap from "@/components/DeliveryTrackingMap";
 import { prizeById } from "@/lib/wheel";
-import { openExternalUrl } from "@/lib/openExternal";
+import { openTelegramBot } from "@/lib/openExternal";
 import type { Fortune } from "@/lib/fortunes";
 import type {
   OrderStatus,
@@ -183,12 +183,11 @@ export default function OrderSuccess({
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => {
-                // Route through openExternalUrl so the deep link also launches
-                // inside the Capacitor app, where target="_blank" is swallowed.
+                // Route through openTelegramBot so the deep link also launches
+                // inside the Capacitor app (where target="_blank" is swallowed)
+                // and uses tg:// to bypass ISP-level t.me blocks.
                 e.preventDefault();
-                openExternalUrl(
-                  `https://t.me/${TELEGRAM_BOT_USERNAME}?start=${orderId}`
-                );
+                openTelegramBot(TELEGRAM_BOT_USERNAME, orderId);
               }}
               className="flex items-center gap-1.5 rounded-full border-2 border-clay-400 bg-clay-50 px-4 py-2 text-xs font-bold text-clay-700 transition-transform hover:scale-105 active:scale-95 dark:bg-coffee-900 dark:text-clay-300"
             >

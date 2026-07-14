@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { BadgeCheck, Bell, Camera, ImageOff, Loader2, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import BongBear from "@/components/mascots/BongBear";
-import { openExternalUrl } from "@/lib/openExternal";
+import { openTelegramBot } from "@/lib/openExternal";
 import type { OrderStatusResponseBody } from "@/lib/types";
 
 interface StaticPaymentModalProps {
@@ -261,12 +261,11 @@ export default function StaticPaymentModal({
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => {
-                // Route through openExternalUrl so the deep link also launches
-                // inside the Capacitor app, where target="_blank" is swallowed.
+                // Route through openTelegramBot so the deep link also launches
+                // inside the Capacitor app (where target="_blank" is swallowed)
+                // and uses tg:// to bypass ISP-level t.me blocks.
                 e.preventDefault();
-                openExternalUrl(
-                  `https://t.me/${TELEGRAM_BOT_USERNAME}?start=${orderId}`
-                );
+                openTelegramBot(TELEGRAM_BOT_USERNAME, orderId);
               }}
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border-2 border-clay-400 bg-clay-50 py-2.5 text-sm font-bold text-clay-700 transition-transform hover:scale-[1.02] active:scale-95 dark:bg-coffee-900 dark:text-clay-300"
             >

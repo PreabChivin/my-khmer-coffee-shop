@@ -38,4 +38,16 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Package visibility (Android 11+/API 30+): lets the app resolve and
+         launch the Telegram `tg://` deep link. Without this, startActivity for
+         a tg:// intent throws ActivityNotFoundException even when Telegram is
+         installed. The `tg://` scheme is used to open the bot directly and
+         bypass ISPs that DNS-block the t.me web domain. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="tg" />
+        </intent>
+    </queries>
 </manifest>

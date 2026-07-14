@@ -8,7 +8,7 @@ import { useSession } from "@/contexts/SessionContext";
 import { useAuthModal } from "@/contexts/AuthModalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getOrCreateTelegramSessionToken } from "@/lib/telegramSession";
-import { openExternalUrl } from "@/lib/openExternal";
+import { openTelegramBot } from "@/lib/openExternal";
 import AppearanceSettings from "@/components/AppearanceSettings";
 import NotificationBell from "@/components/NotificationBell";
 
@@ -31,8 +31,9 @@ export default function Header() {
   // is swallowed) so the Telegram deep link still launches. From then on,
   // every order placed on this device is auto-notified on status changes.
   function handleConnectTelegram() {
+    if (!TELEGRAM_BOT_USERNAME) return;
     const token = getOrCreateTelegramSessionToken();
-    openExternalUrl(`https://t.me/${TELEGRAM_BOT_USERNAME}?start=s_${token}`);
+    openTelegramBot(TELEGRAM_BOT_USERNAME, `s_${token}`);
   }
 
   return (

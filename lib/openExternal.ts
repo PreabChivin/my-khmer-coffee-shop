@@ -40,3 +40,33 @@ export function openExternalUrl(url: string): void {
     window.open(url, "_blank", "noopener,noreferrer");
   }
 }
+
+/**
+ * 🔔 Opens the Telegram bot's `/start` deep link with a payload
+ * (`s_<device-token>` from the header, or a bare orderId from the
+ * order/payment screens), platform-aware:
+ *
+ *   - Native (APK): `tg://resolve?domain=<bot>&start=<payload>` — an
+ *     app-to-app intent that opens the installed Telegram app DIRECTLY and
+ *     never touches the `t.me` web domain. Some ISPs (e.g. Metfone/Cambodia)
+ *     DNS-block `t.me`, which would make the https link time out; `tg://`
+ *     sidesteps that entirely. Telegram must be installed — which the user
+ *     needs anyway to receive the DMs. Requires a `<queries>` entry for the
+ *     `tg` scheme in AndroidManifest so the intent resolves on Android 11+.
+ *
+ *   - Web: `https://t.me/<bot>?start=<payload>` in a new tab, exactly as
+ *     before — desktop/browser users have no `tg://` handler guaranteed.
+ */
+export function openTelegramBot(botUsername: string, startPayload: string): void {
+  if (isCapacitorNative()) {
+    window.location.assign(
+      `tg://resolve?domain=${botUsername}&start=${encodeURIComponent(startPayload)}`
+    );
+  } else {
+    window.open(
+      `https://t.me/${botUsername}?start=${encodeURIComponent(startPayload)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  }
+}
