@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/customerAuth";
-import { toChatMessageDTO } from "@/lib/chatDto";
+import { toChatMessageDTO, chatMessageInclude } from "@/lib/chatDto";
 import { checkChatModeration, moderationErrorBody } from "@/lib/chatModeration";
 import { CHAT_EMOJIS, type ChatEmoji } from "@/lib/types";
 
-const messageInclude = {
-  user: { select: { id: true, name: true, role: true, dateOfBirth: true } },
-  reactions: true,
-} as const;
+const messageInclude = chatMessageInclude;
 
 /**
  * POST /api/chat/messages/[id]/react

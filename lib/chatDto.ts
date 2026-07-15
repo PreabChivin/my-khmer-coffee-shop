@@ -1,15 +1,55 @@
-import type { ChatMessage, ChatReaction, User } from "@prisma/client";
+import type { ChatMessage, ChatReaction, GameSession, User } from "@prisma/client";
 import { generationFromDOB } from "@/lib/generation";
-import { CHAT_EMOJIS, type ChatMessageDTO, type ChatReactionSummary } from "@/lib/types";
+import {
+  CHAT_EMOJIS,
+  type ChatGameSummary,
+  type ChatMessageDTO,
+  type ChatMessageKind,
+  type ChatReactionSummary,
+  type GameStatus,
+  type GameType,
+} from "@/lib/types";
+
+type GameWithPlayers = GameSession & {
+  player1: Pick<User, "id" | "name">;
+  player2: Pick<User, "id" | "name"> | null;
+};
 
 type MessageWithRelations = ChatMessage & {
   user: Pick<User, "id" | "name" | "role" | "dateOfBirth">;
   reactions: ChatReaction[];
+  gameSession?: GameWithPlayers | null;
 };
 
-/** Maps a Prisma ChatMessage (+ author + reactions) to the wire DTO, folding
- *  the flat ChatReaction rows into one summary per emoji so the client never
- *  has to do that aggregation itself. */
+/** Prisma include shape shared by every route that returns member-facing chat
+ *  messages, so game-invite bubbles always carry their live game summary. */
+export const chatMessageInclude = {
+  user: { select: { id: true, name: true, role: true, dateOfBirth: true } },
+  reactions: true,
+  gameSession: {
+    include: {
+      player1: { select: { id: true, name: true } },
+      player2: { select: { id: true, name: true } },
+    },
+  },
+} as const;
+
+function toGameSummary(game: GameWithPlayers, viewerId: string): ChatGameSummary {
+  return {
+    id: game.id,
+    gameType: game.gameType as GameType,
+    status: game.status as GameStatus,
+    player1: { id: game.player1.id, name: game.player1.name },
+    player2: game.player2 ? { id: game.player2.id, name: game.player2.name } : null,
+    winnerId: game.winnerId,
+    isTie: game.isTie,
+    iAmParticipant: game.player1Id === viewerId || game.player2Id === viewerId,
+  };
+}
+
+/** Maps a Prisma ChatMessage (+ author + reactions + optional game) to the
+ *  wire DTO, folding the flat ChatReaction rows into one summary per emoji so
+ *  the client never has to do that aggregation itself. */
 export function toChatMessageDTO(
   message: MessageWithRelations,
   viewerId: string
@@ -36,5 +76,7 @@ export function toChatMessageDTO(
     },
     isMine: message.userId === viewerId,
     reactions: summaries,
+    kind: message.kind as ChatMessageKind,
+    game: message.gameSession ? toGameSummary(message.gameSession, viewerId) : null,
   };
 }

@@ -175,6 +175,10 @@ model User {
   // only (still readable); chatBannedAt blocks the whole feature.
   chatMutedUntil DateTime?
   chatBannedAt   DateTime?
+  // 🎮 Café Lounge mini-game scoreboard (lifetime, across all matches).
+  gameWins      Int      @default(0)
+  gameLosses    Int      @default(0)
+  gameTies      Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   orders        Order[]
@@ -184,6 +188,8 @@ model User {
   chatMessages  ChatMessage[]
   chatReactions ChatReaction[]
   chatTyping    ChatTyping?
+  gamesAsPlayer1 GameSession[] @relation("GamePlayer1")
+  gamesAsPlayer2 GameSession[] @relation("GamePlayer2")
 }
 
 // 📍 Address book — a logged-in customer's saved delivery locations, each
@@ -380,6 +386,12 @@ model ChatMessage {
   // as evidence for other moderators, surfaced in the Admin Chat Monitor's
   // "Flagged" filter.
   flagged   Boolean  @default(false)
+  // 🎮 Message kind — "TEXT" (normal), "GAME_INVITE" (carries a challenge,
+  // links to gameSession), or "GAME_RESULT" (system announcement of a match
+  // outcome). Existing rows default to TEXT.
+  kind      String   @default("TEXT")
+  gameSessionId String?
+  gameSession   GameSession? @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   reactions ChatReaction[]
 
@@ -410,4 +422,33 @@ model ChatTyping {
   userId    String   @id
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   updatedAt DateTime @updatedAt
+}
+
+// 🎮 Café Lounge mini-game — a single match between two members. Created as
+// an OPEN challenge (player2 is null until the first member accepts). The
+// whole board + whose-turn lives in the `gameState` JSON so a move is one
+// lightweight single-row update, never a write per cell. "Real-time" is the
+// same short-interval polling as the chat (GET the row every ~1.5s while a
+// board is open) — no WebSocket/Pusher/Supabase.
+//
+// winnerId is a plain id (always equals player1Id or player2Id when set), not
+// a formal relation — the winner is always one of the two players, so a FK
+// would only add multi-cascade complexity for zero benefit.
+model GameSession {
+  id        String   @id @default(uuid())
+  gameType  String   @default("TICTACTOE") // "TICTACTOE"
+  // "PENDING" (open challenge) | "ACTIVE" | "COMPLETED" | "DECLINED" | "CANCELLED"
+  status    String   @default("PENDING")
+  player1Id String
+  player1   User     @relation("GamePlayer1", fields: [player1Id], references: [id], onDelete: Cascade)
+  player2Id String?
+  player2   User?    @relation("GamePlayer2", fields: [player2Id], references: [id], onDelete: Cascade)
+  winnerId  String? // null when tie or not finished; else equals a player id
+  isTie     Boolean  @default(false)
+  gameState Json // { board: (null|"player1"|"player2")[9], turn: "player1"|"player2" }
+  messages  ChatMessage[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
 }

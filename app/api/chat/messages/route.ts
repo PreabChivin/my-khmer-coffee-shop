@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/customerAuth";
-import { toChatMessageDTO } from "@/lib/chatDto";
+import { toChatMessageDTO, chatMessageInclude } from "@/lib/chatDto";
 import { checkChatModeration, moderationErrorBody } from "@/lib/chatModeration";
 import type { ChatMessageDTO } from "@/lib/types";
 
@@ -11,10 +11,7 @@ const MAX_TEXT_LENGTH = 500;
 // matches the client's ~2.5s debounce, so a closed tab goes quiet fast.
 const TYPING_FRESHNESS_MS = 6000;
 
-const messageInclude = {
-  user: { select: { id: true, name: true, role: true, dateOfBirth: true } },
-  reactions: true,
-} as const;
+const messageInclude = chatMessageInclude;
 
 /**
  * GET /api/chat/messages

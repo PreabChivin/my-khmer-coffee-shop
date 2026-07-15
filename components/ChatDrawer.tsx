@@ -1,10 +1,28 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { X, Send, ImagePlus, SmilePlus, Trash2, Sparkles, Loader2 } from "lucide-react";
+import {
+  X,
+  Send,
+  ImagePlus,
+  SmilePlus,
+  Trash2,
+  Sparkles,
+  Loader2,
+  Gamepad2,
+  Swords,
+} from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { useChat } from "@/contexts/ChatContext";
-import { CHAT_EMOJIS, type ChatEmoji, type ChatMessageDTO } from "@/lib/types";
+import ChatGameOverlay from "@/components/ChatGameOverlay";
+import {
+  CHAT_EMOJIS,
+  type ChatEmoji,
+  type ChatMessageDTO,
+  type ChatGameSummary,
+  type GameStatsDTO,
+  type GameDetailDTO,
+} from "@/lib/types";
 
 const POLL_INTERVAL_MS = 2500;
 const TYPING_HEARTBEAT_MS = 2500;
@@ -52,10 +70,22 @@ export default function ChatDrawer() {
   // when a poll comes back 403, replacing the whole feed with the reason
   // instead of silently showing an empty room forever.
   const [fatalError, setFatalError] = useState<string | null>(null);
+  // 🎮 Mini-game state — activeGameId opens the board overlay; the challenge
+  // menu shows the caller's scoreboard before they fire an open challenge.
+  const [activeGameId, setActiveGameId] = useState<string | null>(null);
+  const [showGameMenu, setShowGameMenu] = useState(false);
+  const [gameStats, setGameStats] = useState<GameStatsDTO | null>(null);
+  const [gameBusy, setGameBusy] = useState(false);
 
   const lastIdRef = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
+  // Mirror of `messages` for the poll loop to read without re-subscribing —
+  // used to refresh live game-invite state (see refreshActiveInvites).
+  const messagesRef = useRef<ChatMessageDTO[]>([]);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   const isTyping = text.trim().length > 0;
 
@@ -91,11 +121,59 @@ export default function ChatDrawer() {
           );
           lastIdRef.current = data.messages[data.messages.length - 1].id;
         }
+        // 🎮 The `?after=` cursor only returns NEW messages — an existing
+        // game-invite bubble whose linked match just changed (someone accepted,
+        // the game ended) would otherwise stay stale forever. So each tick we
+        // re-fetch the state of any non-terminal invite the viewer is part of
+        // (normally 0-1 games) and patch its embedded summary in place.
+        await refreshActiveInvites();
       } catch {
         // transient network hiccup — next tick retries
       } finally {
         setIsLoadingHistory(false);
       }
+    }
+
+    async function refreshActiveInvites() {
+      const active = messagesRef.current.filter(
+        (m) =>
+          m.kind === "GAME_INVITE" &&
+          m.game?.iAmParticipant &&
+          (m.game.status === "PENDING" || m.game.status === "ACTIVE")
+      );
+      if (active.length === 0) return;
+      const ids = [...new Set(active.map((m) => m.game!.id))];
+      const details = await Promise.all(
+        ids.map(async (id) => {
+          try {
+            const r = await fetch(`/api/chat/games/${id}`);
+            return r.ok ? ((await r.json()) as GameDetailDTO) : null;
+          } catch {
+            return null;
+          }
+        })
+      );
+      if (cancelled) return;
+      const byId = new Map<string, GameDetailDTO>();
+      for (const d of details) if (d) byId.set(d.id, d);
+      if (byId.size === 0) return;
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.kind !== "GAME_INVITE" || !m.game) return m;
+          const d = byId.get(m.game.id);
+          if (!d) return m;
+          return {
+            ...m,
+            game: {
+              ...m.game,
+              status: d.status,
+              player2: d.player2 ? { id: d.player2.id, name: d.player2.name } : null,
+              winnerId: d.winnerId,
+              isTie: d.isTie,
+            },
+          };
+        })
+      );
     }
 
     poll();
@@ -206,6 +284,72 @@ export default function ChatDrawer() {
     }
   }
 
+  // 🎮 Game actions ---------------------------------------------------------
+  async function openGameMenu() {
+    setShowGameMenu((v) => !v);
+    if (!gameStats) {
+      try {
+        const res = await fetch("/api/chat/games/stats");
+        if (res.ok) setGameStats((await res.json()) as GameStatsDTO);
+      } catch {
+        // non-critical
+      }
+    }
+  }
+
+  async function sendChallenge() {
+    setGameBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/chat/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameType: "TICTACTOE" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "មិនអាចបង្កើតការលេងបានទេ។");
+        return;
+      }
+      shouldAutoScrollRef.current = true;
+      setMessages((prev) => mergeMessages(prev, [data as ChatMessageDTO]));
+      lastIdRef.current = data.id;
+      setShowGameMenu(false);
+    } catch {
+      setError("បណ្តាញមានបញ្ហា សូមព្យាយាមម្តងទៀត។");
+    } finally {
+      setGameBusy(false);
+    }
+  }
+
+  async function acceptChallenge(game: ChatGameSummary) {
+    setGameBusy(true);
+    try {
+      const res = await fetch(`/api/chat/games/${game.id}/accept`, { method: "POST" });
+      if (res.ok) {
+        setActiveGameId(game.id);
+      } else {
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? "មិនអាចចូលរួមបានទេ។");
+      }
+    } catch {
+      setError("បណ្តាញមានបញ្ហា សូមព្យាយាមម្តងទៀត។");
+    } finally {
+      setGameBusy(false);
+    }
+  }
+
+  async function cancelChallenge(game: ChatGameSummary) {
+    setGameBusy(true);
+    try {
+      await fetch(`/api/chat/games/${game.id}/cancel`, { method: "POST" });
+    } catch {
+      // best-effort; the next poll reconciles the invite bubble's state
+    } finally {
+      setGameBusy(false);
+    }
+  }
+
   if (!user || !isChatOpen) return null;
 
   return (
@@ -261,8 +405,32 @@ export default function ChatDrawer() {
             </div>
           ) : (
             messages.map((message, index) => {
+              if (message.kind === "GAME_RESULT") {
+                return (
+                  <div key={message.id} className="flex justify-center py-1">
+                    <span className="rounded-full bg-gradient-to-r from-gold-100 to-clay-100 px-3 py-1.5 text-center text-xs font-bold text-clay-700 dark:from-coffee-800 dark:to-coffee-800 dark:text-gold-400">
+                      {message.text}
+                    </span>
+                  </div>
+                );
+              }
+              if (message.kind === "GAME_INVITE" && message.game) {
+                return (
+                  <GameInviteBubble
+                    key={message.id}
+                    game={message.game}
+                    busy={gameBusy}
+                    onAccept={() => acceptChallenge(message.game!)}
+                    onCancel={() => cancelChallenge(message.game!)}
+                    onOpenBoard={() => setActiveGameId(message.game!.id)}
+                  />
+                );
+              }
               const prev = messages[index - 1];
-              const isGrouped = prev && prev.author.id === message.author.id;
+              const isGrouped =
+                prev &&
+                prev.author.id === message.author.id &&
+                prev.kind === "TEXT";
               return (
                 <ChatBubble
                   key={message.id}
@@ -338,8 +506,52 @@ export default function ChatDrawer() {
               </div>
             )}
 
+            {/* 🎮 Game challenge menu */}
+            {showGameMenu && (
+              <div className="mx-3 mb-2 animate-pop-in rounded-2xl border border-lavender-400/60 bg-lavender-50 p-3 dark:border-coffee-600 dark:bg-coffee-800">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="flex items-center gap-1.5 text-sm font-bold text-coffee-900 dark:text-cream-50">
+                    <Gamepad2 size={15} /> ហ្គេម · Games
+                  </p>
+                  {gameStats && (
+                    <p className="text-[11px] font-semibold text-coffee-500 dark:text-cream-300">
+                      🏆 {gameStats.wins}W · {gameStats.losses}L · {gameStats.ties}T
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={sendChallenge}
+                  disabled={gameBusy}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-lavender-500 to-crimson-500 py-2.5 text-sm font-bold text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+                >
+                  {gameBusy ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <Swords size={15} />
+                  )}
+                  ប្រកួត Tic-Tac-Toe (រកគូ)
+                </button>
+                <p className="mt-1.5 text-center text-[10px] text-coffee-400 dark:text-cream-400">
+                  អ្នកដំបូងដែលចុច «ចូលរួម» នឹងក្លាយជាគូប្រកួតរបស់អ្នក
+                </p>
+              </div>
+            )}
+
             {/* ✍️ Composer */}
             <div className="flex items-end gap-2 border-t-2 border-gold-500/40 bg-cream-50 p-3 dark:bg-coffee-900">
+              <button
+                type="button"
+                onClick={openGameMenu}
+                aria-label="Play a game"
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-95 ${
+                  showGameMenu
+                    ? "bg-lavender-500 text-white"
+                    : "bg-coffee-100 text-coffee-700 dark:bg-coffee-800 dark:text-cream-200"
+                }`}
+              >
+                <Gamepad2 size={18} />
+              </button>
               <button
                 type="button"
                 onClick={() => setShowImageField((v) => !v)}
@@ -378,6 +590,97 @@ export default function ChatDrawer() {
               </button>
             </div>
           </>
+        )}
+
+        {/* 🎮 Game board overlay — fills the drawer while a match is open */}
+        {activeGameId && (
+          <ChatGameOverlay
+            gameId={activeGameId}
+            myUserId={user.id}
+            onClose={() => setActiveGameId(null)}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** 🎮 Game invite bubble — a challenge posted to the shared room. Its state is
+ *  driven entirely by the polled game summary, so it live-updates from
+ *  "waiting" → "playing" → "over" for everyone without any local wiring. */
+function GameInviteBubble({
+  game,
+  busy,
+  onAccept,
+  onCancel,
+  onOpenBoard,
+}: {
+  game: ChatGameSummary;
+  busy: boolean;
+  onAccept: () => void;
+  onCancel: () => void;
+  onOpenBoard: () => void;
+}) {
+  const p1 = game.player1.name;
+  return (
+    <div className="flex justify-center py-1">
+      <div className="w-full max-w-[85%] rounded-2xl border-2 border-lavender-400 bg-gradient-to-br from-lavender-50 to-clay-50 p-3 text-center shadow-sm dark:border-lavender-500/60 dark:from-coffee-800 dark:to-coffee-800">
+        <p className="text-2xl">🎮</p>
+        <p className="mt-0.5 text-sm font-bold text-coffee-900 dark:text-cream-50">
+          {p1} បានប្រកួត Tic-Tac-Toe!
+        </p>
+
+        {game.status === "PENDING" && (
+          <div className="mt-2">
+            {game.iAmParticipant ? (
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={busy}
+                className="rounded-full bg-coffee-100 px-4 py-1.5 text-xs font-bold text-coffee-600 transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 dark:bg-coffee-900 dark:text-cream-300"
+              >
+                រង់ចាំគូប្រកួត... (ចុចដើម្បីបោះបង់)
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={onAccept}
+                disabled={busy}
+                className="rounded-full bg-gradient-to-r from-matcha-500 to-lavender-500 px-5 py-1.5 text-xs font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
+              >
+                ✅ ចូលរួម · Accept
+              </button>
+            )}
+          </div>
+        )}
+
+        {game.status === "ACTIVE" && (
+          <div className="mt-2">
+            {game.iAmParticipant ? (
+              <button
+                type="button"
+                onClick={onOpenBoard}
+                className="rounded-full bg-gradient-to-r from-lavender-500 to-crimson-500 px-5 py-1.5 text-xs font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
+              >
+                🎯 បើកក្តារ · Open Board
+              </button>
+            ) : (
+              <p className="text-xs font-semibold text-coffee-500 dark:text-cream-300">
+                {p1} vs {game.player2?.name} កំពុងលេង...
+              </p>
+            )}
+          </div>
+        )}
+
+        {game.status === "COMPLETED" && (
+          <p className="mt-1.5 text-xs font-semibold text-coffee-400 dark:text-cream-400">
+            ការប្រកួតបានបញ្ចប់
+          </p>
+        )}
+        {(game.status === "CANCELLED" || game.status === "DECLINED") && (
+          <p className="mt-1.5 text-xs font-semibold text-coffee-400 dark:text-cream-400">
+            ការអញ្ជើញត្រូវបានបោះបង់
+          </p>
         )}
       </div>
     </div>

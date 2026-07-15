@@ -331,6 +331,27 @@ export interface ChatReactionSummary {
   reactedByMe: boolean;
 }
 
+/** 🎮 Mini-game supported types (only Tic-Tac-Toe for now). */
+export type GameType = "TICTACTOE";
+export type GameStatus = "PENDING" | "ACTIVE" | "COMPLETED" | "DECLINED" | "CANCELLED";
+
+/** Compact game summary embedded on a GAME_INVITE chat message, so the invite
+ *  bubble in the feed can render its live state (Accept / Waiting / Open Board
+ *  / result) straight from the polled message list — no extra request. */
+export interface ChatGameSummary {
+  id: string;
+  gameType: GameType;
+  status: GameStatus;
+  player1: { id: string; name: string };
+  player2: { id: string; name: string } | null;
+  winnerId: string | null;
+  isTie: boolean;
+  /** True when the requesting user is player1 or player2 in this match. */
+  iAmParticipant: boolean;
+}
+
+export type ChatMessageKind = "TEXT" | "GAME_INVITE" | "GAME_RESULT";
+
 export interface ChatMessageDTO {
   id: string;
   text: string;
@@ -346,6 +367,35 @@ export interface ChatMessageDTO {
    *  client-side (staff/admin can delete any message; see isStaff on the hook). */
   isMine: boolean;
   reactions: ChatReactionSummary[];
+  /** "TEXT" for ordinary messages; "GAME_INVITE"/"GAME_RESULT" render specially. */
+  kind: ChatMessageKind;
+  /** Present only on GAME_INVITE messages. */
+  game: ChatGameSummary | null;
+}
+
+/** 🎮 Full board state for the game overlay — fetched on open and re-polled
+ *  every ~1.5s while a board is on screen. `board` is emoji marks resolved
+ *  server-side so the client never maps player slots to symbols itself. */
+export interface GameDetailDTO {
+  id: string;
+  gameType: GameType;
+  status: GameStatus;
+  /** 9 cells: an emoji mark or null. */
+  board: (string | null)[];
+  player1: { id: string; name: string; mark: string };
+  player2: { id: string; name: string; mark: string } | null;
+  /** Whose move it is (null once the game is over). */
+  currentTurnPlayerId: string | null;
+  winnerId: string | null;
+  isTie: boolean;
+  /** "player1" | "player2" for a participant, else null (spectator). */
+  mySlot: "player1" | "player2" | null;
+}
+
+export interface GameStatsDTO {
+  wins: number;
+  losses: number;
+  ties: number;
 }
 
 /** 👑 Admin Chat Monitor row — deliberately a separate shape from
