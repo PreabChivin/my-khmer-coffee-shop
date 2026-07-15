@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/customerAuth";
 import { toChatMessageDTO } from "@/lib/chatDto";
+import { checkChatModeration, moderationErrorBody } from "@/lib/chatModeration";
 import type { ChatMessageDTO } from "@/lib/types";
 
 const PAGE_SIZE = 50;
@@ -27,6 +28,11 @@ export async function GET(request: NextRequest) {
   const session = getUserFromRequest(request);
   if (!session) {
     return NextResponse.json({ error: "សូមចូលគណនីជាមុនសិន។" }, { status: 401 });
+  }
+
+  const modCheck = await checkChatModeration(session.id, false);
+  if (modCheck.blocked) {
+    return NextResponse.json(moderationErrorBody(modCheck), { status: 403 });
   }
 
   const afterId = request.nextUrl.searchParams.get("after");
@@ -80,6 +86,11 @@ export async function POST(request: NextRequest) {
   const session = getUserFromRequest(request);
   if (!session) {
     return NextResponse.json({ error: "សូមចូលគណនីជាមុនសិន។" }, { status: 401 });
+  }
+
+  const modCheck = await checkChatModeration(session.id, true);
+  if (modCheck.blocked) {
+    return NextResponse.json(moderationErrorBody(modCheck), { status: 403 });
   }
 
   let body: { text?: unknown; imageUrl?: unknown };

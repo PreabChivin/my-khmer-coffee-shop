@@ -38,6 +38,7 @@ export default function AdminDashboard({
         onProductCreated={handleProductCreated}
         onProductUpdated={handleProductUpdated}
         onProductDeleted={handleProductDeleted}
+        isAdminRole={isAdminRole}
       />
       {isAdminRole && (
         <div className="mx-auto max-w-[1600px] px-4 pb-16 sm:px-6">

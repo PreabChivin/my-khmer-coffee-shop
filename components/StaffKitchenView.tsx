@@ -8,6 +8,7 @@ import RegisteredCustomersPanel from "@/components/admin/RegisteredCustomersPane
 import RedemptionsPanel from "@/components/admin/RedemptionsPanel";
 import NotificationsPanel from "@/components/admin/NotificationsPanel";
 import LuckyDrawPanel from "@/components/admin/LuckyDrawPanel";
+import AdminChatMonitorPanel from "@/components/admin/AdminChatMonitorPanel";
 import AdminToast from "@/components/admin/AdminToast";
 import type { ProductDTO } from "@/lib/types";
 
@@ -24,11 +25,13 @@ export default function StaffKitchenView({
   onProductCreated,
   onProductUpdated,
   onProductDeleted,
+  isAdminRole,
 }: {
   products: ProductDTO[];
   onProductCreated: (created: ProductDTO) => void;
   onProductUpdated: (updated: ProductDTO) => void;
   onProductDeleted: (id: string) => void;
+  isAdminRole: boolean;
 }) {
   // 🚨 One shared error toast for the whole dashboard — any failed mutation
   // in either panel surfaces here instead of freezing or failing silently.
@@ -70,8 +73,13 @@ export default function StaffKitchenView({
       </div>
 
       {/* 👥 Full registered-customer roster with generation + LTV drill-down */}
-      <div className="px-4 pb-16 sm:px-6">
+      <div className="px-4 sm:px-6">
         <RegisteredCustomersPanel onError={showError} />
+      </div>
+
+      {/* 💬 Café Lounge moderation — Staff view/flag/delete, Admin also mutes/bans */}
+      <div className="px-4 pb-16 sm:px-6">
+        <AdminChatMonitorPanel isAdminRole={isAdminRole} onError={showError} />
       </div>
 
       {toastMessage && (

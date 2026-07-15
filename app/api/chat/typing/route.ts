@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/customerAuth";
+import { checkChatModeration } from "@/lib/chatModeration";
 
 /**
  * POST /api/chat/typing
@@ -13,6 +14,13 @@ export async function POST(request: NextRequest) {
   const session = getUserFromRequest(request);
   if (!session) {
     return NextResponse.json({ error: "សូមចូលគណនីជាមុនសិន។" }, { status: 401 });
+  }
+
+  // Muted/banned members just don't get a typing row — best-effort endpoint,
+  // no need to surface a 403 for a purely cosmetic indicator.
+  const modCheck = await checkChatModeration(session.id, true);
+  if (modCheck.blocked) {
+    return NextResponse.json({ success: false });
   }
 
   try {

@@ -48,6 +48,10 @@ export default function ChatDrawer() {
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [openReactionBarFor, setOpenReactionBarFor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // 🚫 A ban blocks reads too (unlike a mute, which only blocks writes) — set
+  // when a poll comes back 403, replacing the whole feed with the reason
+  // instead of silently showing an empty room forever.
+  const [fatalError, setFatalError] = useState<string | null>(null);
 
   const lastIdRef = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -67,7 +71,14 @@ export default function ChatDrawer() {
           ? `/api/chat/messages?after=${lastIdRef.current}`
           : "/api/chat/messages";
         const res = await fetch(url);
-        if (!res.ok || cancelled) return;
+        if (cancelled) return;
+        if (!res.ok) {
+          if (res.status === 403) {
+            const body = await res.json().catch(() => null);
+            setFatalError(body?.error ?? "អ្នកមិនអាចចូលប្រើការជជែកនេះទេ។");
+          }
+          return;
+        }
         const data = (await res.json()) as {
           messages: ChatMessageDTO[];
           typingUsers: { id: string; name: string }[];
@@ -234,7 +245,12 @@ export default function ChatDrawer() {
           onScroll={handleScroll}
           className="flex-1 space-y-3 overflow-y-auto overscroll-contain px-3 py-4"
         >
-          {isLoadingHistory ? (
+          {fatalError ? (
+            <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center text-coffee-500 dark:text-cream-300">
+              <p className="text-3xl">🚫</p>
+              <p className="text-sm font-semibold">{fatalError}</p>
+            </div>
+          ) : isLoadingHistory ? (
             <div className="flex h-full items-center justify-center text-sm text-coffee-500 dark:text-cream-300">
               កំពុងផ្ទុកសារ...
             </div>
@@ -275,90 +291,94 @@ export default function ChatDrawer() {
           )}
         </div>
 
-        {/* ☕ Icebreakers — quick-fill prompts, hidden once a real conversation exists */}
-        {messages.length < 3 && (
-          <div className="flex gap-1.5 overflow-x-auto px-3 pb-1.5">
-            {ICEBREAKERS.map((prompt) => (
+        {!fatalError && (
+          <>
+            {/* ☕ Icebreakers — quick-fill prompts, hidden once a real conversation exists */}
+            {messages.length < 3 && (
+              <div className="flex gap-1.5 overflow-x-auto px-3 pb-1.5">
+                {ICEBREAKERS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => sendMessage(prompt)}
+                    disabled={isSending}
+                    className="shrink-0 whitespace-nowrap rounded-full border border-lavender-400/60 bg-lavender-100 px-3 py-1.5 text-xs font-semibold text-lavender-500 transition-transform hover:scale-105 active:scale-95 dark:bg-coffee-800 dark:text-lavender-400"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {error && (
+              <p className="px-3 pb-1 text-xs font-semibold text-crimson-600 dark:text-crimson-400">
+                {error}
+              </p>
+            )}
+
+            {showImageField && (
+              <div className="flex items-center gap-2 px-3 pb-2">
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="ដាក់តំណរូបភាព (https://...)"
+                  className="flex-1 rounded-full border border-coffee-300 bg-cream-50 px-3 py-1.5 text-xs outline-none focus:border-lavender-500 dark:border-coffee-600 dark:bg-coffee-800 dark:text-cream-50"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageUrl("");
+                    setShowImageField(false);
+                  }}
+                  className="text-xs font-semibold text-coffee-500 dark:text-cream-300"
+                >
+                  បោះបង់
+                </button>
+              </div>
+            )}
+
+            {/* ✍️ Composer */}
+            <div className="flex items-end gap-2 border-t-2 border-gold-500/40 bg-cream-50 p-3 dark:bg-coffee-900">
               <button
-                key={prompt}
                 type="button"
-                onClick={() => sendMessage(prompt)}
-                disabled={isSending}
-                className="shrink-0 whitespace-nowrap rounded-full border border-lavender-400/60 bg-lavender-100 px-3 py-1.5 text-xs font-semibold text-lavender-500 transition-transform hover:scale-105 active:scale-95 dark:bg-coffee-800 dark:text-lavender-400"
+                onClick={() => setShowImageField((v) => !v)}
+                aria-label="Attach image link"
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-95 ${
+                  showImageField
+                    ? "bg-lavender-500 text-white"
+                    : "bg-coffee-100 text-coffee-700 dark:bg-coffee-800 dark:text-cream-200"
+                }`}
               >
-                {prompt}
+                <ImagePlus size={18} />
               </button>
-            ))}
-          </div>
+              <div className="flex-1">
+                <textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value.slice(0, MAX_TEXT_LENGTH))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      sendMessage();
+                    }
+                  }}
+                  rows={1}
+                  placeholder="សរសេរអ្វីមួយ... ✨"
+                  className="max-h-24 w-full resize-none rounded-2xl border border-coffee-300 bg-cream-100 px-3.5 py-2.5 text-sm outline-none focus:border-lavender-500 dark:border-coffee-600 dark:bg-coffee-800 dark:text-cream-50"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => sendMessage()}
+                disabled={isSending || (!text.trim() && !imageUrl.trim())}
+                aria-label="Send message"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-lavender-500 to-crimson-500 text-white shadow-lg transition-transform hover:scale-110 active:scale-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+              >
+                {isSending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+              </button>
+            </div>
+          </>
         )}
-
-        {error && (
-          <p className="px-3 pb-1 text-xs font-semibold text-crimson-600 dark:text-crimson-400">
-            {error}
-          </p>
-        )}
-
-        {showImageField && (
-          <div className="flex items-center gap-2 px-3 pb-2">
-            <input
-              type="url"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="ដាក់តំណរូបភាព (https://...)"
-              className="flex-1 rounded-full border border-coffee-300 bg-cream-50 px-3 py-1.5 text-xs outline-none focus:border-lavender-500 dark:border-coffee-600 dark:bg-coffee-800 dark:text-cream-50"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                setImageUrl("");
-                setShowImageField(false);
-              }}
-              className="text-xs font-semibold text-coffee-500 dark:text-cream-300"
-            >
-              បោះបង់
-            </button>
-          </div>
-        )}
-
-        {/* ✍️ Composer */}
-        <div className="flex items-end gap-2 border-t-2 border-gold-500/40 bg-cream-50 p-3 dark:bg-coffee-900">
-          <button
-            type="button"
-            onClick={() => setShowImageField((v) => !v)}
-            aria-label="Attach image link"
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-95 ${
-              showImageField
-                ? "bg-lavender-500 text-white"
-                : "bg-coffee-100 text-coffee-700 dark:bg-coffee-800 dark:text-cream-200"
-            }`}
-          >
-            <ImagePlus size={18} />
-          </button>
-          <div className="flex-1">
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value.slice(0, MAX_TEXT_LENGTH))}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  sendMessage();
-                }
-              }}
-              rows={1}
-              placeholder="សរសេរអ្វីមួយ... ✨"
-              className="max-h-24 w-full resize-none rounded-2xl border border-coffee-300 bg-cream-100 px-3.5 py-2.5 text-sm outline-none focus:border-lavender-500 dark:border-coffee-600 dark:bg-coffee-800 dark:text-cream-50"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={() => sendMessage()}
-            disabled={isSending || (!text.trim() && !imageUrl.trim())}
-            aria-label="Send message"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-lavender-500 to-crimson-500 text-white shadow-lg transition-transform hover:scale-110 active:scale-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
-          >
-            {isSending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-          </button>
-        </div>
       </div>
     </div>
   );

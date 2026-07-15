@@ -347,3 +347,25 @@ export interface ChatMessageDTO {
   isMine: boolean;
   reactions: ChatReactionSummary[];
 }
+
+/** 👑 Admin Chat Monitor row — deliberately a separate shape from
+ *  ChatMessageDTO (never sent to regular members): includes the author's
+ *  email and live moderation status, and — unlike the customer feed —
+ *  includes soft-deleted messages so Staff/Admin retain a full audit trail. */
+export interface AdminChatMessageDTO {
+  id: string;
+  text: string;
+  imageUrl: string | null;
+  createdAt: string;
+  deletedAt: string | null;
+  flagged: boolean;
+  reactionCount: number;
+  author: {
+    id: string;
+    name: string;
+    email: string;
+    role: Role;
+    chatMutedUntil: string | null;
+    chatBannedAt: string | null;
+  };
+}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/customerAuth";
 import { toChatMessageDTO } from "@/lib/chatDto";
+import { checkChatModeration, moderationErrorBody } from "@/lib/chatModeration";
 import { CHAT_EMOJIS, type ChatEmoji } from "@/lib/types";
 
 const messageInclude = {
@@ -22,6 +23,11 @@ export async function POST(
   const session = getUserFromRequest(request);
   if (!session) {
     return NextResponse.json({ error: "សូមចូលគណនីជាមុនសិន។" }, { status: 401 });
+  }
+
+  const modCheck = await checkChatModeration(session.id, true);
+  if (modCheck.blocked) {
+    return NextResponse.json(moderationErrorBody(modCheck), { status: 403 });
   }
 
   const { id: messageId } = await params;

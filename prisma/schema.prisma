@@ -169,6 +169,12 @@ model User {
   // reversible. The separate "Permanently Purge" action does a real DELETE
   // instead of touching this field.
   deactivatedAt DateTime?
+  // 🔇 Chat moderation (Café Lounge) — ADMIN-only actions, independent of
+  // account deactivation so a customer can be timed out of chat without
+  // touching their ability to order. chatMutedUntil blocks sending/reacting
+  // only (still readable); chatBannedAt blocks the whole feature.
+  chatMutedUntil DateTime?
+  chatBannedAt   DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   orders        Order[]
@@ -370,10 +376,15 @@ model ChatMessage {
   // 🛡️ Staff/Admin moderation soft-delete — hides the message from the feed
   // without erasing it, mirroring the User.deactivatedAt pattern.
   deletedAt DateTime?
+  // 🚩 Marked for review by Staff/Admin without deleting — keeps the message
+  // as evidence for other moderators, surfaced in the Admin Chat Monitor's
+  // "Flagged" filter.
+  flagged   Boolean  @default(false)
   createdAt DateTime @default(now())
   reactions ChatReaction[]
 
   @@index([createdAt])
+  @@index([userId])
 }
 
 // ❤️🔥💀💯😭 One row per (message, user, emoji) — lets a member react with
