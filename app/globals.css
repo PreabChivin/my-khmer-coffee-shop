@@ -297,6 +297,23 @@ body {
   animation: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
+/* 💬 Chat bubble entrance — a quick rise + settle, distinct from pop-in's
+   overshoot-scale since a whole column of these fires on every poll tick. */
+@keyframes bubble-in {
+  0% {
+    transform: translateY(10px) scale(0.94);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-bubble-in {
+  animation: bubble-in 0.25s ease-out both;
+}
+
 /* Sleepy Zzz drift */
 @keyframes sleep-z {
   0% {

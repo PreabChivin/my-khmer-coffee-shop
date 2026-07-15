@@ -175,6 +175,9 @@ model User {
   redemptions   RedemptionHistory[]
   notifications Notification[]
   savedAddresses SavedAddress[]
+  chatMessages  ChatMessage[]
+  chatReactions ChatReaction[]
+  chatTyping    ChatTyping?
 }
 
 // 📍 Address book — a logged-in customer's saved delivery locations, each
@@ -347,5 +350,53 @@ model Admin {
   password  String
   name      String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 💬 Members' Lounge — one shared, real-time-feeling community chat room for
+// every registered member (CUSTOMER/STAFF/ADMIN all post to the same stream;
+// there is no per-conversation pairing, so no separate ChatRoom model is
+// needed). Real-time is short-interval polling (GET ?after=<id>), matching
+// every other "live" surface in this app (order board, notifications) —
+// no WebSocket/Supabase/Pusher infrastructure.
+model ChatMessage {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text      String
+  // 🖼️ Pasted image URL (not an uploaded file — this app has no object
+  // storage service yet). Renders inline in the bubble.
+  imageUrl  String?
+  // 🛡️ Staff/Admin moderation soft-delete — hides the message from the feed
+  // without erasing it, mirroring the User.deactivatedAt pattern.
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  reactions ChatReaction[]
+
+  @@index([createdAt])
+}
+
+// ❤️🔥💀💯😭 One row per (message, user, emoji) — lets a member react with
+// more than one emoji on the same message, while still toggling cleanly:
+// posting the same emoji again removes it (see app/api/chat/messages/[id]/react).
+model ChatReaction {
+  id        String      @id @default(uuid())
+  messageId String
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emoji     String // one of: ❤️ 🔥 💀 💯 😭 (validated in the API route)
+  createdAt DateTime    @default(now())
+
+  @@unique([messageId, userId, emoji])
+}
+
+// ⌨️ "X is typing…" — a single row per member, upserted (debounced
+// client-side) while they're actively typing. Polled alongside messages;
+// a row counts as "typing" only if updatedAt is within the last few seconds,
+// so stale rows just age out with no cleanup job needed.
+model ChatTyping {
+  userId    String   @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   updatedAt DateTime @updatedAt
 }

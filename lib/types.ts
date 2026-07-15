@@ -314,3 +314,36 @@ export interface GiftVoucherDTO {
   redeemed: boolean;
   items: { nameEn: string; nameKh: string; quantity: number }[];
 }
+
+/** 💬 Members' Lounge — the one shared, real-time-feeling chat room every
+ *  logged-in member posts to. Author is a lightweight public-safe slice of
+ *  UserDTO (never the full profile) plus a fun generation emoji, reused from
+ *  the same lib/generation.ts helper the admin dashboard already uses. */
+export type ChatEmoji = "❤️" | "🔥" | "💀" | "💯" | "😭";
+
+export const CHAT_EMOJIS: ChatEmoji[] = ["❤️", "🔥", "💀", "💯", "😭"];
+
+export interface ChatReactionSummary {
+  emoji: ChatEmoji;
+  count: number;
+  /** Whether the requesting user is one of the reactors — drives the
+   *  highlighted/"already reacted" pill style client-side. */
+  reactedByMe: boolean;
+}
+
+export interface ChatMessageDTO {
+  id: string;
+  text: string;
+  imageUrl: string | null;
+  createdAt: string;
+  author: {
+    id: string;
+    name: string;
+    role: Role;
+    generationEmoji: string;
+  };
+  /** True only for the sender's own messages — gates the "delete" affordance
+   *  client-side (staff/admin can delete any message; see isStaff on the hook). */
+  isMine: boolean;
+  reactions: ChatReactionSummary[];
+}
