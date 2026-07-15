@@ -46,7 +46,7 @@ export async function redeemReward(userId: string, rewardId: string): Promise<Re
     const result = await prisma.$transaction(async (tx): Promise<RedeemTxResult> => {
       const reward = await tx.reward.findUnique({ where: { id: rewardId } });
       if (!reward || !reward.isAvailable) {
-        return { ok: false, error: "This reward is no longer available." };
+        return { ok: false, error: "រង្វាន់នេះលែងមានទៀតហើយ។" };
       }
 
       // Atomic claim: deducts only if the balance still covers the cost.
@@ -76,7 +76,7 @@ export async function redeemReward(userId: string, rewardId: string): Promise<Re
       const status = result.error === INSUFFICIENT ? 400 : 409;
       const message =
         result.error === INSUFFICIENT
-          ? "You don't have enough points for this reward yet 🥺"
+          ? "អ្នកមិនទាន់មានពិន្ទុគ្រប់គ្រាន់សម្រាប់រង្វាន់នេះទេ 🥺"
           : result.error;
       return { ok: false, status, error: message };
     }
@@ -106,6 +106,6 @@ export async function redeemReward(userId: string, rewardId: string): Promise<Re
       },
     };
   } catch {
-    return { ok: false, status: 503, error: "Couldn't redeem right now — please try again." };
+    return { ok: false, status: 503, error: "មិនអាចប្តូររង្វាន់បានទេឥឡូវនេះ សូមព្យាយាមម្តងទៀត។" };
   }
 }

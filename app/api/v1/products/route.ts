@@ -25,6 +25,6 @@ export async function GET(request: NextRequest) {
     }));
     return withCors(apiSuccess(body));
   } catch {
-    return withCors(apiError("The database is busy — please try again in a moment.", 503));
+    return withCors(apiError("ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀតក្នុងពេលបន្តិចទៀតនេះ។", 503));
   }
 }

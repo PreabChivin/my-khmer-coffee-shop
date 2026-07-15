@@ -15,13 +15,13 @@ export async function POST(request: NextRequest) {
   try {
     raw = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។" }, { status: 400 });
   }
 
   const parsed = registerSchema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid details" },
+      { error: parsed.error.issues[0]?.message ?? "ព័ត៌មានមិនត្រឹមត្រូវទេ។" },
       { status: 400 }
     );
   }
@@ -60,13 +60,14 @@ export async function POST(request: NextRequest) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
       const target = (err.meta?.target as string[] | undefined)?.join(", ") ?? "";
       const field = target.includes("username") ? "username" : "email";
+      const fieldLabel = field === "username" ? "ឈ្មោះអ្នកប្រើ" : "អុីមែល";
       return NextResponse.json(
-        { error: `That ${field} is already registered.` },
+        { error: `${fieldLabel}នេះត្រូវបានប្រើរួចហើយ។` },
         { status: 409 }
       );
     }
     return NextResponse.json(
-      { error: "The database is busy — please try again in a moment." },
+      { error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀតក្នុងពេលបន្តិចទៀតនេះ។" },
       { status: 503 }
     );
   }

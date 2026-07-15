@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 
 const schema = z.object({
-  newPassword: z.string().min(6, "Password must be at least 6 characters").max(200),
+  newPassword: z.string().min(6, "ពាក្យសម្ងាត់ត្រូវមានយ៉ាងតិច ៦ តួអក្សរ។").max(200),
 });
 
 // 👑 Admin-only: reset any account's password (staff or customer). The new
@@ -17,7 +17,7 @@ export async function PATCH(
 ) {
   const session = requireAdminRole(request);
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 403 });
   }
   const { id } = await params;
 
@@ -25,12 +25,12 @@ export async function PATCH(
   try {
     raw = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។" }, { status: 400 });
   }
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid password" },
+      { error: parsed.error.issues[0]?.message ?? "ពាក្យសម្ងាត់មិនត្រឹមត្រូវទេ។" },
       { status: 400 }
     );
   }
@@ -38,7 +38,7 @@ export async function PATCH(
   try {
     const existing = await prisma.user.findUnique({ where: { id } });
     if (!existing) {
-      return NextResponse.json({ error: "Account not found" }, { status: 404 });
+      return NextResponse.json({ error: "រកមិនឃើញគណនីនេះទេ។" }, { status: 404 });
     }
 
     const passwordHash = await bcrypt.hash(parsed.data.newPassword, 10);
@@ -46,7 +46,7 @@ export async function PATCH(
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(
-      { error: "The database is busy — please try again in a moment." },
+      { error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀតក្នុងពេលបន្តិចទៀតនេះ។" },
       { status: 503 }
     );
   }

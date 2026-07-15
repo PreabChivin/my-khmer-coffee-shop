@@ -6,7 +6,7 @@ import type { AdminRedemptionDTO } from "@/lib/types";
 // 👑 Redemptions awaiting fulfilment (and recently fulfilled), for staff.
 export async function GET(request: NextRequest) {
   if (!getAdminFromRequest(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 401 });
   }
   try {
     const rows = await prisma.redemptionHistory.findMany({
@@ -27,6 +27,6 @@ export async function GET(request: NextRequest) {
     }));
     return NextResponse.json(body);
   } catch {
-    return NextResponse.json({ error: "The database is busy." }, { status: 503 });
+    return NextResponse.json({ error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀត។" }, { status: 503 });
   }
 }

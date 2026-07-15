@@ -9,7 +9,7 @@ import type { OrderHistoryItemDTO } from "@/lib/types";
 export async function GET(request: NextRequest) {
   const session = getUserFromRequest(request);
   if (!session) {
-    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+    return NextResponse.json({ error: "សូមចូលគណនីជាមុនសិន។" }, { status: 401 });
   }
 
   try {
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(body);
   } catch {
     return NextResponse.json(
-      { error: "The database is busy — please try again in a moment." },
+      { error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀតក្នុងពេលបន្តិចទៀតនេះ។" },
       { status: 503 }
     );
   }

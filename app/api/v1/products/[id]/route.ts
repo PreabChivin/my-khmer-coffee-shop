@@ -21,12 +21,12 @@ export async function GET(
       include: { category: true },
     });
     if (!product) {
-      return withCors(apiError("Product not found.", 404));
+      return withCors(apiError("រកមិនឃើញផលិតផលនេះទេ។", 404));
     }
     const { category, ...p } = product;
     const body: ProductDTO = { ...p, category: category.name };
     return withCors(apiSuccess(body));
   } catch {
-    return withCors(apiError("The database is busy — please try again in a moment.", 503));
+    return withCors(apiError("ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀតក្នុងពេលបន្តិចទៀតនេះ។", 503));
   }
 }

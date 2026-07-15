@@ -10,10 +10,10 @@ const optionalText = (max: number) =>
 
 export const categoryCreateSchema = z.object({
   name: z
-    .string()
+    .string({ error: "តម្រូវឲ្យមានឈ្មោះប្រភេទ។" })
     .trim()
-    .min(1, "Category name is required")
-    .max(60, "Category name must be 60 characters or fewer"),
+    .min(1, "តម្រូវឲ្យមានឈ្មោះប្រភេទ។")
+    .max(60, "ឈ្មោះប្រភេទត្រូវមានតែ ៦០ តួអក្សរបំផុត។"),
   iconKey: optionalText(60),
   iconUrl: optionalText(500),
 });
@@ -22,8 +22,8 @@ export const categoryUpdateSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, "Category name is required")
-    .max(60, "Category name must be 60 characters or fewer")
+    .min(1, "តម្រូវឲ្យមានឈ្មោះប្រភេទ។")
+    .max(60, "ឈ្មោះប្រភេទត្រូវមានតែ ៦០ តួអក្សរបំផុត។")
     .optional(),
   iconKey: optionalText(60),
   iconUrl: optionalText(500),

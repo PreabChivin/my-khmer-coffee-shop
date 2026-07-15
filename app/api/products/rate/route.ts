@@ -15,13 +15,13 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។" }, { status: 400 });
   }
 
   const { orderId, rating } = body;
 
   if (!orderId || typeof orderId !== "string") {
-    return NextResponse.json({ error: "orderId is required" }, { status: 400 });
+    return NextResponse.json({ error: "តម្រូវឲ្យមានលេខការកម្ម៉ង់។" }, { status: 400 });
   }
   if (
     typeof rating !== "number" ||
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     rating > 5
   ) {
     return NextResponse.json(
-      { error: "rating must be an integer between 1 and 5" },
+      { error: "ការវាយតម្លៃត្រូវតែជាចំនួនគត់ចាប់ពី ១ ដល់ ៥។" },
       { status: 400 }
     );
   }
@@ -41,11 +41,11 @@ export async function POST(request: NextRequest) {
   });
 
   if (!order) {
-    return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    return NextResponse.json({ error: "រកមិនឃើញការកម្ម៉ង់នេះទេ។" }, { status: 404 });
   }
   if (order.orderStatus !== "COMPLETED") {
     return NextResponse.json(
-      { error: "Only completed orders can be rated" },
+      { error: "មានតែការកម្ម៉ង់ដែលបានបញ្ចប់ ទើបអាចវាយតម្លៃបាន។" },
       { status: 400 }
     );
   }

@@ -14,7 +14,7 @@ export async function GET(
 
   if (normalized.length < 6) {
     return NextResponse.json(
-      { error: "A valid phone number is required" },
+      { error: "សូមបញ្ចូលលេខទូរស័ព្ទឲ្យបានត្រឹមត្រូវ។" },
       { status: 400 }
     );
   }

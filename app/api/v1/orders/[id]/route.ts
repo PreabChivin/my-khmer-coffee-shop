@@ -19,7 +19,7 @@ export async function GET(
 ) {
   const session = getUserFromRequest(request);
   if (!session) {
-    return withCors(apiError("Please sign in first.", 401));
+    return withCors(apiError("សូមចូលគណនីជាមុនសិន។", 401));
   }
 
   const { id } = await params;
@@ -33,10 +33,10 @@ export async function GET(
       },
     });
     if (!order || order.userId !== session.id) {
-      return withCors(apiError("Order not found.", 404));
+      return withCors(apiError("រកមិនឃើញការកម្ម៉ង់នេះទេ។", 404));
     }
     return withCors(apiSuccess(toOrderHistoryItem(order)));
   } catch {
-    return withCors(apiError("The database is busy — please try again in a moment.", 503));
+    return withCors(apiError("ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀតក្នុងពេលបន្តិចទៀតនេះ។", 503));
   }
 }

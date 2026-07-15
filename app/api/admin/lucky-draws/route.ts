@@ -34,7 +34,7 @@ const schema = z.object({
   title: z.string().trim().min(1).max(120),
   prizeName: z.string().trim().min(1).max(120),
   prizeEmoji: z.string().trim().max(8).optional(),
-  month: z.string().regex(/^\d{4}-\d{2}$/, "Use YYYY-MM"),
+  month: z.string().regex(/^\d{4}-\d{2}$/, "សូមប្រើទម្រង់ ឆ្នាំ-ខែ (YYYY-MM)។"),
   minPoints: z.number().int().min(0).max(1000000).optional(),
   tierLabel: z.preprocess(
     (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
@@ -44,30 +44,30 @@ const schema = z.object({
 
 export async function GET(request: NextRequest) {
   if (!getAdminFromRequest(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 401 });
   }
   try {
     const draws = await prisma.luckyDraw.findMany({ orderBy: { createdAt: "desc" } });
     return NextResponse.json(draws.map(toDTO));
   } catch {
-    return NextResponse.json({ error: "The database is busy." }, { status: 503 });
+    return NextResponse.json({ error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀត។" }, { status: 503 });
   }
 }
 
 export async function POST(request: NextRequest) {
   if (!getAdminFromRequest(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 401 });
   }
   let raw: unknown;
   try {
     raw = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។" }, { status: 400 });
   }
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid draw" },
+      { error: parsed.error.issues[0]?.message ?? "ព័ត៌មានកម្មវិធីចាប់រង្វាន់មិនត្រឹមត្រូវទេ។" },
       { status: 400 }
     );
   }
@@ -84,6 +84,6 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json(toDTO(draw), { status: 201 });
   } catch {
-    return NextResponse.json({ error: "The database is busy." }, { status: 503 });
+    return NextResponse.json({ error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀត។" }, { status: 503 });
   }
 }

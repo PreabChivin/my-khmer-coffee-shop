@@ -14,7 +14,7 @@ export async function GET(
   });
 
   if (!order) {
-    return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    return NextResponse.json({ error: "រកមិនឃើញការកម្ម៉ង់នេះទេ។" }, { status: 404 });
   }
 
   const body: OrderStatusResponseBody = {

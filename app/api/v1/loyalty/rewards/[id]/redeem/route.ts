@@ -17,7 +17,7 @@ export async function POST(
 ) {
   const session = getUserFromRequest(request);
   if (!session) {
-    return withCors(apiError("Please sign in first.", 401));
+    return withCors(apiError("សូមចូលគណនីជាមុនសិន។", 401));
   }
 
   const { id } = await params;

@@ -12,18 +12,18 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   if (!getAdminFromRequest(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 401 });
   }
   const { id } = await params;
 
   try {
     const draw = await prisma.luckyDraw.findUnique({ where: { id } });
     if (!draw) {
-      return NextResponse.json({ error: "Draw not found" }, { status: 404 });
+      return NextResponse.json({ error: "រកមិនឃើញកម្មវិធីចាប់រង្វាន់នេះទេ។" }, { status: 404 });
     }
     if (draw.winnerId) {
       return NextResponse.json(
-        { error: "This draw already has a winner." },
+        { error: "កម្មវិធីចាប់រង្វាន់នេះមានអ្នកឈ្នះរួចហើយ។" },
         { status: 409 }
       );
     }
@@ -34,7 +34,7 @@ export async function POST(
     });
     if (eligible.length === 0) {
       return NextResponse.json(
-        { error: "No eligible customers meet the criteria yet." },
+        { error: "មិនទាន់មានអតិថិជនណាមួយត្រូវនឹងលក្ខខណ្ឌនៅឡើយទេ។" },
         { status: 400 }
       );
     }
@@ -48,7 +48,7 @@ export async function POST(
     });
     if (claim.count === 0) {
       return NextResponse.json(
-        { error: "This draw already has a winner." },
+        { error: "កម្មវិធីចាប់រង្វាន់នេះមានអ្នកឈ្នះរួចហើយ។" },
         { status: 409 }
       );
     }
@@ -86,6 +86,6 @@ export async function POST(
       eligibleCount: eligible.length,
     });
   } catch {
-    return NextResponse.json({ error: "The database is busy." }, { status: 503 });
+    return NextResponse.json({ error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀត។" }, { status: 503 });
   }
 }

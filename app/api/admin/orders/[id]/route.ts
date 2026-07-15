@@ -27,7 +27,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   if (!getAdminFromRequest(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -36,19 +36,19 @@ export async function PATCH(
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។" }, { status: 400 });
   }
 
   if (body.orderStatus === undefined && body.giftRedeemed === undefined) {
     return NextResponse.json(
-      { error: "Provide orderStatus and/or giftRedeemed" },
+      { error: "សូមផ្តល់ស្ថានភាពការកម្ម៉ង់ និង/ឬស្ថានភាពកាដូ។" },
       { status: 400 }
     );
   }
 
   if (body.orderStatus !== undefined && !VALID_STATUSES.includes(body.orderStatus)) {
     return NextResponse.json(
-      { error: `orderStatus must be one of: ${VALID_STATUSES.join(", ")}` },
+      { error: `ស្ថានភាពការកម្ម៉ង់ត្រូវតែជាមួយក្នុងចំណោម: ${VALID_STATUSES.join(", ")}` },
       { status: 400 }
     );
   }
@@ -56,7 +56,7 @@ export async function PATCH(
   try {
     const existing = await prisma.order.findUnique({ where: { id } });
     if (!existing) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      return NextResponse.json({ error: "រកមិនឃើញការកម្ម៉ង់នេះទេ។" }, { status: 404 });
     }
 
     // Approving an order (transitioning it into the kitchen queue) is the
@@ -157,7 +157,7 @@ export async function PATCH(
     return NextResponse.json(order);
   } catch {
     return NextResponse.json(
-      { error: "The database is busy — please try again in a moment." },
+      { error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀតក្នុងពេលបន្តិចទៀតនេះ។" },
       { status: 503 }
     );
   }

@@ -16,13 +16,13 @@ export async function PATCH(
 ) {
   const session = requireAdminRole(request);
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 403 });
   }
   const { id } = await params;
 
   if (session.id === id) {
     return NextResponse.json(
-      { error: "You can't change your own role — ask another admin." },
+      { error: "អ្នកមិនអាចប្តូរតួនាទីខ្លួនឯងបានទេ — សូមសុំឲ្យអ្នកគ្រប់គ្រងផ្សេងធ្វើឲ្យ។" },
       { status: 400 }
     );
   }
@@ -31,12 +31,12 @@ export async function PATCH(
   try {
     raw = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។" }, { status: 400 });
   }
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid role" },
+      { error: parsed.error.issues[0]?.message ?? "ព័ត៌មានតួនាទីមិនត្រឹមត្រូវទេ។" },
       { status: 400 }
     );
   }
@@ -44,7 +44,7 @@ export async function PATCH(
   try {
     const existing = await prisma.user.findUnique({ where: { id } });
     if (!existing) {
-      return NextResponse.json({ error: "Account not found" }, { status: 404 });
+      return NextResponse.json({ error: "រកមិនឃើញគណនីនេះទេ។" }, { status: 404 });
     }
 
     const user = await prisma.user.update({
@@ -54,7 +54,7 @@ export async function PATCH(
     return NextResponse.json({ id: user.id, role: user.role });
   } catch {
     return NextResponse.json(
-      { error: "The database is busy — please try again in a moment." },
+      { error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀតក្នុងពេលបន្តិចទៀតនេះ។" },
       { status: 503 }
     );
   }

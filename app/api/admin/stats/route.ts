@@ -14,7 +14,7 @@ const ACTIVE_ORDER_STATUSES = ["PENDING", "AWAITING_VERIFICATION", "PREPARING", 
 
 export async function GET(request: NextRequest) {
   if (!getAdminFromRequest(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 401 });
   }
 
   const startOfDay = new Date();

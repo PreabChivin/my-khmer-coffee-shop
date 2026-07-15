@@ -9,7 +9,7 @@ import { withCors, corsPreflight } from "@/lib/apiCors";
 export const OPTIONS = corsPreflight;
 
 const patchSchema = z.object({
-  name: z.string().trim().min(1, "Name cannot be empty").max(100).optional(),
+  name: z.string().trim().min(1, "ឈ្មោះមិនអាចទទេបានទេ។").max(100).optional(),
   phone: z.string().trim().max(30).optional(),
 });
 
@@ -21,12 +21,12 @@ const patchSchema = z.object({
 export async function GET(request: NextRequest) {
   const session = getUserFromRequest(request);
   if (!session) {
-    return withCors(apiError("Please sign in first.", 401));
+    return withCors(apiError("សូមចូលគណនីជាមុនសិន។", 401));
   }
 
   const user = await prisma.user.findUnique({ where: { id: session.id } });
   if (!user || user.deactivatedAt) {
-    return withCors(apiError("Account not found.", 404));
+    return withCors(apiError("រកមិនឃើញគណនីនេះទេ។", 404));
   }
 
   return withCors(apiSuccess({ user: toUserDTO(user) }));
@@ -39,24 +39,24 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const session = getUserFromRequest(request);
   if (!session) {
-    return withCors(apiError("Please sign in first.", 401));
+    return withCors(apiError("សូមចូលគណនីជាមុនសិន។", 401));
   }
 
   let raw: unknown;
   try {
     raw = await request.json();
   } catch {
-    return withCors(apiError("Invalid JSON body", 400));
+    return withCors(apiError("ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។", 400));
   }
 
   const parsed = patchSchema.safeParse(raw);
   if (!parsed.success) {
-    return withCors(apiError(parsed.error.issues[0]?.message ?? "Invalid details", 400));
+    return withCors(apiError(parsed.error.issues[0]?.message ?? "ព័ត៌មានមិនត្រឹមត្រូវទេ។", 400));
   }
 
   const { name, phone } = parsed.data;
   if (name === undefined && phone === undefined) {
-    return withCors(apiError("Nothing to update.", 400));
+    return withCors(apiError("គ្មានអ្វីត្រូវកែប្រែទេ។", 400));
   }
 
   const user = await prisma.user.update({

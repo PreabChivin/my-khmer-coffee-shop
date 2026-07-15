@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
   const fallbackLabel = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-    return NextResponse.json({ error: "lat and lng are required" }, { status: 400 });
+    return NextResponse.json({ error: "តម្រូវឲ្យមានទីតាំង (lat/lng)។" }, { status: 400 });
   }
 
   try {

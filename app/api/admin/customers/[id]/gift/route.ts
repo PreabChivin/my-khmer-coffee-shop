@@ -27,7 +27,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   if (!getAdminFromRequest(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 401 });
   }
   const { id } = await params;
 
@@ -35,12 +35,12 @@ export async function POST(
   try {
     raw = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។" }, { status: 400 });
   }
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid gift" },
+      { error: parsed.error.issues[0]?.message ?? "ព័ត៌មានកាដូមិនត្រឹមត្រូវទេ។" },
       { status: 400 }
     );
   }
@@ -49,7 +49,7 @@ export async function POST(
   try {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) {
-      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+      return NextResponse.json({ error: "រកមិនឃើញអតិថិជននេះទេ។" }, { status: 404 });
     }
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -107,6 +107,6 @@ export async function POST(
       badges: updated.badges,
     });
   } catch {
-    return NextResponse.json({ error: "The database is busy." }, { status: 503 });
+    return NextResponse.json({ error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀត។" }, { status: 503 });
   }
 }

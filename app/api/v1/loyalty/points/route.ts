@@ -15,7 +15,7 @@ export const OPTIONS = corsPreflight;
 export async function GET(request: NextRequest) {
   const session = getUserFromRequest(request);
   if (!session) {
-    return withCors(apiError("Please sign in first.", 401));
+    return withCors(apiError("សូមចូលគណនីជាមុនសិន។", 401));
   }
 
   const user = await prisma.user.findUnique({
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     select: { loyaltyPoints: true },
   });
   if (!user) {
-    return withCors(apiError("Account not found.", 404));
+    return withCors(apiError("រកមិនឃើញគណនីនេះទេ។", 404));
   }
 
   const progress = tierProgress(user.loyaltyPoints);

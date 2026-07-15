@@ -25,12 +25,12 @@ export async function POST(request: NextRequest) {
   try {
     raw = await request.json();
   } catch {
-    return withCors(apiError("Invalid JSON body", 400));
+    return withCors(apiError("ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។", 400));
   }
 
   const parsed = registerSchema.safeParse(raw);
   if (!parsed.success) {
-    return withCors(apiError(parsed.error.issues[0]?.message ?? "Invalid details", 400));
+    return withCors(apiError(parsed.error.issues[0]?.message ?? "ព័ត៌មានមិនត្រឹមត្រូវទេ។", 400));
   }
 
   const email = parsed.data.email.toLowerCase();
@@ -65,6 +65,6 @@ export async function POST(request: NextRequest) {
       const field = target.includes("username") ? "username" : "email";
       return withCors(apiError(`That ${field} is already registered.`, 409, "DUPLICATE"));
     }
-    return withCors(apiError("The database is busy — please try again in a moment.", 503));
+    return withCors(apiError("ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀតក្នុងពេលបន្តិចទៀតនេះ។", 503));
   }
 }

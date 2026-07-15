@@ -25,7 +25,7 @@ export async function GET(
   });
 
   if (!groupCart) {
-    return NextResponse.json({ error: "Bestie Cart not found" }, { status: 404 });
+    return NextResponse.json({ error: "រកមិនឃើញកន្ត្រកមិត្តភ័ក្តិនេះទេ។" }, { status: 404 });
   }
 
   const body: GroupCartStateDTO = {

@@ -21,13 +21,13 @@ export async function POST(
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។" }, { status: 400 });
   }
 
   const contributorName = body.contributorName?.trim().slice(0, 60);
   if (!contributorName) {
     return NextResponse.json(
-      { error: "contributorName is required" },
+      { error: "តម្រូវឲ្យមានឈ្មោះអ្នកបញ្ជាទិញ។" },
       { status: 400 }
     );
   }
@@ -39,18 +39,18 @@ export async function POST(
     body.quantity <= 0
   ) {
     return NextResponse.json(
-      { error: "productId and a positive integer quantity are required" },
+      { error: "តម្រូវឲ្យមានលេខផលិតផល និងចំនួនត្រឹមត្រូវ។" },
       { status: 400 }
     );
   }
 
   const groupCart = await prisma.groupCart.findUnique({ where: { id } });
   if (!groupCart) {
-    return NextResponse.json({ error: "Bestie Cart not found" }, { status: 404 });
+    return NextResponse.json({ error: "រកមិនឃើញកន្ត្រកមិត្តភ័ក្តិនេះទេ។" }, { status: 404 });
   }
   if (groupCart.status !== "OPEN") {
     return NextResponse.json(
-      { error: "This Bestie Cart has already been checked out" },
+      { error: "កន្ត្រកមិត្តភ័ក្តិនេះបានទូទាត់រួចហើយ។" },
       { status: 409 }
     );
   }
@@ -60,7 +60,7 @@ export async function POST(
     include: { category: true },
   });
   if (!product) {
-    return NextResponse.json({ error: "Product not found" }, { status: 400 });
+    return NextResponse.json({ error: "រកមិនឃើញផលិតផលនេះទេ។" }, { status: 400 });
   }
   if (!product.isAvailable) {
     return NextResponse.json(

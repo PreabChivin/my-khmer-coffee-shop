@@ -16,7 +16,7 @@ export const OPTIONS = corsPreflight;
 export async function GET(request: NextRequest) {
   const session = getUserFromRequest(request);
   if (!session) {
-    return withCors(apiError("Please sign in first.", 401));
+    return withCors(apiError("សូមចូលគណនីជាមុនសិន។", 401));
   }
 
   try {
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const body: OrderHistoryItemDTO[] = orders.map(toOrderHistoryItem);
     return withCors(apiSuccess(body));
   } catch {
-    return withCors(apiError("The database is busy — please try again in a moment.", 503));
+    return withCors(apiError("ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀតក្នុងពេលបន្តិចទៀតនេះ។", 503));
   }
 }
 
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return withCors(apiError("Invalid JSON body", 400));
+    return withCors(apiError("ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។", 400));
   }
 
   const session = getUserFromRequest(request);

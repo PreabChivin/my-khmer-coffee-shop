@@ -69,30 +69,30 @@ export async function createOrder(
       : null;
 
   if (!customerName?.trim() || !customerPhone?.trim()) {
-    return { ok: false, status: 400, error: "customerName and customerPhone are required" };
+    return { ok: false, status: 400, error: "តម្រូវឲ្យមានឈ្មោះ និងលេខទូរស័ព្ទរបស់អតិថិជន។" };
   }
 
   // 📱 Latin digits only, 8-15 of them — mirrors the client-side sanitizer
   // (lib/loyalty.ts) but re-checked server-side since that's trivially
   // bypassable from a raw request.
   if (!isValidPhone(customerPhone)) {
-    return { ok: false, status: 400, error: "customerPhone must be 8-15 digits (0-9 only)" };
+    return { ok: false, status: 400, error: "លេខទូរស័ព្ទត្រូវមានលេខ ៨ ទៅ ១៥ ខ្ទង់ (លេខ 0-9 ប៉ុណ្ណោះ)។" };
   }
 
   if (!VALID_ORDER_TYPES.includes(orderType)) {
-    return { ok: false, status: 400, error: "orderType must be 'PickUp' or 'Delivery'" };
+    return { ok: false, status: 400, error: "ប្រភេទការកម្ម៉ង់ត្រូវតែជា 'PickUp' ឬ 'Delivery'។" };
   }
 
   if (orderType === "Delivery" && !address?.trim()) {
-    return { ok: false, status: 400, error: "address is required for delivery orders" };
+    return { ok: false, status: 400, error: "តម្រូវឲ្យមានអាសយដ្ឋានសម្រាប់ការកម្ម៉ង់ដឹកជញ្ជូន។" };
   }
 
   if (isGift && !giftRecipientName?.trim()) {
-    return { ok: false, status: 400, error: "giftRecipientName is required when isGift is true" };
+    return { ok: false, status: 400, error: "តម្រូវឲ្យមានឈ្មោះអ្នកទទួលកាដូ នៅពេលជ្រើសរើសកាដូ។" };
   }
 
   if (!Array.isArray(items) || items.length === 0) {
-    return { ok: false, status: 400, error: "items must be a non-empty array" };
+    return { ok: false, status: 400, error: "ត្រូវមានទំនិញយ៉ាងហោចណាស់មួយក្នុងការកម្ម៉ង់។" };
   }
 
   for (const item of items) {
@@ -102,7 +102,7 @@ export async function createOrder(
       item.quantity <= 0 ||
       !Number.isInteger(item.quantity)
     ) {
-      return { ok: false, status: 400, error: "Each item requires a valid productId and quantity" };
+      return { ok: false, status: 400, error: "ទំនិញនីមួយៗត្រូវមានលេខផលិតផល និងចំនួនត្រឹមត្រូវ។" };
     }
   }
 
@@ -117,10 +117,10 @@ export async function createOrder(
   for (const item of items) {
     const product = productMap.get(item.productId);
     if (!product) {
-      return { ok: false, status: 400, error: `Product ${item.productId} not found` };
+      return { ok: false, status: 400, error: `រកមិនឃើញផលិតផល ${item.productId} ទេ។` };
     }
     if (!product.isAvailable) {
-      return { ok: false, status: 400, error: `${product.nameEn} is currently out of stock` };
+      return { ok: false, status: 400, error: `${product.nameEn} បច្ចុប្បន្នអស់ពីស្តុកហើយ។` };
     }
   }
 
@@ -300,9 +300,9 @@ export async function createOrder(
     };
   } catch (error) {
     if (error instanceof Error && error.message === GROUP_CART_TAKEN) {
-      return { ok: false, status: 409, error: "This Bestie Cart has already been checked out." };
+      return { ok: false, status: 409, error: "កន្ត្រកមិត្តភ័ក្តិនេះបានទូទាត់រួចហើយ។" };
     }
     console.error("Checkout failed:", error);
-    return { ok: false, status: 500, error: "Failed to create order. Please try again." };
+    return { ok: false, status: 500, error: "បង្កើតការកម្ម៉ង់មិនជោគជ័យទេ សូមព្យាយាមម្តងទៀត។" };
   }
 }

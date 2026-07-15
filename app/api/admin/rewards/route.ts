@@ -17,30 +17,30 @@ const rewardSchema = z.object({
 // 👑 Admin: full reward catalogue (incl. unavailable) + create a reward.
 export async function GET(request: NextRequest) {
   if (!getAdminFromRequest(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 401 });
   }
   try {
     const rewards = await prisma.reward.findMany({ orderBy: { cost: "asc" } });
     return NextResponse.json(rewards);
   } catch {
-    return NextResponse.json({ error: "The database is busy." }, { status: 503 });
+    return NextResponse.json({ error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀត។" }, { status: 503 });
   }
 }
 
 export async function POST(request: NextRequest) {
   if (!getAdminFromRequest(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 401 });
   }
   let raw: unknown;
   try {
     raw = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។" }, { status: 400 });
   }
   const parsed = rewardSchema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid reward" },
+      { error: parsed.error.issues[0]?.message ?? "ព័ត៌មានរង្វាន់មិនត្រឹមត្រូវទេ។" },
       { status: 400 }
     );
   }
@@ -56,6 +56,6 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json(reward, { status: 201 });
   } catch {
-    return NextResponse.json({ error: "The database is busy." }, { status: 503 });
+    return NextResponse.json({ error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀត។" }, { status: 503 });
   }
 }

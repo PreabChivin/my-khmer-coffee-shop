@@ -14,13 +14,13 @@ export async function POST(request: NextRequest) {
   try {
     raw = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។" }, { status: 400 });
   }
 
   const parsed = loginSchema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid credentials" },
+      { error: parsed.error.issues[0]?.message ?? "ព័ត៌មានចូលគណនីមិនត្រឹមត្រូវទេ។" },
       { status: 400 }
     );
   }
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   // Constant-ish response: same error whether the account is missing or the
   // password is wrong, so we never reveal which emails are registered.
   const genericError = NextResponse.json(
-    { error: "Invalid email/username or password." },
+    { error: "អុីមែល/ឈ្មោះអ្នកប្រើ ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវទេ។" },
     { status: 401 }
   );
 
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
   // the password reaches this branch, so it reveals nothing new).
   if (user.deactivatedAt) {
     return NextResponse.json(
-      { error: "This account has been deactivated. Contact an admin for help." },
+      { error: "គណនីនេះត្រូវបានផ្អាកហើយ។ សូមទាក់ទងអ្នកគ្រប់គ្រងដើម្បីទទួលជំនួយ។" },
       { status: 403 }
     );
   }

@@ -14,7 +14,7 @@ function toProductDTO(
 
 export async function GET(request: NextRequest) {
   if (!getAdminFromRequest(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 401 });
   }
 
   try {
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(products.map(toProductDTO));
   } catch {
     return NextResponse.json(
-      { error: "The database is busy — please try again in a moment." },
+      { error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀតក្នុងពេលបន្តិចទៀតនេះ។" },
       { status: 503 }
     );
   }
@@ -49,14 +49,14 @@ interface ProductPayload {
 
 export async function POST(request: NextRequest) {
   if (!getAdminFromRequest(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 401 });
   }
 
   let body: ProductPayload;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។" }, { status: 400 });
   }
 
   const {
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
       where: { id: categoryId },
     });
     if (!category) {
-      return NextResponse.json({ error: "Category not found" }, { status: 400 });
+      return NextResponse.json({ error: "រកមិនឃើញប្រភេទនេះទេ។" }, { status: 400 });
     }
 
     const product = await prisma.product.create({
@@ -126,12 +126,12 @@ export async function POST(request: NextRequest) {
       err.code === "P2002"
     ) {
       return NextResponse.json(
-        { error: "A product with this English name already exists." },
+        { error: "មានផលិតផលឈ្មោះនេះជាភាសាអង់គ្លេសរួចហើយ។" },
         { status: 409 }
       );
     }
     return NextResponse.json(
-      { error: "The database is busy — please try again in a moment." },
+      { error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀតក្នុងពេលបន្តិចទៀតនេះ។" },
       { status: 503 }
     );
   }

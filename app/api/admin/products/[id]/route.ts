@@ -33,7 +33,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   if (!getAdminFromRequest(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -42,7 +42,7 @@ export async function PUT(
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។" }, { status: 400 });
   }
 
   if (
@@ -52,7 +52,7 @@ export async function PUT(
       body.price <= 0)
   ) {
     return NextResponse.json(
-      { error: "price must be a positive number" },
+      { error: "តម្លៃត្រូវតែជាចំនួនវិជ្ជមាន។" },
       { status: 400 }
     );
   }
@@ -62,14 +62,14 @@ export async function PUT(
     (body.nameKh !== undefined && !body.nameKh.trim())
   ) {
     return NextResponse.json(
-      { error: "nameEn and nameKh cannot be empty" },
+      { error: "ឈ្មោះជាភាសាអង់គ្លេស និងខ្មែរ មិនអាចទទេបានទេ។" },
       { status: 400 }
     );
   }
 
   if (body.categoryId !== undefined && !body.categoryId.trim()) {
     return NextResponse.json(
-      { error: "categoryId cannot be empty" },
+      { error: "ត្រូវជ្រើសរើសប្រភេទ។" },
       { status: 400 }
     );
   }
@@ -77,7 +77,7 @@ export async function PUT(
   try {
     const existing = await prisma.product.findUnique({ where: { id } });
     if (!existing) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+      return NextResponse.json({ error: "រកមិនឃើញផលិតផលនេះទេ។" }, { status: 404 });
     }
 
     if (body.categoryId !== undefined) {
@@ -85,7 +85,7 @@ export async function PUT(
         where: { id: body.categoryId },
       });
       if (!category) {
-        return NextResponse.json({ error: "Category not found" }, { status: 400 });
+        return NextResponse.json({ error: "រកមិនឃើញប្រភេទនេះទេ។" }, { status: 400 });
       }
     }
 
@@ -125,12 +125,12 @@ export async function PUT(
       err.code === "P2002"
     ) {
       return NextResponse.json(
-        { error: "A product with this English name already exists." },
+        { error: "មានផលិតផលឈ្មោះនេះជាភាសាអង់គ្លេសរួចហើយ។" },
         { status: 409 }
       );
     }
     return NextResponse.json(
-      { error: "The database is busy — please try again in a moment." },
+      { error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀតក្នុងពេលបន្តិចទៀតនេះ។" },
       { status: 503 }
     );
   }
@@ -141,7 +141,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   if (!getAdminFromRequest(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -149,7 +149,7 @@ export async function DELETE(
   try {
     const existing = await prisma.product.findUnique({ where: { id } });
     if (!existing) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+      return NextResponse.json({ error: "រកមិនឃើញផលិតផលនេះទេ។" }, { status: 404 });
     }
 
     await prisma.product.delete({ where: { id } });
@@ -168,7 +168,7 @@ export async function DELETE(
       );
     }
     return NextResponse.json(
-      { error: "The database is busy — please try again in a moment." },
+      { error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀតក្នុងពេលបន្តិចទៀតនេះ។" },
       { status: 503 }
     );
   }

@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
   if (!expectedSecret || secret !== expectedSecret) {
     // Deliberately 401 (not 200) here — this is the one case worth Telegram
     // NOT retrying, since a bad secret will never become a good one.
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 401 });
   }
 
   try {

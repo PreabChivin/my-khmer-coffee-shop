@@ -12,7 +12,7 @@ export async function PATCH(
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។" }, { status: 400 });
   }
 
   if (
@@ -21,14 +21,14 @@ export async function PATCH(
     body.quantity <= 0
   ) {
     return NextResponse.json(
-      { error: "quantity must be a positive integer" },
+      { error: "ចំនួនត្រូវតែជាចំនួនគត់វិជ្ជមាន។" },
       { status: 400 }
     );
   }
 
   const item = await prisma.groupCartItem.findUnique({ where: { id: itemId } });
   if (!item || item.groupCartId !== id) {
-    return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    return NextResponse.json({ error: "រកមិនឃើញទំនិញនេះទេ។" }, { status: 404 });
   }
 
   await prisma.groupCartItem.update({
@@ -47,7 +47,7 @@ export async function DELETE(
 
   const item = await prisma.groupCartItem.findUnique({ where: { id: itemId } });
   if (!item || item.groupCartId !== id) {
-    return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    return NextResponse.json({ error: "រកមិនឃើញទំនិញនេះទេ។" }, { status: 404 });
   }
 
   await prisma.groupCartItem.delete({ where: { id: itemId } });

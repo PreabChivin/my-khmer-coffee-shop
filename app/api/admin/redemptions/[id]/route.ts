@@ -8,7 +8,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   if (!getAdminFromRequest(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 401 });
   }
   const { id } = await params;
   try {
@@ -18,12 +18,12 @@ export async function PATCH(
     });
     if (updated.count === 0) {
       return NextResponse.json(
-        { error: "Not found or already fulfilled." },
+        { error: "រកមិនឃើញ ឬបានប្រគល់ជូនរួចហើយ។" },
         { status: 404 }
       );
     }
     return NextResponse.json({ success: true });
   } catch {
-    return NextResponse.json({ error: "The database is busy." }, { status: 503 });
+    return NextResponse.json({ error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀត។" }, { status: 503 });
   }
 }

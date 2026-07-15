@@ -11,21 +11,21 @@ export async function DELETE(
 ) {
   const session = getUserFromRequest(request);
   if (!session) {
-    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+    return NextResponse.json({ error: "សូមចូលគណនីជាមុនសិន។" }, { status: 401 });
   }
   const { id } = await params;
 
   try {
     const existing = await prisma.savedAddress.findUnique({ where: { id } });
     if (!existing || existing.userId !== session.id) {
-      return NextResponse.json({ error: "Address not found" }, { status: 404 });
+      return NextResponse.json({ error: "រកមិនឃើញអាសយដ្ឋាននេះទេ។" }, { status: 404 });
     }
 
     await prisma.savedAddress.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(
-      { error: "The database is busy — please try again in a moment." },
+      { error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀតក្នុងពេលបន្តិចទៀតនេះ។" },
       { status: 503 }
     );
   }

@@ -19,12 +19,12 @@ export async function POST(
 
   const order = await prisma.order.findUnique({ where: { id } });
   if (!order) {
-    return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    return NextResponse.json({ error: "រកមិនឃើញការកម្ម៉ង់នេះទេ។" }, { status: 404 });
   }
 
   if (order.orderStatus === "CANCELLED") {
     return NextResponse.json(
-      { error: "This order has been cancelled" },
+      { error: "ការកម្ម៉ង់នេះត្រូវបានលុបចោលហើយ។" },
       { status: 400 }
     );
   }
@@ -39,7 +39,7 @@ export async function POST(
     if (candidate instanceof File && candidate.size > 0) {
       if (candidate.size > MAX_PHOTO_BYTES) {
         return NextResponse.json(
-          { error: "Screenshot is too large (max 4.5MB)." },
+          { error: "រូបថតអេក្រង់ធំពេក (អតិបរមា 4.5MB)។" },
           { status: 400 }
         );
       }

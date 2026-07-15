@@ -5,17 +5,17 @@ import { redeemReward } from "@/lib/redeemReward";
 export async function POST(request: NextRequest) {
   const session = getUserFromRequest(request);
   if (!session) {
-    return NextResponse.json({ error: "Please sign in first." }, { status: 401 });
+    return NextResponse.json({ error: "សូមចូលគណនីជាមុនសិន។" }, { status: 401 });
   }
 
   let body: { rewardId?: string };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។" }, { status: 400 });
   }
   if (!body.rewardId || typeof body.rewardId !== "string") {
-    return NextResponse.json({ error: "rewardId is required" }, { status: 400 });
+    return NextResponse.json({ error: "តម្រូវឲ្យមានលេខរង្វាន់។" }, { status: 400 });
   }
 
   const result = await redeemReward(session.id, body.rewardId);

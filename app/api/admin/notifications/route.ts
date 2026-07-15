@@ -21,19 +21,19 @@ const schema = z.object({
 // 👑 Targeted Notification Engine — broadcast to all customers or DM one.
 export async function POST(request: NextRequest) {
   if (!getAdminFromRequest(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 401 });
   }
 
   let raw: unknown;
   try {
     raw = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។" }, { status: 400 });
   }
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid notification" },
+      { error: parsed.error.issues[0]?.message ?? "ព័ត៌មានការជូនដំណឹងមិនត្រឹមត្រូវទេ។" },
       { status: 400 }
     );
   }
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         select: { id: true },
       });
       if (!user) {
-        return NextResponse.json({ error: "Target customer not found" }, { status: 400 });
+        return NextResponse.json({ error: "រកមិនឃើញអតិថិជនគោលដៅនេះទេ។" }, { status: 400 });
       }
     }
 
@@ -64,6 +64,6 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch {
-    return NextResponse.json({ error: "The database is busy." }, { status: 503 });
+    return NextResponse.json({ error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀត។" }, { status: 503 });
   }
 }

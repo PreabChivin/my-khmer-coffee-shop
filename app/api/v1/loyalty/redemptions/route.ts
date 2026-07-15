@@ -14,7 +14,7 @@ export const OPTIONS = corsPreflight;
 export async function GET(request: NextRequest) {
   const session = getUserFromRequest(request);
   if (!session) {
-    return withCors(apiError("Please sign in first.", 401));
+    return withCors(apiError("សូមចូលគណនីជាមុនសិន។", 401));
   }
   try {
     const rows = await prisma.redemptionHistory.findMany({
@@ -31,6 +31,6 @@ export async function GET(request: NextRequest) {
     }));
     return withCors(apiSuccess(body));
   } catch {
-    return withCors(apiError("The database is busy — please try again in a moment.", 503));
+    return withCors(apiError("ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀតក្នុងពេលបន្តិចទៀតនេះ។", 503));
   }
 }

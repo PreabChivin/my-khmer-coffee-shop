@@ -19,12 +19,12 @@ export async function POST(request: NextRequest) {
   try {
     raw = await request.json();
   } catch {
-    return withCors(apiError("Invalid JSON body", 400));
+    return withCors(apiError("ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។", 400));
   }
 
   const parsed = loginSchema.safeParse(raw);
   if (!parsed.success) {
-    return withCors(apiError(parsed.error.issues[0]?.message ?? "Invalid credentials", 400));
+    return withCors(apiError(parsed.error.issues[0]?.message ?? "ព័ត៌មានចូលគណនីមិនត្រឹមត្រូវទេ។", 400));
   }
 
   const identifier = parsed.data.identifier.trim();
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
   // Constant-ish response: same error whether the account is missing or the
   // password is wrong, so we never reveal which emails are registered.
-  const genericError = () => withCors(apiError("Invalid email/username or password.", 401));
+  const genericError = () => withCors(apiError("អុីមែល/ឈ្មោះអ្នកប្រើ ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវទេ។", 401));
 
   if (!user || !user.passwordHash) return genericError();
 
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
   if (user.deactivatedAt) {
     return withCors(
-      apiError("This account has been deactivated. Contact an admin for help.", 403, "DEACTIVATED")
+      apiError("គណនីនេះត្រូវបានផ្អាកហើយ។ សូមទាក់ទងអ្នកគ្រប់គ្រងដើម្បីទទួលជំនួយ។", 403, "DEACTIVATED")
     );
   }
 

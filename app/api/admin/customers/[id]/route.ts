@@ -12,7 +12,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   if (!getAdminFromRequest(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -20,7 +20,7 @@ export async function GET(
   try {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) {
-      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+      return NextResponse.json({ error: "រកមិនឃើញអតិថិជននេះទេ។" }, { status: 404 });
     }
 
     const [orders, savedAddresses] = await Promise.all([
@@ -59,7 +59,7 @@ export async function GET(
     return NextResponse.json(body);
   } catch {
     return NextResponse.json(
-      { error: "The database is busy — please try again in a moment." },
+      { error: "ប្រព័ន្ធកំពុងមមាញឹកបន្តិច សូមព្យាយាមម្តងទៀតក្នុងពេលបន្តិចទៀតនេះ។" },
       { status: 503 }
     );
   }
