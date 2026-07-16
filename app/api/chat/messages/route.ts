@@ -7,6 +7,9 @@ import type { ChatMessageDTO } from "@/lib/types";
 
 const PAGE_SIZE = 50;
 const MAX_TEXT_LENGTH = 500;
+// ~1.2M base64 chars ≈ 900KB decoded — a hard ceiling above the client's
+// ~100-250KB compressed output, so a tampered client still can't bloat rows.
+const MAX_IMAGE_DATA_URL_CHARS = 1_200_000;
 // A member counts as "typing" only if their heartbeat is this fresh —
 // matches the client's ~2.5s debounce, so a closed tab goes quiet fast.
 const TYPING_FRESHNESS_MS = 6000;
@@ -116,13 +119,26 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
-  // 🖼️ Pasted-URL only (no upload storage yet) — cheap sanity check so we
-  // never store something that obviously isn't a link.
-  if (imageUrl && !/^https:\/\/.+/.test(imageUrl)) {
-    return NextResponse.json(
-      { error: "តំណរូបភាពត្រូវតែជា URL https ត្រឹមត្រូវ។" },
-      { status: 400 }
-    );
+  // 🖼️ Accept either an https URL (legacy) or a compressed base64 image data
+  // URL produced by the client uploader (lib/imageCompress.ts). The client
+  // compresses to ~100-250KB, but that's bypassable, so re-cap the size here:
+  // MAX_IMAGE_DATA_URL_CHARS of base64 ≈ 900KB decoded, comfortably above a
+  // compressed image yet far below anything that would bloat the feed.
+  if (imageUrl) {
+    const isHttps = /^https:\/\/.+/.test(imageUrl);
+    const isImageDataUrl = /^data:image\/(jpeg|png|webp|gif);base64,/.test(imageUrl);
+    if (!isHttps && !isImageDataUrl) {
+      return NextResponse.json(
+        { error: "រូបភាពមិនត្រឹមត្រូវទេ។" },
+        { status: 400 }
+      );
+    }
+    if (isImageDataUrl && imageUrl.length > MAX_IMAGE_DATA_URL_CHARS) {
+      return NextResponse.json(
+        { error: "រូបភាពធំពេក សូមព្យាយាមម្តងទៀត។" },
+        { status: 400 }
+      );
+    }
   }
 
   try {

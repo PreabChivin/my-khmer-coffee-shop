@@ -15,6 +15,7 @@ import {
 import { useSession } from "@/contexts/SessionContext";
 import { useChat } from "@/contexts/ChatContext";
 import ChatGameOverlay from "@/components/ChatGameOverlay";
+import { compressImageToDataUrl } from "@/lib/imageCompress";
 import {
   CHAT_EMOJIS,
   type ChatEmoji,
@@ -60,8 +61,10 @@ export default function ChatDrawer() {
   const [messages, setMessages] = useState<ChatMessageDTO[]>([]);
   const [typingUsers, setTypingUsers] = useState<{ id: string; name: string }[]>([]);
   const [text, setText] = useState("");
+  // 🖼️ Holds the compressed base64 data URL of a picked image (or ""), shown
+  // as a preview above the composer and sent as the message's imageUrl.
   const [imageUrl, setImageUrl] = useState("");
-  const [showImageField, setShowImageField] = useState(false);
+  const [imageBusy, setImageBusy] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [openReactionBarFor, setOpenReactionBarFor] = useState<string | null>(null);
@@ -80,6 +83,7 @@ export default function ChatDrawer() {
   const lastIdRef = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   // Mirror of `messages` for the poll loop to read without re-subscribing —
   // used to refresh live game-invite state (see refreshActiveInvites).
   const messagesRef = useRef<ChatMessageDTO[]>([]);
@@ -230,11 +234,37 @@ export default function ChatDrawer() {
       lastIdRef.current = data.id;
       setText("");
       setImageUrl("");
-      setShowImageField(false);
     } catch {
       setError("បណ្តាញមានបញ្ហា សូមព្យាយាមម្តងទៀត។");
     } finally {
       setIsSending(false);
+    }
+  }
+
+  // 🖼️ Native file picker → compress in-browser → preview. Works on desktop
+  // (OS file dialog) and inside the Capacitor Android WebView (native gallery),
+  // no plugin or manifest change needed.
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    // Reset the input so picking the SAME file again still fires onChange.
+    e.target.value = "";
+    if (!file) return;
+    setImageBusy(true);
+    setError(null);
+    try {
+      const dataUrl = await compressImageToDataUrl(file);
+      setImageUrl(dataUrl);
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : "";
+      setError(
+        reason === "too-large"
+          ? "រូបភាពធំពេក (អតិបរមា 5MB)។"
+          : reason === "not-an-image"
+            ? "សូមជ្រើសរើសឯកសាររូបភាព។"
+            : "មិនអាចដំណើរការរូបភាពនេះបានទេ។"
+      );
+    } finally {
+      setImageBusy(false);
     }
   }
 
@@ -484,27 +514,44 @@ export default function ChatDrawer() {
               </p>
             )}
 
-            {showImageField && (
-              <div className="flex items-center gap-2 px-3 pb-2">
-                <input
-                  type="url"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="ដាក់តំណរូបភាព (https://...)"
-                  className="flex-1 rounded-full border border-coffee-300 bg-cream-50 px-3 py-1.5 text-xs outline-none focus:border-lavender-500 dark:border-coffee-600 dark:bg-coffee-800 dark:text-cream-50"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setImageUrl("");
-                    setShowImageField(false);
-                  }}
-                  className="text-xs font-semibold text-coffee-500 dark:text-cream-300"
-                >
-                  បោះបង់
-                </button>
+            {/* 🖼️ Selected-image preview (compressing spinner, then thumbnail) */}
+            {(imageBusy || imageUrl) && (
+              <div className="px-3 pb-2">
+                <div className="relative inline-block">
+                  {imageBusy ? (
+                    <div className="flex h-20 w-20 items-center justify-center rounded-xl border border-coffee-300 bg-coffee-100 dark:border-coffee-600 dark:bg-coffee-800">
+                      <Loader2 size={20} className="animate-spin text-lavender-500" />
+                    </div>
+                  ) : (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imageUrl}
+                        alt="preview"
+                        className="h-20 w-20 rounded-xl border border-coffee-300 object-cover dark:border-coffee-600"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setImageUrl("")}
+                        aria-label="Remove image"
+                        className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-coffee-900 text-white shadow-md transition-transform hover:scale-110 active:scale-95"
+                      >
+                        <X size={13} />
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             )}
+
+            {/* Hidden native file input — works on desktop + Capacitor WebView */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileSelected}
+            />
 
             {/* 🎮 Game challenge menu */}
             {showGameMenu && (
@@ -554,15 +601,16 @@ export default function ChatDrawer() {
               </button>
               <button
                 type="button"
-                onClick={() => setShowImageField((v) => !v)}
-                aria-label="Attach image link"
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-95 ${
-                  showImageField
+                onClick={() => fileInputRef.current?.click()}
+                disabled={imageBusy}
+                aria-label="Attach image"
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-95 disabled:opacity-50 ${
+                  imageUrl
                     ? "bg-lavender-500 text-white"
                     : "bg-coffee-100 text-coffee-700 dark:bg-coffee-800 dark:text-cream-200"
                 }`}
               >
-                <ImagePlus size={18} />
+                {imageBusy ? <Loader2 size={18} className="animate-spin" /> : <ImagePlus size={18} />}
               </button>
               <div className="flex-1">
                 <textarea
@@ -582,7 +630,7 @@ export default function ChatDrawer() {
               <button
                 type="button"
                 onClick={() => sendMessage()}
-                disabled={isSending || (!text.trim() && !imageUrl.trim())}
+                disabled={isSending || imageBusy || (!text.trim() && !imageUrl.trim())}
                 aria-label="Send message"
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-lavender-500 to-crimson-500 text-white shadow-lg transition-transform hover:scale-110 active:scale-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
               >
