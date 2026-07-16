@@ -39,6 +39,8 @@ export interface UserDTO {
   /** ISO date string, or null if not on file. Generation is derived from it. */
   dateOfBirth: string | null;
   role: Role;
+  /** Compressed base64 JPEG data URL, or null — see User.avatarUrl. */
+  avatarUrl: string | null;
 }
 
 /** 👑 One row in the admin "Registered Customers" / User Management table. */
@@ -362,6 +364,8 @@ export interface ChatMessageDTO {
     name: string;
     role: Role;
     generationEmoji: string;
+    /** Profile picture — null falls back to a generationEmoji circle. */
+    avatarUrl: string | null;
   };
   /** True only for the sender's own messages — gates the "delete" affordance
    *  client-side (staff/admin can delete any message; see isStaff on the hook). */
@@ -417,5 +421,6 @@ export interface AdminChatMessageDTO {
     role: Role;
     chatMutedUntil: string | null;
     chatBannedAt: string | null;
+    avatarUrl: string | null;
   };
 }

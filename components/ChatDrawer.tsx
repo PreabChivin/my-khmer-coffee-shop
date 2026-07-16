@@ -761,7 +761,18 @@ function ChatBubble({
             isMine ? "flex-row-reverse" : ""
           }`}
         >
-          <span>{message.author.generationEmoji}</span>
+          <span className="flex h-4 w-4 items-center justify-center overflow-hidden rounded-full bg-clay-100 text-[10px] leading-none dark:bg-coffee-900">
+            {message.author.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={message.author.avatarUrl}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              message.author.generationEmoji
+            )}
+          </span>
           <span>{message.author.name}</span>
           {(message.author.role === "STAFF" || message.author.role === "ADMIN") && (
             <span className="rounded-full bg-matcha-400/80 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">

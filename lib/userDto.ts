@@ -12,5 +12,6 @@ export function toUserDTO(user: User): UserDTO {
     loyaltyPoints: user.loyaltyPoints,
     dateOfBirth: user.dateOfBirth ? user.dateOfBirth.toISOString() : null,
     role: user.role,
+    avatarUrl: user.avatarUrl,
   };
 }

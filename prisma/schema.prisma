@@ -151,6 +151,10 @@ model User {
   passwordHash  String? // null only for future pure-OAuth accounts
   name          String
   phone         String?
+  // 🖼️ Profile picture — a compressed base64 JPEG data URL (same storage
+  // pattern as ChatMessage.imageUrl: no object storage service, compressed
+  // client-side before upload). Rendered as the member's chat avatar.
+  avatarUrl     String?
   role          Role     @default(CUSTOMER)
   // 🎂 Date of birth — used to derive the customer's generation tier
   // (lib/generation.ts). Nullable so pre-existing accounts stay valid; the

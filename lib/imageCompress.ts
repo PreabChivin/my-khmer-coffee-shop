@@ -10,13 +10,17 @@
  * an <img> fallback covers the rare browser without it.
  */
 
-export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // reject originals over 5MB
+export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // default: reject originals over 5MB
 
 export interface CompressOptions {
   /** Longest-edge cap in px (image is scaled down to fit, never up). */
   maxDim?: number;
   /** JPEG quality 0-1. */
   quality?: number;
+  /** Reject the ORIGINAL file above this size, before any compression runs.
+   *  Defaults to MAX_UPLOAD_BYTES; callers with a tighter policy (e.g. a
+   *  profile picture, capped at 3MB per this feature's spec) can override it. */
+  maxSourceBytes?: number;
 }
 
 async function loadBitmap(file: File): Promise<{
@@ -65,10 +69,10 @@ async function loadBitmap(file: File): Promise<{
  */
 export async function compressImageToDataUrl(
   file: File,
-  { maxDim = 1000, quality = 0.6 }: CompressOptions = {}
+  { maxDim = 1000, quality = 0.6, maxSourceBytes = MAX_UPLOAD_BYTES }: CompressOptions = {}
 ): Promise<string> {
   if (!file.type.startsWith("image/")) throw new Error("not-an-image");
-  if (file.size > MAX_UPLOAD_BYTES) throw new Error("too-large");
+  if (file.size > maxSourceBytes) throw new Error("too-large");
 
   const src = await loadBitmap(file);
   try {

@@ -224,6 +224,16 @@ export default function AdminChatMonitorPanel({
                         onClick={() => setProfileUserId(m.author.id)}
                         className="flex items-center gap-1.5 font-bold text-coffee-900 hover:underline dark:text-cream-50"
                       >
+                        <span className="flex h-5 w-5 items-center justify-center overflow-hidden rounded-full bg-clay-100 dark:bg-coffee-900">
+                          {m.author.avatarUrl && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={m.author.avatarUrl}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          )}
+                        </span>
                         {m.author.name}
                         <span className="rounded-full bg-coffee-100 px-1.5 py-0.5 text-[10px] font-bold text-coffee-500 dark:bg-coffee-900 dark:text-cream-300">
                           {m.author.role}

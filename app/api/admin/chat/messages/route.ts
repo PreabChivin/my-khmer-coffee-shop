@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
             role: true,
             chatMutedUntil: true,
             chatBannedAt: true,
+            avatarUrl: true,
           },
         },
         _count: { select: { reactions: true } },
@@ -67,6 +68,7 @@ export async function GET(request: NextRequest) {
         role: row.user.role,
         chatMutedUntil: row.user.chatMutedUntil ? row.user.chatMutedUntil.toISOString() : null,
         chatBannedAt: row.user.chatBannedAt ? row.user.chatBannedAt.toISOString() : null,
+        avatarUrl: row.user.avatarUrl,
       },
     }));
 

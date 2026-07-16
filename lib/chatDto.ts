@@ -16,7 +16,7 @@ type GameWithPlayers = GameSession & {
 };
 
 type MessageWithRelations = ChatMessage & {
-  user: Pick<User, "id" | "name" | "role" | "dateOfBirth">;
+  user: Pick<User, "id" | "name" | "role" | "dateOfBirth" | "avatarUrl">;
   reactions: ChatReaction[];
   gameSession?: GameWithPlayers | null;
 };
@@ -24,7 +24,7 @@ type MessageWithRelations = ChatMessage & {
 /** Prisma include shape shared by every route that returns member-facing chat
  *  messages, so game-invite bubbles always carry their live game summary. */
 export const chatMessageInclude = {
-  user: { select: { id: true, name: true, role: true, dateOfBirth: true } },
+  user: { select: { id: true, name: true, role: true, dateOfBirth: true, avatarUrl: true } },
   reactions: true,
   gameSession: {
     include: {
@@ -73,6 +73,7 @@ export function toChatMessageDTO(
       name: message.user.name,
       role: message.user.role,
       generationEmoji: generationFromDOB(message.user.dateOfBirth)?.emoji ?? "☕",
+      avatarUrl: message.user.avatarUrl,
     },
     isMine: message.userId === viewerId,
     reactions: summaries,
