@@ -8,6 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import LoyaltyProgress from "@/components/LoyaltyProgress";
 import RewardStore from "@/components/RewardStore";
 import OrderHistoryList from "@/components/OrderHistoryList";
+import RecommendationsCard from "@/components/RecommendationsCard";
 import { generationFromDOB } from "@/lib/generation";
 import { compressImageToDataUrl } from "@/lib/imageCompress";
 import type { OrderHistoryItemDTO } from "@/lib/types";
@@ -338,6 +339,9 @@ export default function AccountPage() {
           </div>
         </div>
       )}
+
+      {/* ✨ Recommended for you */}
+      <RecommendationsCard />
 
       {/* 💎 Loyalty points + tier progress */}
       <LoyaltyProgress points={user.loyaltyPoints} />

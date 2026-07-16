@@ -352,7 +352,7 @@ export interface ChatGameSummary {
   iAmParticipant: boolean;
 }
 
-export type ChatMessageKind = "TEXT" | "GAME_INVITE" | "GAME_RESULT";
+export type ChatMessageKind = "TEXT" | "STICKER" | "GAME_INVITE" | "GAME_RESULT";
 
 export interface ChatMessageDTO {
   id: string;
@@ -367,14 +367,18 @@ export interface ChatMessageDTO {
     /** Profile picture — null falls back to a generationEmoji circle. */
     avatarUrl: string | null;
   };
-  /** True only for the sender's own messages — gates the "delete" affordance
-   *  client-side (staff/admin can delete any message; see isStaff on the hook). */
+  /** True only for the sender's own messages — gates the "delete"/"edit"
+   *  affordances client-side (staff/admin can delete any message; see
+   *  isStaff on the hook). */
   isMine: boolean;
   reactions: ChatReactionSummary[];
-  /** "TEXT" for ordinary messages; "GAME_INVITE"/"GAME_RESULT" render specially. */
+  /** "TEXT"/"STICKER" render as bubbles; "GAME_INVITE"/"GAME_RESULT" specially. */
   kind: ChatMessageKind;
   /** Present only on GAME_INVITE messages. */
   game: ChatGameSummary | null;
+  /** True if the sender edited this after sending — the ORIGINAL text is not
+   *  exposed to regular members, only to Staff/Admin (AdminChatMessageDTO). */
+  isEdited: boolean;
 }
 
 /** 🎮 Full board state for the game overlay — fetched on open and re-polled
@@ -412,7 +416,15 @@ export interface AdminChatMessageDTO {
   imageUrl: string | null;
   createdAt: string;
   deletedAt: string | null;
+  /** True when the SENDER deleted their own message; false + deletedAt set
+   *  means Staff/Admin moderation removed it instead. */
+  isDeletedByUser: boolean;
+  /** The message exactly as first sent, if it was ever edited — full audit
+   *  visibility, never sent to the member-facing ChatMessageDTO. */
+  originalText: string | null;
+  editedAt: string | null;
   flagged: boolean;
+  kind: ChatMessageKind;
   reactionCount: number;
   author: {
     id: string;
@@ -423,4 +435,29 @@ export interface AdminChatMessageDTO {
     chatBannedAt: string | null;
     avatarUrl: string | null;
   };
+}
+
+/** ✨ One recommended product on the account page — a heuristic over the
+ *  member's own order history (their most-ordered product/category), NOT a
+ *  trained ML model. `reason` tells the UI which of the two heuristics
+ *  produced it, so it can show a matching Khmer label. */
+export interface RecommendationDTO {
+  product: ProductDTO;
+  reason: "your-usual" | "popular-in-category" | "popular-overall";
+}
+
+/** 📊 Admin-side sales trend — a moving-average projection over recent daily
+ *  totals, NOT a trained predictive model (see app/api/admin/analytics/predict
+ *  for the exact heuristic and why). */
+export interface SalesPredictionDTO {
+  /** Last 7 days of {date, total}, oldest first — the basis for the trend. */
+  recentDaily: { date: string; total: number }[];
+  /** Simple average of recentDaily. */
+  averageDailyTotal: number;
+  /** Naive projection: averageDailyTotal carried forward one week. */
+  projectedNextWeekTotal: number;
+  /** "up" / "down" / "flat" — first half vs second half of recentDaily. */
+  trend: "up" | "down" | "flat";
+  /** % change between the two halves, signed. */
+  trendPercent: number;
 }

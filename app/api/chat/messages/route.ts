@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/customerAuth";
 import { toChatMessageDTO, chatMessageInclude } from "@/lib/chatDto";
 import { checkChatModeration, moderationErrorBody } from "@/lib/chatModeration";
+import { shouldAutoFlag } from "@/lib/chatModerationFilter";
+import { getSticker } from "@/lib/stickers";
 import type { ChatMessageDTO } from "@/lib/types";
 
 const PAGE_SIZE = 50;
@@ -79,8 +81,11 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/chat/messages
- * Body: { text: string, imageUrl?: string }
+ * Body: { text?: string, imageUrl?: string } for a normal message, OR
+ *       { stickerId: string } for a sticker (mutually exclusive with text/image).
  * Every registered member (customer or staff) can post to the shared room.
+ * Plain-text messages are scanned by lib/chatModerationFilter.ts and
+ * auto-flagged (never blocked) for the Admin Chat Monitor to review.
  */
 export async function POST(request: NextRequest) {
   const session = getUserFromRequest(request);
@@ -93,7 +98,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(moderationErrorBody(modCheck), { status: 403 });
   }
 
-  let body: { text?: unknown; imageUrl?: unknown };
+  let body: { text?: unknown; imageUrl?: unknown; stickerId?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -101,6 +106,27 @@ export async function POST(request: NextRequest) {
       { error: "ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។" },
       { status: 400 }
     );
+  }
+
+  // 💌 Sticker path — a fixed lib/stickers.ts id, no text/image alongside it.
+  if (typeof body.stickerId === "string") {
+    const sticker = getSticker(body.stickerId);
+    if (!sticker) {
+      return NextResponse.json({ error: "ស្ទីខឺមិនត្រឹមត្រូវទេ។" }, { status: 400 });
+    }
+    try {
+      const created = await prisma.chatMessage.create({
+        data: { userId: session.id, text: sticker.id, kind: "STICKER" },
+        include: messageInclude,
+      });
+      await prisma.chatTyping.deleteMany({ where: { userId: session.id } }).catch(() => {});
+      return NextResponse.json(toChatMessageDTO(created, session.id), { status: 201 });
+    } catch {
+      return NextResponse.json(
+        { error: "មិនអាចផ្ញើស្ទីខឺបានទេ សូមព្យាយាមម្តងទៀត។" },
+        { status: 503 }
+      );
+    }
   }
 
   const text = typeof body.text === "string" ? body.text.trim() : "";
@@ -143,7 +169,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const created = await prisma.chatMessage.create({
-      data: { userId: session.id, text, imageUrl },
+      data: { userId: session.id, text, imageUrl, flagged: shouldAutoFlag(text) },
       include: messageInclude,
     });
     // Sending a message is itself proof of activity — clear any stale

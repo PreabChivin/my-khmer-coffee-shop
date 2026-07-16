@@ -9,6 +9,7 @@ import RedemptionsPanel from "@/components/admin/RedemptionsPanel";
 import NotificationsPanel from "@/components/admin/NotificationsPanel";
 import LuckyDrawPanel from "@/components/admin/LuckyDrawPanel";
 import AdminChatMonitorPanel from "@/components/admin/AdminChatMonitorPanel";
+import AdminPredictivePanel from "@/components/admin/AdminPredictivePanel";
 import AdminToast from "@/components/admin/AdminToast";
 import type { ProductDTO } from "@/lib/types";
 
@@ -45,6 +46,7 @@ export default function StaffKitchenView({
           ផ្ទាំងគ្រប់គ្រងការកម្ម៉ង់របស់ Besties 🧸
         </h1>
         <AdminStats />
+        <AdminPredictivePanel />
       </div>
 
       {/* Compact two-column workspace: Live Orders Control | Menu & Partner CMS */}

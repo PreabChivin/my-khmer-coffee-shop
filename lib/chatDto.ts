@@ -79,5 +79,6 @@ export function toChatMessageDTO(
     reactions: summaries,
     kind: message.kind as ChatMessageKind,
     game: message.gameSession ? toGameSummary(message.gameSession, viewerId) : null,
+    isEdited: message.editedAt !== null,
   };
 }

@@ -444,6 +444,10 @@ const dictionary = {
     "account.logout": "Log Out",
     "account.myOrders": "My Orders 🧾",
     "account.loadingOrders": "Loading orders…",
+    "account.recommendedTitle": "Recommended for you ✨",
+    "account.recommendedYourUsual": "Your usual",
+    "account.recommendedCategory": "More like what you love",
+    "account.recommendedPopular": "Popular right now",
 
     "ordersPage.lockedTitle": "Track your orders",
     "ordersPage.lockedSubtitle":
@@ -898,6 +902,10 @@ const dictionary = {
     "account.logout": "ចាកចេញ",
     "account.myOrders": "ការកម្ម៉ង់របស់ខ្ញុំ 🧾",
     "account.loadingOrders": "កំពុងផ្ទុកការកម្ម៉ង់...",
+    "account.recommendedTitle": "ណែនាំសម្រាប់អ្នក ✨",
+    "account.recommendedYourUsual": "របស់ដែលអ្នកតែងតែបញ្ជា",
+    "account.recommendedCategory": "ស្រដៀងនឹងអ្វីដែលអ្នកចូលចិត្ត",
+    "account.recommendedPopular": "កំពុងពេញនិយមឥឡូវនេះ",
 
     "ordersPage.lockedTitle": "តាមដានការកម្ម៉ង់របស់អ្នក",
     "ordersPage.lockedSubtitle":

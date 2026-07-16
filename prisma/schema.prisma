@@ -380,19 +380,31 @@ model ChatMessage {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   text      String
-  // 🖼️ Pasted image URL (not an uploaded file — this app has no object
-  // storage service yet). Renders inline in the bubble.
+  // 🖼️ A compressed base64 image data URL (client-compressed, stored inline —
+  // this app has no object storage service) or a legacy https link. Renders
+  // inline in the bubble.
   imageUrl  String?
-  // 🛡️ Staff/Admin moderation soft-delete — hides the message from the feed
-  // without erasing it, mirroring the User.deactivatedAt pattern.
+  // 🛡️ Soft-delete — hides the message from the member-facing feed without
+  // erasing it, mirroring the User.deactivatedAt pattern. Set either by the
+  // sender themselves (isDeletedByUser: true) or by Staff/Admin moderation
+  // (isDeletedByUser stays false) — the Admin Chat Monitor shows both, this
+  // flag is just how it labels which happened.
   deletedAt DateTime?
+  isDeletedByUser Boolean @default(false)
+  // ✏️ Edit audit trail — originalText is set ONCE, on the first edit, so it
+  // always holds the message exactly as first sent (later edits only update
+  // `text` + `editedAt`, never overwrite originalText). null = never edited.
+  originalText String?
+  editedAt     DateTime?
   // 🚩 Marked for review by Staff/Admin without deleting — keeps the message
   // as evidence for other moderators, surfaced in the Admin Chat Monitor's
-  // "Flagged" filter.
+  // "Flagged" filter. Also set automatically by lib/chatModerationFilter.ts
+  // on send for messages matching a risky-content pattern.
   flagged   Boolean  @default(false)
-  // 🎮 Message kind — "TEXT" (normal), "GAME_INVITE" (carries a challenge,
-  // links to gameSession), or "GAME_RESULT" (system announcement of a match
-  // outcome). Existing rows default to TEXT.
+  // 🎮💌 Message kind — "TEXT" (normal), "STICKER" (one of the predefined
+  // lib/stickers.ts set, rendered large with no bubble chrome), "GAME_INVITE"
+  // (carries a challenge, links to gameSession), or "GAME_RESULT" (system
+  // announcement of a match outcome). Existing rows default to TEXT.
   kind      String   @default("TEXT")
   gameSessionId String?
   gameSession   GameSession? @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)

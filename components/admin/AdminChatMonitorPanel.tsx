@@ -12,6 +12,9 @@ import {
   Ban,
   ShieldCheck,
   X,
+  CheckSquare,
+  Square,
+  Loader2,
 } from "lucide-react";
 import CustomerHistoryModal from "@/components/admin/CustomerHistoryModal";
 import type { AdminChatMessageDTO } from "@/lib/types";
@@ -52,6 +55,9 @@ export default function AdminChatMonitorPanel({
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
   const [muteTarget, setMuteTarget] = useState<AdminChatMessageDTO["author"] | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isClearing, setIsClearing] = useState(false);
 
   // Deliberately does NOT reset messages to null before the fetch resolves
   // (matches RegisteredCustomersPanel's pattern) — switching filters keeps
@@ -112,6 +118,46 @@ export default function AdminChatMonitorPanel({
     }
   }
 
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function clearSelected() {
+    if (selectedIds.size === 0) return;
+    if (
+      !confirm(
+        `តើអ្នកប្រាកដទេថាចង់លុបសារ ${selectedIds.size} ជាអចិន្ត្រៃយ៍? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។`
+      )
+    ) {
+      return;
+    }
+    setIsClearing(true);
+    try {
+      const res = await fetch("/api/admin/chat/messages/clear", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [...selectedIds] }),
+      });
+      if (res.ok) {
+        setMessages((prev) => prev?.filter((m) => !selectedIds.has(m.id)) ?? null);
+        setSelectedIds(new Set());
+        setSelectMode(false);
+      } else {
+        const data = await res.json().catch(() => null);
+        onError(data?.error ?? "មិនអាចលុបសារបានទេ។");
+      }
+    } catch {
+      onError("បណ្តាញមានបញ្ហា សូមព្យាយាមម្តងទៀត។");
+    } finally {
+      setIsClearing(false);
+    }
+  }
+
   async function mute(userId: string, minutes: number) {
     const res = await fetch(`/api/admin/chat/users/${userId}/mute`, {
       method: "POST",
@@ -169,7 +215,7 @@ export default function AdminChatMonitorPanel({
 
       {isOpen && (
         <div className="border-t border-coffee-200 px-4 py-3 dark:border-coffee-700">
-          <div className="mb-3 flex gap-2">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => setFilter("all")}
@@ -192,6 +238,41 @@ export default function AdminChatMonitorPanel({
             >
               បានដាក់ទង់ · Flagged 🚩
             </button>
+
+            {isAdminRole && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectMode((v) => !v);
+                    setSelectedIds(new Set());
+                  }}
+                  className={`ml-auto flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${
+                    selectMode
+                      ? "bg-coffee-800 text-gold-400"
+                      : "bg-coffee-100 text-coffee-600 dark:bg-coffee-900 dark:text-cream-300"
+                  }`}
+                >
+                  {selectMode ? <CheckSquare size={13} /> : <Square size={13} />}
+                  ជ្រើសរើស · Select
+                </button>
+                {selectMode && (
+                  <button
+                    type="button"
+                    onClick={clearSelected}
+                    disabled={selectedIds.size === 0 || isClearing}
+                    className="flex items-center gap-1 rounded-full bg-crimson-600 px-3 py-1.5 text-xs font-bold text-white transition-transform hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {isClearing ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={13} />
+                    )}
+                    លុបជាអចិន្ត្រៃយ៍ ({selectedIds.size})
+                  </button>
+                )}
+              </>
+            )}
           </div>
 
           {messages === null ? (
@@ -210,7 +291,7 @@ export default function AdminChatMonitorPanel({
                 return (
                   <div
                     key={m.id}
-                    className={`rounded-xl border p-3 text-sm ${
+                    className={`flex gap-2 rounded-xl border p-3 text-sm ${
                       m.deletedAt
                         ? "border-coffee-200 bg-coffee-50 opacity-60 dark:border-coffee-700 dark:bg-coffee-900"
                         : m.flagged
@@ -218,6 +299,21 @@ export default function AdminChatMonitorPanel({
                           : "border-coffee-200 bg-white dark:border-coffee-700 dark:bg-coffee-800"
                     }`}
                   >
+                    {selectMode && (
+                      <button
+                        type="button"
+                        onClick={() => toggleSelected(m.id)}
+                        aria-label="Select message"
+                        className="mt-0.5 shrink-0 text-coffee-500 dark:text-cream-300"
+                      >
+                        {selectedIds.has(m.id) ? (
+                          <CheckSquare size={16} />
+                        ) : (
+                          <Square size={16} />
+                        )}
+                      </button>
+                    )}
+                    <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center justify-between gap-1">
                       <button
                         type="button"
@@ -259,11 +355,21 @@ export default function AdminChatMonitorPanel({
 
                     {m.deletedAt ? (
                       <p className="mt-1.5 italic text-coffee-400 dark:text-cream-400">
-                        [លុបនៅ {formatDateTime(m.deletedAt)}] {m.text}
+                        [{m.isDeletedByUser ? "សមាជិកលុបខ្លួនឯង" : "បុគ្គលិកលុប"} · {formatDateTime(m.deletedAt)}] {m.text}
                       </p>
                     ) : (
                       <p className="mt-1.5 whitespace-pre-wrap break-words text-coffee-800 dark:text-cream-100">
                         {m.text}
+                        {m.editedAt && (
+                          <span className="ml-1.5 text-[10px] italic text-coffee-400 dark:text-cream-400">
+                            (កែប្រែ · {formatDateTime(m.editedAt)})
+                          </span>
+                        )}
+                      </p>
+                    )}
+                    {m.originalText && (
+                      <p className="mt-1 rounded-lg bg-coffee-100/60 px-2 py-1 text-[11px] italic text-coffee-500 dark:bg-coffee-900/60 dark:text-cream-300">
+                        📝 ដើម៖ {m.originalText}
                       </p>
                     )}
                     {m.imageUrl && (
@@ -333,6 +439,7 @@ export default function AdminChatMonitorPanel({
                           )}
                         </>
                       )}
+                    </div>
                     </div>
                   </div>
                 );

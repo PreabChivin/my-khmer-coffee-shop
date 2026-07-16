@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import {
   X,
   Send,
@@ -11,11 +11,15 @@ import {
   Loader2,
   Gamepad2,
   Swords,
+  Pencil,
+  Check,
+  Sticker as StickerIcon,
 } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { useChat } from "@/contexts/ChatContext";
 import ChatGameOverlay from "@/components/ChatGameOverlay";
 import { compressImageToDataUrl } from "@/lib/imageCompress";
+import { STICKERS, getSticker } from "@/lib/stickers";
 import {
   CHAT_EMOJIS,
   type ChatEmoji,
@@ -39,6 +43,22 @@ const ICEBREAKERS = [
 function formatTime(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
+
+function dayKey(iso: string): string {
+  return new Date(iso).toDateString();
+}
+
+/** "ថ្ងៃនេះ" / "ម្សិលមិញ" / a formatted date — the label shown on the date
+ *  separator between messages sent on different days. */
+function formatDateSeparator(iso: string): string {
+  const target = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  if (dayKey(iso) === today.toDateString()) return "ថ្ងៃនេះ";
+  if (dayKey(iso) === yesterday.toDateString()) return "ម្សិលមិញ";
+  return target.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 }
 
 /** Appends `incoming` messages, de-duped by id. Needed because a send's
@@ -79,6 +99,8 @@ export default function ChatDrawer() {
   const [showGameMenu, setShowGameMenu] = useState(false);
   const [gameStats, setGameStats] = useState<GameStatsDTO | null>(null);
   const [gameBusy, setGameBusy] = useState(false);
+  // 💌 Sticker drawer toggle
+  const [showStickerDrawer, setShowStickerDrawer] = useState(false);
 
   const lastIdRef = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -314,6 +336,47 @@ export default function ChatDrawer() {
     }
   }
 
+  async function editMessage(messageId: string, newText: string): Promise<boolean> {
+    try {
+      const res = await fetch(`/api/chat/messages/${messageId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: newText }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "មិនអាចកែសារបានទេ។");
+        return false;
+      }
+      setMessages((prev) => prev.map((m) => (m.id === messageId ? (data as ChatMessageDTO) : m)));
+      return true;
+    } catch {
+      setError("បណ្តាញមានបញ្ហា សូមព្យាយាមម្តងទៀត។");
+      return false;
+    }
+  }
+
+  async function sendSticker(stickerId: string) {
+    try {
+      const res = await fetch("/api/chat/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stickerId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "មិនអាចផ្ញើស្ទីខឺបានទេ។");
+        return;
+      }
+      shouldAutoScrollRef.current = true;
+      setMessages((prev) => mergeMessages(prev, [data as ChatMessageDTO]));
+      lastIdRef.current = data.id;
+      setShowStickerDrawer(false);
+    } catch {
+      setError("បណ្តាញមានបញ្ហា សូមព្យាយាមម្តងទៀត។");
+    }
+  }
+
   // 🎮 Game actions ---------------------------------------------------------
   async function openGameMenu() {
     setShowGameMenu((v) => !v);
@@ -435,45 +498,65 @@ export default function ChatDrawer() {
             </div>
           ) : (
             messages.map((message, index) => {
+              const prev = messages[index - 1];
+              const showDateSeparator =
+                !prev || dayKey(prev.createdAt) !== dayKey(message.createdAt);
+              const separator = showDateSeparator && (
+                <div key={`sep-${message.id}`} className="flex justify-center py-1">
+                  <span className="rounded-full bg-coffee-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-coffee-500 dark:bg-coffee-800 dark:text-cream-300">
+                    {formatDateSeparator(message.createdAt)}
+                  </span>
+                </div>
+              );
+
               if (message.kind === "GAME_RESULT") {
                 return (
-                  <div key={message.id} className="flex justify-center py-1">
-                    <span className="rounded-full bg-gradient-to-r from-gold-100 to-clay-100 px-3 py-1.5 text-center text-xs font-bold text-clay-700 dark:from-coffee-800 dark:to-coffee-800 dark:text-gold-400">
-                      {message.text}
-                    </span>
-                  </div>
+                  <Fragment key={message.id}>
+                    {separator}
+                    <div className="flex justify-center py-1">
+                      <span className="rounded-full bg-gradient-to-r from-gold-100 to-clay-100 px-3 py-1.5 text-center text-xs font-bold text-clay-700 dark:from-coffee-800 dark:to-coffee-800 dark:text-gold-400">
+                        {message.text}
+                      </span>
+                    </div>
+                  </Fragment>
                 );
               }
               if (message.kind === "GAME_INVITE" && message.game) {
                 return (
-                  <GameInviteBubble
-                    key={message.id}
-                    game={message.game}
-                    busy={gameBusy}
-                    onAccept={() => acceptChallenge(message.game!)}
-                    onCancel={() => cancelChallenge(message.game!)}
-                    onOpenBoard={() => setActiveGameId(message.game!.id)}
-                  />
+                  <Fragment key={message.id}>
+                    {separator}
+                    <GameInviteBubble
+                      game={message.game}
+                      busy={gameBusy}
+                      onAccept={() => acceptChallenge(message.game!)}
+                      onCancel={() => cancelChallenge(message.game!)}
+                      onOpenBoard={() => setActiveGameId(message.game!.id)}
+                    />
+                  </Fragment>
                 );
               }
-              const prev = messages[index - 1];
               const isGrouped =
+                !showDateSeparator &&
                 prev &&
                 prev.author.id === message.author.id &&
-                prev.kind === "TEXT";
+                prev.kind !== "GAME_INVITE" &&
+                prev.kind !== "GAME_RESULT";
               return (
-                <ChatBubble
-                  key={message.id}
-                  message={message}
-                  showHeader={!isGrouped}
-                  canModerate={message.isMine || isStaff}
-                  isReactionBarOpen={openReactionBarFor === message.id}
-                  onToggleReactionBar={() =>
-                    setOpenReactionBarFor((cur) => (cur === message.id ? null : message.id))
-                  }
-                  onReact={(emoji) => react(message.id, emoji)}
-                  onDelete={() => deleteMessage(message.id)}
-                />
+                <Fragment key={message.id}>
+                  {separator}
+                  <ChatBubble
+                    message={message}
+                    showHeader={!isGrouped}
+                    canModerate={message.isMine || isStaff}
+                    isReactionBarOpen={openReactionBarFor === message.id}
+                    onToggleReactionBar={() =>
+                      setOpenReactionBarFor((cur) => (cur === message.id ? null : message.id))
+                    }
+                    onReact={(emoji) => react(message.id, emoji)}
+                    onDelete={() => deleteMessage(message.id)}
+                    onEdit={(newText) => editMessage(message.id, newText)}
+                  />
+                </Fragment>
               );
             })
           )}
@@ -585,6 +668,23 @@ export default function ChatDrawer() {
               </div>
             )}
 
+            {/* 💌 Sticker drawer */}
+            {showStickerDrawer && (
+              <div className="mx-3 mb-2 grid animate-pop-in grid-cols-6 gap-1.5 rounded-2xl border border-lavender-400/60 bg-lavender-50 p-3 dark:border-coffee-600 dark:bg-coffee-800">
+                {STICKERS.map((sticker) => (
+                  <button
+                    key={sticker.id}
+                    type="button"
+                    onClick={() => sendSticker(sticker.id)}
+                    title={sticker.label}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl text-2xl transition-transform hover:scale-125 active:scale-90"
+                  >
+                    {sticker.emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* ✍️ Composer */}
             <div className="flex items-end gap-2 border-t-2 border-gold-500/40 bg-cream-50 p-3 dark:bg-coffee-900">
               <button
@@ -598,6 +698,18 @@ export default function ChatDrawer() {
                 }`}
               >
                 <Gamepad2 size={18} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowStickerDrawer((cur) => !cur)}
+                aria-label="Send a sticker"
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-95 ${
+                  showStickerDrawer
+                    ? "bg-lavender-500 text-white"
+                    : "bg-coffee-100 text-coffee-700 dark:bg-coffee-800 dark:text-cream-200"
+                }`}
+              >
+                <StickerIcon size={18} />
               </button>
               <button
                 type="button"
@@ -743,6 +855,7 @@ function ChatBubble({
   onToggleReactionBar,
   onReact,
   onDelete,
+  onEdit,
 }: {
   message: ChatMessageDTO;
   showHeader: boolean;
@@ -751,8 +864,26 @@ function ChatBubble({
   onToggleReactionBar: () => void;
   onReact: (emoji: ChatEmoji) => void;
   onDelete: () => void;
+  onEdit: (newText: string) => Promise<boolean>;
 }) {
   const isMine = message.isMine;
+  const isSticker = message.kind === "STICKER";
+  const [isEditing, setIsEditing] = useState(false);
+  const [editDraft, setEditDraft] = useState(message.text);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  async function saveEdit() {
+    const trimmed = editDraft.trim();
+    if (!trimmed || trimmed === message.text) {
+      setIsEditing(false);
+      return;
+    }
+    setIsSavingEdit(true);
+    const ok = await onEdit(trimmed);
+    setIsSavingEdit(false);
+    if (ok) setIsEditing(false);
+  }
+
   return (
     <div className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
       {showHeader && (
@@ -783,58 +914,120 @@ function ChatBubble({
       )}
 
       <div className={`group relative max-w-[78%] ${isMine ? "self-end" : "self-start"}`}>
-        <div
-          onDoubleClick={() => onReact("❤️")}
-          className={`animate-bubble-in select-none rounded-2xl px-3.5 py-2.5 text-sm shadow-sm transition-transform active:scale-[0.98] ${
-            isMine
-              ? "rounded-br-md bg-gradient-to-br from-lavender-500 to-crimson-500 text-white"
-              : "rounded-bl-md bg-white text-coffee-900 dark:bg-coffee-800 dark:text-cream-50"
-          }`}
-        >
-          {message.imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={message.imageUrl}
-              alt=""
-              className="mb-1.5 max-h-56 w-full rounded-xl object-cover"
-              loading="lazy"
+        {isEditing ? (
+          <div className="animate-bubble-in w-64 max-w-full rounded-2xl border-2 border-lavender-400 bg-white p-2.5 shadow-sm dark:bg-coffee-800">
+            <textarea
+              value={editDraft}
+              onChange={(e) => setEditDraft(e.target.value.slice(0, MAX_TEXT_LENGTH))}
+              autoFocus
+              rows={2}
+              className="w-full resize-none rounded-lg border border-coffee-200 bg-cream-50 px-2 py-1.5 text-sm outline-none focus:border-lavender-500 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
             />
-          )}
-          {message.text && <p className="whitespace-pre-wrap break-words">{message.text}</p>}
-          <p
-            className={`mt-1 text-right text-[10px] ${
-              isMine ? "text-white/70" : "text-coffee-400 dark:text-cream-400"
+            <div className="mt-1.5 flex justify-end gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditDraft(message.text);
+                  setIsEditing(false);
+                }}
+                disabled={isSavingEdit}
+                className="rounded-full px-2.5 py-1 text-[11px] font-bold text-coffee-500 hover:bg-coffee-100 disabled:opacity-50 dark:text-cream-300 dark:hover:bg-coffee-700"
+              >
+                បោះបង់
+              </button>
+              <button
+                type="button"
+                onClick={saveEdit}
+                disabled={isSavingEdit}
+                className="flex items-center gap-1 rounded-full bg-lavender-500 px-2.5 py-1 text-[11px] font-bold text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
+              >
+                {isSavingEdit ? (
+                  <Loader2 size={11} className="animate-spin" />
+                ) : (
+                  <Check size={11} />
+                )}
+                រក្សាទុក
+              </button>
+            </div>
+          </div>
+        ) : isSticker ? (
+          <div
+            onDoubleClick={() => onReact("❤️")}
+            className="animate-bubble-in select-none text-6xl leading-none"
+            title={getSticker(message.text)?.label}
+          >
+            {getSticker(message.text)?.emoji ?? "❔"}
+          </div>
+        ) : (
+          <div
+            onDoubleClick={() => onReact("❤️")}
+            className={`animate-bubble-in select-none rounded-2xl px-3.5 py-2.5 text-sm shadow-sm transition-transform active:scale-[0.98] ${
+              isMine
+                ? "rounded-br-md bg-gradient-to-br from-lavender-500 to-crimson-500 text-white"
+                : "rounded-bl-md bg-white text-coffee-900 dark:bg-coffee-800 dark:text-cream-50"
             }`}
           >
-            {formatTime(message.createdAt)}
-          </p>
-        </div>
+            {message.imageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={message.imageUrl}
+                alt=""
+                className="mb-1.5 max-h-56 w-full rounded-xl object-cover"
+                loading="lazy"
+              />
+            )}
+            {message.text && <p className="whitespace-pre-wrap break-words">{message.text}</p>}
+            <p
+              className={`mt-1 text-right text-[10px] ${
+                isMine ? "text-white/70" : "text-coffee-400 dark:text-cream-400"
+              }`}
+            >
+              {message.isEdited && <span className="mr-1 italic opacity-80">កែប្រែ</span>}
+              {formatTime(message.createdAt)}
+            </p>
+          </div>
+        )}
 
-        {/* 🎛️ Hover/tap controls — reaction picker + moderation */}
-        <div
-          className={`absolute top-1/2 flex -translate-y-1/2 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 ${
-            isMine ? "right-full mr-1" : "left-full ml-1"
-          }`}
-        >
-          <button
-            type="button"
-            onClick={onToggleReactionBar}
-            aria-label="React"
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-coffee-100 text-coffee-600 transition-transform hover:scale-110 active:scale-90 dark:bg-coffee-700 dark:text-cream-200"
+        {/* 🎛️ Hover/tap controls — reaction picker + edit + moderation */}
+        {!isEditing && (
+          <div
+            className={`absolute top-1/2 flex -translate-y-1/2 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 ${
+              isMine ? "right-full mr-1" : "left-full ml-1"
+            }`}
           >
-            <SmilePlus size={14} />
-          </button>
-          {canModerate && (
             <button
               type="button"
-              onClick={onDelete}
-              aria-label="Delete message"
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-coffee-100 text-crimson-600 transition-transform hover:scale-110 active:scale-90 dark:bg-coffee-700"
+              onClick={onToggleReactionBar}
+              aria-label="React"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-coffee-100 text-coffee-600 transition-transform hover:scale-110 active:scale-90 dark:bg-coffee-700 dark:text-cream-200"
             >
-              <Trash2 size={13} />
+              <SmilePlus size={14} />
             </button>
-          )}
-        </div>
+            {message.isMine && message.kind === "TEXT" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditDraft(message.text);
+                  setIsEditing(true);
+                }}
+                aria-label="Edit message"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-coffee-100 text-coffee-600 transition-transform hover:scale-110 active:scale-90 dark:bg-coffee-700 dark:text-cream-200"
+              >
+                <Pencil size={12} />
+              </button>
+            )}
+            {canModerate && (
+              <button
+                type="button"
+                onClick={onDelete}
+                aria-label="Delete message"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-coffee-100 text-crimson-600 transition-transform hover:scale-110 active:scale-90 dark:bg-coffee-700"
+              >
+                <Trash2 size={13} />
+              </button>
+            )}
+          </div>
+        )}
 
         {isReactionBarOpen && (
           <div

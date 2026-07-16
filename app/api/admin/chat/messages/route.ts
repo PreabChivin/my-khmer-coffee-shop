@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
-import type { AdminChatMessageDTO } from "@/lib/types";
+import type { AdminChatMessageDTO, ChatMessageKind } from "@/lib/types";
 
 const PAGE_SIZE = 50;
 
@@ -59,7 +59,11 @@ export async function GET(request: NextRequest) {
       imageUrl: row.imageUrl,
       createdAt: row.createdAt.toISOString(),
       deletedAt: row.deletedAt ? row.deletedAt.toISOString() : null,
+      isDeletedByUser: row.isDeletedByUser,
+      originalText: row.originalText,
+      editedAt: row.editedAt ? row.editedAt.toISOString() : null,
       flagged: row.flagged,
+      kind: row.kind as ChatMessageKind,
       reactionCount: row._count.reactions,
       author: {
         id: row.user.id,
