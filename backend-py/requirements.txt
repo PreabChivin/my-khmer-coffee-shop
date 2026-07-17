@@ -1,0 +1,7 @@
+# BENCHIMIN CAFE — AI & Analytics microservice dependencies.
+# Pinned to versions verified working on Python 3.14 (native cp314 wheels).
+fastapi==0.139.2
+uvicorn[standard]==0.51.0
+asyncpg==0.31.0
+pydantic==2.13.4
+pydantic-settings==2.14.2

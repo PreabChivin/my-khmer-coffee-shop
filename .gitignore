@@ -64,3 +64,12 @@ ios/App/build/
 ios/App/App.xcworkspace/xcuserdata/
 ios/App/App.xcodeproj/xcuserdata/
 ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Python AI microservice (backend-py) — decoupled, not part of the Vercel build
+backend-py/.venv/
+backend-py/.env
+__pycache__/
+*.pyc
+
+# ...but DO commit the Python service env template
+!backend-py/.env.example
