@@ -14,12 +14,15 @@ import {
   Pencil,
   Check,
   Sticker as StickerIcon,
+  MessageCircleHeart,
 } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { useChat } from "@/contexts/ChatContext";
 import ChatGameOverlay from "@/components/game/ChatGameOverlay";
 import { compressImageToDataUrl } from "@/lib/imageCompress";
 import { STICKERS, getSticker } from "@/lib/stickers";
+import { formatTime, dayKey, formatDateSeparator } from "@/lib/chatDateGroups";
+import DirectMessagesPanel from "@/components/chat/DirectMessagesPanel";
 import {
   CHAT_EMOJIS,
   type ChatEmoji,
@@ -40,27 +43,6 @@ const ICEBREAKERS = [
   "កំពុងផឹកអីថ្ងៃនេះ? 🧋",
   "នរណាចង់បង្កើត Bestie Cart ខ្លះ? 👯",
 ];
-
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-}
-
-function dayKey(iso: string): string {
-  return new Date(iso).toDateString();
-}
-
-/** "ថ្ងៃនេះ" / "ម្សិលមិញ" / a formatted date — the label shown on the date
- *  separator between messages sent on different days. */
-function formatDateSeparator(iso: string): string {
-  const target = new Date(iso);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-  if (dayKey(iso) === today.toDateString()) return "ថ្ងៃនេះ";
-  if (dayKey(iso) === yesterday.toDateString()) return "ម្សិលមិញ";
-  return target.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-}
 
 /** Appends `incoming` messages, de-duped by id. Needed because a send's
  *  optimistic append and the next poll tick can race — the tick may have
@@ -104,6 +86,17 @@ export default function ChatDrawer() {
   const [challengeTargetId, setChallengeTargetId] = useState<string | null>(null);
   // 💌 Sticker drawer toggle
   const [showStickerDrawer, setShowStickerDrawer] = useState(false);
+  // 💬 Private 1-on-1 messaging overlay — showDirectPanel opens it (sibling
+  // to the game overlay, same absolute-inset-0-over-the-drawer pattern);
+  // directTarget jumps straight into a specific person's thread (tapped from
+  // a room-chat message's author header) instead of showing the list first.
+  const [showDirectPanel, setShowDirectPanel] = useState(false);
+  const [directTarget, setDirectTarget] = useState<{ id: string; name: string } | null>(null);
+
+  function openDirectMessages(target?: { id: string; name: string }) {
+    setDirectTarget(target ?? null);
+    setShowDirectPanel(true);
+  }
 
   const lastIdRef = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -485,14 +478,25 @@ export default function ChatDrawer() {
               <p className="text-[11px] text-white/80">សន្ទនាសម្រាប់សមាជិកទាំងអស់</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={closeChat}
-            aria-label="Close chat"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 transition-transform hover:scale-110 hover:bg-white/25 active:scale-95"
-          >
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => openDirectMessages()}
+              aria-label="Private messages"
+              title="សារឯកជន · Private Messages"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 transition-transform hover:scale-110 hover:bg-white/25 active:scale-95"
+            >
+              <MessageCircleHeart size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={closeChat}
+              aria-label="Close chat"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 transition-transform hover:scale-110 hover:bg-white/25 active:scale-95"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* 💬 Message feed */}
@@ -575,6 +579,7 @@ export default function ChatDrawer() {
                     onReact={(emoji) => react(message.id, emoji)}
                     onDelete={() => deleteMessage(message.id)}
                     onEdit={(newText) => editMessage(message.id, newText)}
+                    onStartDirect={(id, name) => openDirectMessages({ id, name })}
                   />
                 </Fragment>
               );
@@ -840,6 +845,18 @@ export default function ChatDrawer() {
             onClose={() => setActiveGameId(null)}
           />
         )}
+
+        {/* 💬 Private messages overlay — conversation list, or straight into
+            a specific thread when opened from a room-chat message's author */}
+        {showDirectPanel && (
+          <DirectMessagesPanel
+            initialTarget={directTarget}
+            onClose={() => {
+              setShowDirectPanel(false);
+              setDirectTarget(null);
+            }}
+          />
+        )}
       </div>
     </div>
   );
@@ -943,6 +960,7 @@ function ChatBubble({
   onReact,
   onDelete,
   onEdit,
+  onStartDirect,
 }: {
   message: ChatMessageDTO;
   showHeader: boolean;
@@ -952,6 +970,7 @@ function ChatBubble({
   onReact: (emoji: ChatEmoji) => void;
   onDelete: () => void;
   onEdit: (newText: string) => Promise<boolean>;
+  onStartDirect: (targetId: string, targetName: string) => void;
 }) {
   const isMine = message.isMine;
   const isSticker = message.kind === "STICKER";
@@ -979,19 +998,29 @@ function ChatBubble({
             isMine ? "flex-row-reverse" : ""
           }`}
         >
-          <span className="flex h-4 w-4 items-center justify-center overflow-hidden rounded-full bg-clay-100 text-[10px] leading-none dark:bg-coffee-900">
-            {message.author.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={message.author.avatarUrl}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              message.author.generationEmoji
-            )}
-          </span>
-          <span>{message.author.name}</span>
+          {/* 👆 Tap a fellow member's name/avatar to start a private thread
+              with them — self-messages aren't clickable. */}
+          <button
+            type="button"
+            disabled={isMine}
+            onClick={() => onStartDirect(message.author.id, message.author.name)}
+            className={`flex items-center gap-1.5 ${isMine ? "cursor-default" : "hover:underline"}`}
+            title={isMine ? undefined : `ផ្ញើសារឯកជនទៅ ${message.author.name}`}
+          >
+            <span className="flex h-4 w-4 items-center justify-center overflow-hidden rounded-full bg-clay-100 text-[10px] leading-none dark:bg-coffee-900">
+              {message.author.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={message.author.avatarUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                message.author.generationEmoji
+              )}
+            </span>
+            <span>{message.author.name}</span>
+          </button>
           {(message.author.role === "STAFF" || message.author.role === "ADMIN") && (
             <span className="rounded-full bg-matcha-400/80 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
               Staff

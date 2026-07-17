@@ -400,6 +400,48 @@ export interface ChatMessageDTO {
   isEdited: boolean;
 }
 
+/** 💌 Private 1-on-1 messaging — a sibling to the shared Café Lounge, not a
+ *  replacement. Only "TEXT"/"STICKER" (no mini-games, no reactions, in this
+ *  first pass). Since a thread always has exactly two participants, a
+ *  message DTO only needs `isMine` (not a full author object like the room
+ *  chat's ChatMessageDTO) — the other party is already known from the
+ *  conversation the thread is showing. */
+export type DirectMessageKind = "TEXT" | "STICKER";
+
+export interface DirectMessageDTO {
+  id: string;
+  conversationId: string;
+  text: string;
+  imageUrl: string | null;
+  createdAt: string;
+  isMine: boolean;
+  kind: DirectMessageKind;
+  isEdited: boolean;
+}
+
+export interface DirectConversationPeerDTO {
+  id: string;
+  name: string;
+  role: Role;
+  generationEmoji: string;
+  avatarUrl: string | null;
+}
+
+/** One row in the "Active Private Chats" list — the peer + a preview of the
+ *  most recent message, sorted by DirectConversation.updatedAt (bumped on
+ *  every send, so this is a plain orderBy with no extra join). */
+export interface DirectConversationSummaryDTO {
+  id: string;
+  peer: DirectConversationPeerDTO;
+  lastMessage: {
+    text: string;
+    kind: DirectMessageKind;
+    createdAt: string;
+    isMine: boolean;
+  } | null;
+  updatedAt: string;
+}
+
 /** 🎮 Full board state for the game overlay — fetched on open and re-polled
  *  every ~1.5s while a board is on screen. `board` is emoji marks resolved
  *  server-side so the client never maps player slots to symbols itself. */

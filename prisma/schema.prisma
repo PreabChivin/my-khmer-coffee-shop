@@ -195,6 +195,9 @@ model User {
   gamesAsPlayer1 GameSession[] @relation("GamePlayer1")
   gamesAsPlayer2 GameSession[] @relation("GamePlayer2")
   gamesTargetingMe GameSession[] @relation("GameTarget")
+  directConversationsAsA DirectConversation[] @relation("ConversationUserA")
+  directConversationsAsB DirectConversation[] @relation("ConversationUserB")
+  directMessagesSent     DirectMessage[]      @relation("DirectMessageSender")
 }
 
 // 📍 Address book — a logged-in customer's saved delivery locations, each
@@ -439,6 +442,58 @@ model ChatTyping {
   userId    String   @id
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   updatedAt DateTime @updatedAt
+}
+
+// 💌 Private 1-on-1 thread between exactly two members — a sibling to the
+// shared-room ChatMessage system, not a replacement (the Café Lounge stays a
+// single shared room). Always stored with userAId < userBId (string compare,
+// enforced in the API layer, never trusted from the client) so "the
+// conversation between X and Y" is a single indexed equality lookup no
+// matter who initiated it, and @@unique makes a duplicate room impossible at
+// the DB level rather than relying on app-code discipline alone.
+model DirectConversation {
+  id        String   @id @default(uuid())
+  userAId   String
+  userA     User     @relation("ConversationUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userBId   String
+  userB     User     @relation("ConversationUserB", fields: [userBId], references: [id], onDelete: Cascade)
+  messages  DirectMessage[]
+  createdAt DateTime @default(now())
+  // Bumped on every new message — lets the "Active Private Chats" list sort
+  // by recency with a plain orderBy, no separate last-message join.
+  updatedAt DateTime @updatedAt
+
+  @@unique([userAId, userBId])
+  @@index([userAId])
+  @@index([userBId])
+}
+
+// 💌 One message inside a DirectConversation. Deliberately mirrors
+// ChatMessage's soft-delete + edit-audit fields exactly (deletedAt,
+// isDeletedByUser, originalText, editedAt, flagged) so the same admin
+// audit-retention guarantee applies here: a delete/edit never erases a row,
+// it only marks it — but there is NO staff/admin moderation override on
+// delete here (see the DELETE route), since this is a private thread, not
+// the shared room. Only TEXT/STICKER kinds — no mini-games in DMs (out of
+// scope for this pass) and no reactions (not requested).
+model DirectMessage {
+  id             String             @id @default(uuid())
+  conversationId String
+  conversation   DirectConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User               @relation("DirectMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  text           String
+  imageUrl       String?
+  deletedAt      DateTime?
+  isDeletedByUser Boolean           @default(false)
+  originalText   String?
+  editedAt       DateTime?
+  flagged        Boolean            @default(false)
+  kind           String             @default("TEXT") // "TEXT" | "STICKER"
+  createdAt      DateTime           @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
 }
 
 // 🎮 Café Lounge mini-game — a single match between two members. Created as
