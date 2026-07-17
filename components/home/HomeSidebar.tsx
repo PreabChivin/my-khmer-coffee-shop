@@ -5,7 +5,7 @@ import { ShoppingBag, Users } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useGroupCart } from "@/contexts/GroupCartContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import StampCard from "@/components/StampCard";
+import StampCard from "@/components/loyalty/StampCard";
 import { customizationSurcharge } from "@/lib/customization";
 import type { LoyaltyStatusResponseBody } from "@/lib/types";
 

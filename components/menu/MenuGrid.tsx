@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
-import ProductCard from "@/components/ProductCard";
+import ProductCard from "@/components/menu/ProductCard";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { localizedCategory } from "@/lib/i18n";
 import type { ProductDTO } from "@/lib/types";

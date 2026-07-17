@@ -1,7 +1,7 @@
 "use client";
 
 import { useLanguage } from "@/contexts/LanguageContext";
-import KhmerDivider from "@/components/KhmerDivider";
+import KhmerDivider from "@/components/layout/KhmerDivider";
 
 export default function MenuHeading() {
   const { t } = useLanguage();

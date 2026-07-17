@@ -3,7 +3,7 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { localizedCategory } from "@/lib/i18n";
 import { playTick } from "@/lib/sfx";
-import CategoryIcon from "@/components/CategoryIcon";
+import CategoryIcon from "@/components/menu/CategoryIcon";
 import type { CategoryDTO } from "@/lib/types";
 
 export const ALL_CATEGORIES_ID = "All";

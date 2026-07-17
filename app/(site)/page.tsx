@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import HomeContent from "@/components/HomeContent";
+import HomeContent from "@/components/home/HomeContent";
 import type { CategoryDTO, ProductDTO } from "@/lib/types";
 
 export const dynamic = "force-dynamic";

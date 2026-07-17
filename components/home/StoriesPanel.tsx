@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { localizedDescription, localizedName } from "@/lib/i18n";
 import { computeDiscountedPrice } from "@/lib/pricing";
-import { hasAnyPromo } from "@/components/PromoBadge";
+import { hasAnyPromo } from "@/components/menu/PromoBadge";
 import ProductImage from "@/components/ProductImage";
 import type { ProductDTO } from "@/lib/types";
 

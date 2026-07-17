@@ -9,7 +9,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { customizationSurcharge, describeCustomization } from "@/lib/customization";
 import { localizedName } from "@/lib/i18n";
 import { SPIN_UNLOCK_THRESHOLD } from "@/lib/wheel";
-import WheelOfCoffee from "@/components/WheelOfCoffee";
+import WheelOfCoffee from "@/components/checkout/WheelOfCoffee";
 import ProductImage from "@/components/ProductImage";
 
 export default function CartSidebar() {

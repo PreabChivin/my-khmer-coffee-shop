@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Pencil, Plus, Trash2, X } from "lucide-react";
-import CategoryIcon from "@/components/CategoryIcon";
+import CategoryIcon from "@/components/menu/CategoryIcon";
 import type { CategoryDTO } from "@/lib/types";
 
 const EMPTY_FORM = { name: "", iconKey: "", iconUrl: "" };

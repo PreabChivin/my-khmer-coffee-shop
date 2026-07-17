@@ -19,7 +19,7 @@ import {
 } from "@/lib/customization";
 import { playBubble, playPop, playTick } from "@/lib/sfx";
 import { computeDiscountedPrice } from "@/lib/pricing";
-import CupMixer from "@/components/CupMixer";
+import CupMixer from "@/components/menu/CupMixer";
 import type { DrinkCustomization, IceLevel, ProductDTO } from "@/lib/types";
 
 interface DrinkCustomizerProps {

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { TranslationKey } from "@/lib/i18n";
-import OrderTimeline from "@/components/OrderTimeline";
+import OrderTimeline from "@/components/orders/OrderTimeline";
 import type { OrderHistoryItemDTO, OrderStatus } from "@/lib/types";
 
 const STATUS_STYLE: Record<OrderStatus, { key: TranslationKey; cls: string }> = {

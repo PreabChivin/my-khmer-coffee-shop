@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import MenuGrid from "@/components/MenuGrid";
-import MenuHeading from "@/components/MenuHeading";
-import GroupCartBanner from "@/components/GroupCartBanner";
-import StartGroupCartButton from "@/components/StartGroupCartButton";
+import MenuGrid from "@/components/menu/MenuGrid";
+import MenuHeading from "@/components/layout/MenuHeading";
+import GroupCartBanner from "@/components/cart/GroupCartBanner";
+import StartGroupCartButton from "@/components/cart/StartGroupCartButton";
 import type { ProductDTO } from "@/lib/types";
 import type { Metadata } from "next";
 

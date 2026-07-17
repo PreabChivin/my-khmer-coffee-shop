@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
-import AdminEditPopover from "@/components/AdminEditPopover";
+import AdminEditPopover from "@/components/admin/AdminEditPopover";
 import ProductImage from "@/components/ProductImage";
 import { clampDiscountPercent, computeDiscountedPrice } from "@/lib/pricing";
 import { localizedCategory } from "@/lib/i18n";

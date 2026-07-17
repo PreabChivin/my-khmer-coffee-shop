@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Gift, X } from "lucide-react";
-import OrderHistoryList from "@/components/OrderHistoryList";
+import OrderHistoryList from "@/components/orders/OrderHistoryList";
 import { tierProgress } from "@/lib/loyaltyPoints";
 import type { CustomerProfileDTO } from "@/lib/types";
 

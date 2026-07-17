@@ -6,7 +6,7 @@ import { Truck } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { useAuthModal } from "@/contexts/AuthModalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import OrderHistoryList from "@/components/OrderHistoryList";
+import OrderHistoryList from "@/components/orders/OrderHistoryList";
 import type { OrderHistoryItemDTO } from "@/lib/types";
 
 // 🚚 Dedicated Order History / Live Tracking dashboard (linked from the header

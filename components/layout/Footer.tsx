@@ -2,7 +2,7 @@
 
 import { Clock, Coffee, MapPin, Phone } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import KhmerDivider from "@/components/KhmerDivider";
+import KhmerDivider from "@/components/layout/KhmerDivider";
 
 export default function Footer() {
   const { t } = useLanguage();

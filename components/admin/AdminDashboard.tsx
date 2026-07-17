@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import StaffKitchenView from "@/components/StaffKitchenView";
+import StaffKitchenView from "@/components/admin/StaffKitchenView";
 import AdminUserManagementPanel from "@/components/admin/AdminUserManagementPanel";
 import type { ProductDTO } from "@/lib/types";
 

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import DrinkFinderBar from "@/components/DrinkFinderBar";
+import DrinkFinderBar from "@/components/home/DrinkFinderBar";
 import BongBear from "@/components/mascots/BongBear";
 import { useLanguage } from "@/contexts/LanguageContext";
 

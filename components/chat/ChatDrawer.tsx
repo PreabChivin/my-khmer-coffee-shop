@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { useChat } from "@/contexts/ChatContext";
-import ChatGameOverlay from "@/components/ChatGameOverlay";
+import ChatGameOverlay from "@/components/game/ChatGameOverlay";
 import { compressImageToDataUrl } from "@/lib/imageCompress";
 import { STICKERS, getSticker } from "@/lib/stickers";
 import {

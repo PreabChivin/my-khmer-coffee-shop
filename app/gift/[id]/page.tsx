@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
-import GiftVoucherCard from "@/components/GiftVoucherCard";
+import GiftVoucherCard from "@/components/orders/GiftVoucherCard";
 import type { GiftVoucherDTO } from "@/lib/types";
 import type { Metadata } from "next";
 

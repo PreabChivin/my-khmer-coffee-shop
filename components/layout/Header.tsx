@@ -9,8 +9,8 @@ import { useAuthModal } from "@/contexts/AuthModalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getOrCreateTelegramSessionToken } from "@/lib/telegramSession";
 import { openTelegramBot } from "@/lib/openExternal";
-import AppearanceSettings from "@/components/AppearanceSettings";
-import NotificationBell from "@/components/NotificationBell";
+import AppearanceSettings from "@/components/layout/AppearanceSettings";
+import NotificationBell from "@/components/layout/NotificationBell";
 
 const TELEGRAM_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
 
