@@ -9,6 +9,7 @@ import LoyaltyProgress from "@/components/LoyaltyProgress";
 import RewardStore from "@/components/RewardStore";
 import OrderHistoryList from "@/components/OrderHistoryList";
 import RecommendationsCard from "@/components/RecommendationsCard";
+import LoyaltyLevelBadge from "@/components/LoyaltyLevelBadge";
 import { generationFromDOB } from "@/lib/generation";
 import { compressImageToDataUrl } from "@/lib/imageCompress";
 import type { OrderHistoryItemDTO } from "@/lib/types";
@@ -178,9 +179,10 @@ export default function AccountPage() {
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex items-center gap-4">
-          {/* 🖼️ Avatar — round picture with a camera-icon overlay to change it */}
-          <div className="relative shrink-0">
-            <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-gold-500 bg-clay-100 text-2xl dark:bg-coffee-800">
+          {/* 🖼️ Avatar — round picture with a camera-icon overlay to change it,
+              wrapped in the spinning gradient story-ring for a premium touch */}
+          <div className="story-ring relative shrink-0 rounded-full p-[3px]">
+            <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-cream-50 bg-clay-100 text-2xl dark:border-coffee-900 dark:bg-coffee-800">
               {user.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
@@ -225,6 +227,11 @@ export default function AccountPage() {
           <LogOut size={13} />
           {t("account.logout")}
         </button>
+      </div>
+
+      {/* 🎮 Compact gamified level chip — right under the greeting */}
+      <div className="mb-4">
+        <LoyaltyLevelBadge points={user.loyaltyPoints} />
       </div>
 
       {user.avatarUrl && (

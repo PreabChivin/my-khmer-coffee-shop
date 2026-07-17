@@ -142,7 +142,7 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
         )}
       </div>
 
-      <div className="relative flex flex-1 flex-col p-4">
+      <div className="glass-card-premium relative flex flex-1 flex-col rounded-b-3xl p-4">
         <div className="relative flex items-start justify-between gap-2">
           <h3 className="font-heading text-base text-coffee-900 dark:text-cream-50">
             {name}

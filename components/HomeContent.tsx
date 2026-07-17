@@ -6,6 +6,7 @@ import { Bike, Clock, QrCode, Sprout, Store } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import HeroSlideshow from "@/components/HeroSlideshow";
 import PromoBannerCarousel from "@/components/PromoBannerCarousel";
+import StoriesPanel from "@/components/StoriesPanel";
 import CategoryScroller, { ALL_CATEGORIES_ID } from "@/components/CategoryScroller";
 import HomeSidebar from "@/components/HomeSidebar";
 import WelcomePopup from "@/components/WelcomePopup";
@@ -86,6 +87,9 @@ export default function HomeContent({
 
       {/* 🎉 Top Promotional Banner Carousel */}
       <PromoBannerCarousel />
+
+      {/* 📸 Highlights — real promo/partner items as tappable story bubbles */}
+      <StoriesPanel products={products} />
 
       {/* 🍩 Categorized horizontal menu scroller */}
       <CategoryScroller

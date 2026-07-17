@@ -37,10 +37,13 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b-2 border-gold-500/70 bg-cream-50/95 backdrop-blur dark:bg-coffee-900/95">
+    <header className="sticky top-0 z-40 border-b-2 border-gold-500/70 bg-cream-50/90 shadow-[0_1px_24px_-8px_rgba(255,195,46,0.35)] backdrop-blur-xl backdrop-saturate-150 dark:bg-coffee-900/85">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-        <Link href="/" className="flex items-center gap-2 text-coffee-900 dark:text-cream-50">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full border border-gold-500 bg-coffee-800 text-gold-400">
+        <Link
+          href="/"
+          className="btn-tactile flex items-center gap-2 text-coffee-900 dark:text-cream-50"
+        >
+          <span className="glow-ring flex h-9 w-9 items-center justify-center rounded-full border border-gold-500 bg-coffee-800 text-gold-400">
             <Coffee size={20} />
           </span>
           <span className="leading-tight">
