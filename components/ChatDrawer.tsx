@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   X,
   Send,
@@ -27,6 +27,7 @@ import {
   type ChatGameSummary,
   type GameStatsDTO,
   type GameDetailDTO,
+  type GameType,
 } from "@/lib/types";
 
 const POLL_INTERVAL_MS = 2500;
@@ -99,6 +100,8 @@ export default function ChatDrawer() {
   const [showGameMenu, setShowGameMenu] = useState(false);
   const [gameStats, setGameStats] = useState<GameStatsDTO | null>(null);
   const [gameBusy, setGameBusy] = useState(false);
+  const [challengeGameType, setChallengeGameType] = useState<GameType>("TICTACTOE");
+  const [challengeTargetId, setChallengeTargetId] = useState<string | null>(null);
   // 💌 Sticker drawer toggle
   const [showStickerDrawer, setShowStickerDrawer] = useState(false);
 
@@ -397,7 +400,10 @@ export default function ChatDrawer() {
       const res = await fetch("/api/chat/games", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gameType: "TICTACTOE" }),
+        body: JSON.stringify({
+          gameType: challengeGameType,
+          targetUserId: challengeTargetId,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -408,6 +414,7 @@ export default function ChatDrawer() {
       setMessages((prev) => mergeMessages(prev, [data as ChatMessageDTO]));
       lastIdRef.current = data.id;
       setShowGameMenu(false);
+      setChallengeTargetId(null);
     } catch {
       setError("បណ្តាញមានបញ្ហា សូមព្យាយាមម្តងទៀត។");
     } finally {
@@ -442,6 +449,18 @@ export default function ChatDrawer() {
       setGameBusy(false);
     }
   }
+
+  // 🎯 Recent room members (from the currently loaded feed) to challenge
+  // directly — no new endpoint, no DMs, just "who's been talking here".
+  const recentMembers = useMemo(() => {
+    const seen = new Map<string, ChatMessageDTO["author"]>();
+    for (const m of messages) {
+      if (m.author.id !== user?.id && !seen.has(m.author.id)) {
+        seen.set(m.author.id, m.author);
+      }
+    }
+    return [...seen.values()].slice(0, 12);
+  }, [messages, user?.id]);
 
   if (!user || !isChatOpen) return null;
 
@@ -531,6 +550,7 @@ export default function ChatDrawer() {
                       onAccept={() => acceptChallenge(message.game!)}
                       onCancel={() => cancelChallenge(message.game!)}
                       onOpenBoard={() => setActiveGameId(message.game!.id)}
+                      inviteText={message.text}
                     />
                   </Fragment>
                 );
@@ -636,7 +656,8 @@ export default function ChatDrawer() {
               onChange={handleFileSelected}
             />
 
-            {/* 🎮 Game challenge menu */}
+            {/* 🎮 Game challenge menu — pick a game, optionally target a
+                specific member, then fire the invite into the shared room */}
             {showGameMenu && (
               <div className="mx-3 mb-2 animate-pop-in rounded-2xl border border-lavender-400/60 bg-lavender-50 p-3 dark:border-coffee-600 dark:bg-coffee-800">
                 <div className="mb-2 flex items-center justify-between">
@@ -649,6 +670,61 @@ export default function ChatDrawer() {
                     </p>
                   )}
                 </div>
+
+                {/* Game type toggle */}
+                <div className="mb-2 flex gap-1.5">
+                  {(
+                    [
+                      { type: "TICTACTOE" as GameType, label: "Tic-Tac-Toe", emoji: "🎮" },
+                      { type: "RPS" as GameType, label: "Rock-Paper-Scissors", emoji: "✊✋✌️" },
+                    ]
+                  ).map((g) => (
+                    <button
+                      key={g.type}
+                      type="button"
+                      onClick={() => setChallengeGameType(g.type)}
+                      className={`flex-1 rounded-xl py-1.5 text-[11px] font-bold transition-colors ${
+                        challengeGameType === g.type
+                          ? "bg-lavender-500 text-white"
+                          : "bg-white text-coffee-600 dark:bg-coffee-900 dark:text-cream-300"
+                      }`}
+                    >
+                      {g.emoji} {g.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Optional target picker — "open to anyone" vs a specific member */}
+                {recentMembers.length > 0 && (
+                  <div className="mb-2 flex items-center gap-1.5 overflow-x-auto pb-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setChallengeTargetId(null)}
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold transition-colors ${
+                        challengeTargetId === null
+                          ? "bg-coffee-800 text-gold-400"
+                          : "bg-white text-coffee-500 dark:bg-coffee-900 dark:text-cream-300"
+                      }`}
+                    >
+                      🌐 អ្នកណាក៏បាន
+                    </button>
+                    {recentMembers.map((member) => (
+                      <button
+                        key={member.id}
+                        type="button"
+                        onClick={() => setChallengeTargetId(member.id)}
+                        className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold transition-colors ${
+                          challengeTargetId === member.id
+                            ? "bg-coffee-800 text-gold-400"
+                            : "bg-white text-coffee-500 dark:bg-coffee-900 dark:text-cream-300"
+                        }`}
+                      >
+                        🎯 {member.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <button
                   type="button"
                   onClick={sendChallenge}
@@ -660,10 +736,14 @@ export default function ChatDrawer() {
                   ) : (
                     <Swords size={15} />
                   )}
-                  ប្រកួត Tic-Tac-Toe (រកគូ)
+                  {challengeTargetId
+                    ? `អញ្ជើញ ${recentMembers.find((m) => m.id === challengeTargetId)?.name ?? ""}`
+                    : "ប្រកួត (រកគូ)"}
                 </button>
                 <p className="mt-1.5 text-center text-[10px] text-coffee-400 dark:text-cream-400">
-                  អ្នកដំបូងដែលចុច «ចូលរួម» នឹងក្លាយជាគូប្រកួតរបស់អ្នក
+                  {challengeTargetId
+                    ? "មានតែសមាជិកនេះទេដែលអាចចូលរួមបាន"
+                    : "អ្នកដំបូងដែលចុច «ចូលរួម» នឹងក្លាយជាគូប្រកួតរបស់អ្នក"}
                 </p>
               </div>
             )}
@@ -774,20 +854,23 @@ function GameInviteBubble({
   onAccept,
   onCancel,
   onOpenBoard,
+  inviteText,
 }: {
   game: ChatGameSummary;
   busy: boolean;
   onAccept: () => void;
   onCancel: () => void;
   onOpenBoard: () => void;
+  inviteText: string;
 }) {
   const p1 = game.player1.name;
+  const emoji = game.gameType === "RPS" ? "✊✋✌️" : "🎮";
   return (
     <div className="flex justify-center py-1">
       <div className="w-full max-w-[85%] rounded-2xl border-2 border-lavender-400 bg-gradient-to-br from-lavender-50 to-clay-50 p-3 text-center shadow-sm dark:border-lavender-500/60 dark:from-coffee-800 dark:to-coffee-800">
-        <p className="text-2xl">🎮</p>
+        <p className="text-2xl">{emoji}</p>
         <p className="mt-0.5 text-sm font-bold text-coffee-900 dark:text-cream-50">
-          {p1} បានប្រកួត Tic-Tac-Toe!
+          {inviteText}
         </p>
 
         {game.status === "PENDING" && (
@@ -801,7 +884,7 @@ function GameInviteBubble({
               >
                 រង់ចាំគូប្រកួត... (ចុចដើម្បីបោះបង់)
               </button>
-            ) : (
+            ) : game.canAccept ? (
               <button
                 type="button"
                 onClick={onAccept}
@@ -810,7 +893,11 @@ function GameInviteBubble({
               >
                 ✅ ចូលរួម · Accept
               </button>
-            )}
+            ) : game.targetName ? (
+              <p className="text-xs font-semibold text-coffee-400 dark:text-cream-400">
+                🎯 សម្រាប់ {game.targetName} តែប៉ុណ្ណោះ
+              </p>
+            ) : null}
           </div>
         )}
 

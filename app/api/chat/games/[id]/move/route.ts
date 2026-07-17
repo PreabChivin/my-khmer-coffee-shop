@@ -10,6 +10,7 @@ import {
   type PlayerSlot,
   type TicTacToeState,
 } from "@/lib/ticTacToe";
+import { isValidRPSState, resolveRPS, RPS_EMOJI, type RPSState } from "@/lib/rps";
 import type { Prisma } from "@prisma/client";
 
 /**
@@ -37,15 +38,11 @@ export async function POST(
 
   const { id } = await params;
 
-  let body: { cell?: unknown };
+  let body: { cell?: unknown; choice?: unknown };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "ទិន្នន័យដែលបានផ្ញើមកមិនត្រឹមត្រូវទេ។" }, { status: 400 });
-  }
-  const cell = Number(body.cell);
-  if (!Number.isInteger(cell) || cell < 0 || cell > 8) {
-    return NextResponse.json({ error: "ប្រអប់មិនត្រឹមត្រូវទេ។" }, { status: 400 });
   }
 
   type MoveResult =
@@ -68,6 +65,110 @@ export async function POST(
             : null;
       if (!mySlot) {
         return { ok: false, status: 403, error: "អ្នកមិនមែនជាអ្នកលេងក្នុងការប្រកួតនេះទេ។" };
+      }
+
+      // ✊✋✌️ Rock-Paper-Scissors — a completely separate branch (simultaneous
+      // single choice, no turns) rather than a rearchitecture of the
+      // Tic-Tac-Toe logic below, which stays untouched.
+      if (game.gameType === "RPS") {
+        const choice = typeof body.choice === "string" ? body.choice : "";
+        if (choice !== "rock" && choice !== "paper" && choice !== "scissors") {
+          return { ok: false, status: 400, error: "ការជ្រើសរើសមិនត្រឹមត្រូវទេ។" };
+        }
+        if (!isValidRPSState(game.gameState)) {
+          return { ok: false, status: 500, error: "ស្ថានភាពការលេងខូច។" };
+        }
+        const rpsState: RPSState = game.gameState;
+        const myKey = mySlot === "player1" ? "player1Choice" : "player2Choice";
+        if (rpsState[myKey] !== null) {
+          return { ok: false, status: 409, error: "អ្នកបានជ្រើសរើសរួចហើយ។" };
+        }
+        const nextRpsState: RPSState = { ...rpsState, [myKey]: choice };
+
+        if (nextRpsState.player1Choice && nextRpsState.player2Choice) {
+          const outcome = resolveRPS(nextRpsState.player1Choice, nextRpsState.player2Choice);
+          const p1Emoji = RPS_EMOJI[nextRpsState.player1Choice];
+          const p2Emoji = RPS_EMOJI[nextRpsState.player2Choice];
+
+          if (outcome === "tie") {
+            await tx.gameSession.update({
+              where: { id },
+              data: {
+                gameState: nextRpsState as unknown as Prisma.InputJsonValue,
+                status: "COMPLETED",
+                isTie: true,
+              },
+            });
+            await tx.user.update({
+              where: { id: game.player1Id },
+              data: { gameTies: { increment: 1 } },
+            });
+            await tx.user.update({
+              where: { id: game.player2Id! },
+              data: { gameTies: { increment: 1 } },
+            });
+            const [p1, p2] = await Promise.all([
+              tx.user.findUnique({ where: { id: game.player1Id }, select: { name: true } }),
+              tx.user.findUnique({ where: { id: game.player2Id! }, select: { name: true } }),
+            ]);
+            await tx.chatMessage.create({
+              data: {
+                userId: game.player1Id,
+                kind: "GAME_RESULT",
+                gameSessionId: id,
+                text: `🤝 ${p1?.name ?? "អ្នកលេង"} (${p1Emoji}) និង ${p2?.name ?? "អ្នកលេង"} (${p2Emoji}) បានស្មើគ្នាក្នុង Rock-Paper-Scissors!`,
+              },
+            });
+          } else {
+            const winnerId = outcome === "player1" ? game.player1Id : game.player2Id!;
+            const loserId = outcome === "player1" ? game.player2Id! : game.player1Id;
+            const winnerEmoji = outcome === "player1" ? p1Emoji : p2Emoji;
+            const loserEmoji = outcome === "player1" ? p2Emoji : p1Emoji;
+            await tx.gameSession.update({
+              where: { id },
+              data: {
+                gameState: nextRpsState as unknown as Prisma.InputJsonValue,
+                status: "COMPLETED",
+                winnerId,
+              },
+            });
+            await tx.user.update({
+              where: { id: winnerId },
+              data: { gameWins: { increment: 1 } },
+            });
+            await tx.user.update({
+              where: { id: loserId },
+              data: { gameLosses: { increment: 1 } },
+            });
+            const [winner, loser] = await Promise.all([
+              tx.user.findUnique({ where: { id: winnerId }, select: { name: true } }),
+              tx.user.findUnique({ where: { id: loserId }, select: { name: true } }),
+            ]);
+            await tx.chatMessage.create({
+              data: {
+                userId: winnerId,
+                kind: "GAME_RESULT",
+                gameSessionId: id,
+                text: `🎉 ${winner?.name ?? "នរណាម្នាក់"} (${winnerEmoji}) បានឈ្នះ ${loser?.name ?? "គូប្រកួត"} (${loserEmoji}) ក្នុង Rock-Paper-Scissors!`,
+              },
+            });
+          }
+        } else {
+          // Only one player has chosen so far — persist and stay ACTIVE.
+          // The opponent's choice is never leaked back to the DTO until the
+          // round is COMPLETED (see toGameDetailDTO), so this is safe even
+          // though both choices already live in the same JSON blob.
+          await tx.gameSession.update({
+            where: { id },
+            data: { gameState: nextRpsState as unknown as Prisma.InputJsonValue },
+          });
+        }
+        return { ok: true };
+      }
+
+      const cell = Number(body.cell);
+      if (!Number.isInteger(cell) || cell < 0 || cell > 8) {
+        return { ok: false, status: 400, error: "ប្រអប់មិនត្រឹមត្រូវទេ។" };
       }
 
       if (!isValidState(game.gameState)) {

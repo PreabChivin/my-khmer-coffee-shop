@@ -4,11 +4,15 @@ import { getUserFromRequest } from "@/lib/customerAuth";
 import { checkChatModeration, moderationErrorBody } from "@/lib/chatModeration";
 import { toChatMessageDTO, chatMessageInclude } from "@/lib/chatDto";
 import { initialTicTacToeState } from "@/lib/ticTacToe";
+import { initialRPSState } from "@/lib/rps";
 import type { GameType } from "@/lib/types";
 import type { Prisma } from "@prisma/client";
 
-const SUPPORTED_GAMES: GameType[] = ["TICTACTOE"];
-const GAME_LABEL: Record<GameType, string> = { TICTACTOE: "Tic-Tac-Toe" };
+const SUPPORTED_GAMES: GameType[] = ["TICTACTOE", "RPS"];
+const GAME_LABEL: Record<GameType, string> = {
+  TICTACTOE: "Tic-Tac-Toe",
+  RPS: "Rock-Paper-Scissors",
+};
 
 /**
  * POST /api/chat/games
@@ -28,7 +32,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(moderationErrorBody(modCheck), { status: 403 });
   }
 
-  let body: { gameType?: unknown };
+  let body: { gameType?: unknown; targetUserId?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -38,6 +42,17 @@ export async function POST(request: NextRequest) {
   const gameType = (typeof body.gameType === "string" ? body.gameType : "TICTACTOE") as GameType;
   if (!SUPPORTED_GAMES.includes(gameType)) {
     return NextResponse.json({ error: "ប្រភេទហ្គេមមិនត្រឹមត្រូវទេ។" }, { status: 400 });
+  }
+
+  // 🎯 Optional targeted challenge — "invite this specific member" instead of
+  // an open first-to-accept invite. Still posts to the one shared room (no
+  // private channel); only targetUserId gets an Accept button on it.
+  const targetUserId = typeof body.targetUserId === "string" ? body.targetUserId : null;
+  if (targetUserId === session.id) {
+    return NextResponse.json(
+      { error: "អ្នកមិនអាចអញ្ជើញខ្លួនឯងបានទេ។" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -52,8 +67,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let target: { name: string } | null = null;
+    if (targetUserId) {
+      target = await prisma.user.findUnique({
+        where: { id: targetUserId },
+        select: { name: true },
+      });
+      if (!target) {
+        return NextResponse.json({ error: "រកមិនឃើញសមាជិកនេះទេ។" }, { status: 404 });
+      }
+    }
+
     // turn is a placeholder until accept randomizes who goes first.
-    const gameState = initialTicTacToeState("player1");
+    const gameState =
+      gameType === "RPS" ? initialRPSState() : initialTicTacToeState("player1");
+
+    const inviteText = target
+      ? `បានអញ្ជើញ ${target.name} ឲ្យលេង ${GAME_LABEL[gameType]}! 🎮`
+      : `បានអញ្ជើញលេង ${GAME_LABEL[gameType]}! 🎮`;
 
     const message = await prisma.$transaction(async (tx) => {
       const game = await tx.gameSession.create({
@@ -61,13 +92,14 @@ export async function POST(request: NextRequest) {
           gameType,
           status: "PENDING",
           player1Id: session.id,
+          targetUserId,
           gameState: gameState as unknown as Prisma.InputJsonValue,
         },
       });
       return tx.chatMessage.create({
         data: {
           userId: session.id,
-          text: `បានអញ្ជើញលេង ${GAME_LABEL[gameType]}! 🎮`,
+          text: inviteText,
           kind: "GAME_INVITE",
           gameSessionId: game.id,
         },

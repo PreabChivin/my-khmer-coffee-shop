@@ -4,6 +4,7 @@ import { getUserFromRequest } from "@/lib/customerAuth";
 import { checkChatModeration, moderationErrorBody } from "@/lib/chatModeration";
 import { toGameDetailDTO, gameInclude } from "@/lib/gameDto";
 import { initialTicTacToeState, type PlayerSlot } from "@/lib/ticTacToe";
+import { initialRPSState } from "@/lib/rps";
 import type { Prisma } from "@prisma/client";
 
 /**
@@ -33,7 +34,7 @@ export async function POST(
   try {
     const game = await prisma.gameSession.findUnique({
       where: { id },
-      select: { player1Id: true, status: true },
+      select: { player1Id: true, status: true, gameType: true, targetUserId: true },
     });
     if (!game) {
       return NextResponse.json({ error: "រកមិនឃើញការលេងនេះទេ។" }, { status: 404 });
@@ -44,10 +45,18 @@ export async function POST(
         { status: 400 }
       );
     }
+    if (game.targetUserId && game.targetUserId !== session.id) {
+      return NextResponse.json(
+        { error: "ការអញ្ជើញនេះសម្រាប់សមាជិកម្នាក់ទៀត។" },
+        { status: 403 }
+      );
+    }
 
-    // Coin-flip who moves first, then atomically claim the open slot.
+    // Coin-flip who moves first (Tic-Tac-Toe only — RPS has no turn order),
+    // then atomically claim the open slot.
     const firstTurn: PlayerSlot = Math.random() < 0.5 ? "player1" : "player2";
-    const gameState = initialTicTacToeState(firstTurn);
+    const gameState =
+      game.gameType === "RPS" ? initialRPSState() : initialTicTacToeState(firstTurn);
 
     const claim = await prisma.gameSession.updateMany({
       where: { id, status: "PENDING", player2Id: null },

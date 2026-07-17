@@ -333,8 +333,18 @@ export interface ChatReactionSummary {
   reactedByMe: boolean;
 }
 
-/** 🎮 Mini-game supported types (only Tic-Tac-Toe for now). */
-export type GameType = "TICTACTOE";
+/** 🎮 Mini-game supported types. */
+export type GameType = "TICTACTOE" | "RPS";
+
+/** ✊✋✌️ Rock-Paper-Scissors round state, exposed only on RPS games —
+ *  simultaneous choices, not turn-based, so this is a distinct shape from
+ *  the Tic-Tac-Toe `board`. `opponentChoice` stays null (hidden) until the
+ *  round is COMPLETED, even though the server already knows it. */
+export interface RPSDetailState {
+  myChoice: "rock" | "paper" | "scissors" | null;
+  opponentHasChosen: boolean;
+  opponentChoice: "rock" | "paper" | "scissors" | null;
+}
 export type GameStatus = "PENDING" | "ACTIVE" | "COMPLETED" | "DECLINED" | "CANCELLED";
 
 /** Compact game summary embedded on a GAME_INVITE chat message, so the invite
@@ -350,6 +360,15 @@ export interface ChatGameSummary {
   isTie: boolean;
   /** True when the requesting user is player1 or player2 in this match. */
   iAmParticipant: boolean;
+  /** 🎯 Set only for a targeted challenge (invite aimed at one member rather
+   *  than open to the whole room) — the name is shown to everyone else so
+   *  they understand why Accept isn't offered to them. */
+  targetName: string | null;
+  /** True when the viewer is allowed to accept this PENDING invite — open
+   *  invites (no target) accept anyone but the challenger; targeted invites
+   *  accept only the named target. Computed server-side so the client never
+   *  has to re-derive the gating rule itself. */
+  canAccept: boolean;
 }
 
 export type ChatMessageKind = "TEXT" | "STICKER" | "GAME_INVITE" | "GAME_RESULT";
@@ -388,16 +407,18 @@ export interface GameDetailDTO {
   id: string;
   gameType: GameType;
   status: GameStatus;
-  /** 9 cells: an emoji mark or null. */
+  /** TICTACTOE only — 9 cells: an emoji mark or null. Empty array for RPS. */
   board: (string | null)[];
   player1: { id: string; name: string; mark: string };
   player2: { id: string; name: string; mark: string } | null;
-  /** Whose move it is (null once the game is over). */
+  /** Whose move it is — TICTACTOE only; always null for RPS (no turns). */
   currentTurnPlayerId: string | null;
   winnerId: string | null;
   isTie: boolean;
   /** "player1" | "player2" for a participant, else null (spectator). */
   mySlot: "player1" | "player2" | null;
+  /** RPS only — null for TICTACTOE games. */
+  rps: RPSDetailState | null;
 }
 
 export interface GameStatsDTO {

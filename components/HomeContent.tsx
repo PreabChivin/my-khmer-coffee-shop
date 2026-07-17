@@ -7,6 +7,7 @@ import ProductCard from "@/components/ProductCard";
 import HeroSlideshow from "@/components/HeroSlideshow";
 import PromoBannerCarousel from "@/components/PromoBannerCarousel";
 import StoriesPanel from "@/components/StoriesPanel";
+import CafeLoungeBanner from "@/components/CafeLoungeBanner";
 import CategoryScroller, { ALL_CATEGORIES_ID } from "@/components/CategoryScroller";
 import HomeSidebar from "@/components/HomeSidebar";
 import WelcomePopup from "@/components/WelcomePopup";
@@ -90,6 +91,9 @@ export default function HomeContent({
 
       {/* 📸 Highlights — real promo/partner items as tappable story bubbles */}
       <StoriesPanel products={products} />
+
+      {/* 💬 Café Lounge entry point — creative invite into chat/games/stickers */}
+      <CafeLoungeBanner />
 
       {/* 🍩 Categorized horizontal menu scroller */}
       <CategoryScroller

@@ -13,6 +13,7 @@ import {
 type GameWithPlayers = GameSession & {
   player1: Pick<User, "id" | "name">;
   player2: Pick<User, "id" | "name"> | null;
+  target?: Pick<User, "id" | "name"> | null;
 };
 
 type MessageWithRelations = ChatMessage & {
@@ -30,11 +31,19 @@ export const chatMessageInclude = {
     include: {
       player1: { select: { id: true, name: true } },
       player2: { select: { id: true, name: true } },
+      target: { select: { id: true, name: true } },
     },
   },
 } as const;
 
 function toGameSummary(game: GameWithPlayers, viewerId: string): ChatGameSummary {
+  const iAmParticipant = game.player1Id === viewerId || game.player2Id === viewerId;
+  const isTargeted = game.targetUserId !== null;
+  const canAccept =
+    game.status === "PENDING" &&
+    game.player1Id !== viewerId &&
+    (!isTargeted || game.targetUserId === viewerId);
+
   return {
     id: game.id,
     gameType: game.gameType as GameType,
@@ -43,7 +52,9 @@ function toGameSummary(game: GameWithPlayers, viewerId: string): ChatGameSummary
     player2: game.player2 ? { id: game.player2.id, name: game.player2.name } : null,
     winnerId: game.winnerId,
     isTie: game.isTie,
-    iAmParticipant: game.player1Id === viewerId || game.player2Id === viewerId,
+    iAmParticipant,
+    targetName: game.target?.name ?? null,
+    canAccept,
   };
 }
 

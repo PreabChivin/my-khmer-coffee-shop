@@ -194,6 +194,7 @@ model User {
   chatTyping    ChatTyping?
   gamesAsPlayer1 GameSession[] @relation("GamePlayer1")
   gamesAsPlayer2 GameSession[] @relation("GamePlayer2")
+  gamesTargetingMe GameSession[] @relation("GameTarget")
 }
 
 // 📍 Address book — a logged-in customer's saved delivery locations, each
@@ -459,6 +460,14 @@ model GameSession {
   player1   User     @relation("GamePlayer1", fields: [player1Id], references: [id], onDelete: Cascade)
   player2Id String?
   player2   User?    @relation("GamePlayer2", fields: [player2Id], references: [id], onDelete: Cascade)
+  // 🎯 Optional targeted challenge — "invite this specific member" rather
+  // than an open first-to-accept invite. Null = anyone in the room can
+  // accept (the original behavior). Set = only targetUserId may accept;
+  // everyone else still sees the invite bubble in the shared room feed
+  // (still one shared room, no private channel), just without an Accept
+  // button of their own.
+  targetUserId String?
+  target       User?   @relation("GameTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
   winnerId  String? // null when tie or not finished; else equals a player id
   isTie     Boolean  @default(false)
   gameState Json // { board: (null|"player1"|"player2")[9], turn: "player1"|"player2" }

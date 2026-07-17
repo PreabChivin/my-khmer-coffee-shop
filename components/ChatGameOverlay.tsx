@@ -3,16 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import Confetti from "@/components/Confetti";
+import { RPS_CHOICES, RPS_EMOJI, type RPSChoice } from "@/lib/rps";
 import type { GameDetailDTO } from "@/lib/types";
 
 const POLL_INTERVAL_MS = 1500;
 
 /**
- * 🎮 Tic-Tac-Toe board overlay — a bottom-sheet inside the chat drawer. Polls
- * the game state every 1.5s (faster than the chat's 2.5s, since turns want to
- * feel snappy) and only polls while the game is still live. Turn validation is
- * server-authoritative; the client just disables cells that aren't legal for
- * the local player, so a tap out of turn never even fires a request.
+ * 🎮 Mini-game overlay — a bottom-sheet inside the chat drawer, shared by
+ * Tic-Tac-Toe (turn-based grid) and Rock-Paper-Scissors (simultaneous single
+ * choice). Polls the game state every 1.5s (faster than the chat's 2.5s,
+ * since moves want to feel snappy) and only polls while the game is still
+ * live. Validation is server-authoritative; the client just disables
+ * controls that aren't legal for the local player right now.
  */
 export default function ChatGameOverlay({
   gameId,
@@ -26,11 +28,13 @@ export default function ChatGameOverlay({
   const [game, setGame] = useState<GameDetailDTO | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendingCell, setPendingCell] = useState<number | null>(null);
+  const [pendingChoice, setPendingChoice] = useState(false);
   const celebratedRef = useRef(false);
   const [celebrate, setCelebrate] = useState(false);
 
   const isOver = game?.status === "COMPLETED";
   const iWon = isOver && game?.winnerId === myUserId;
+  const isRPS = game?.gameType === "RPS";
 
   // 🔁 Poll the board while it's live; stop once the match ends.
   useEffect(() => {
@@ -99,6 +103,29 @@ export default function ChatGameOverlay({
     }
   }
 
+  async function chooseRPS(choice: RPSChoice) {
+    if (!game || game.status !== "ACTIVE" || game.rps?.myChoice) return;
+    setPendingChoice(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/chat/games/${gameId}/move`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ choice }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "មិនអាចលេងបានទេ។");
+        return;
+      }
+      setGame(data as GameDetailDTO);
+    } catch {
+      setError("បណ្តាញមានបញ្ហា សូមព្យាយាមម្តងទៀត។");
+    } finally {
+      setPendingChoice(false);
+    }
+  }
+
   const myTurn = game?.status === "ACTIVE" && game.currentTurnPlayerId === myUserId;
   const opponent =
     game && game.mySlot === "player1" ? game.player2 : game?.player1 ?? null;
@@ -106,6 +133,10 @@ export default function ChatGameOverlay({
   let banner: { text: string; tone: string };
   if (!game) {
     banner = { text: "កំពុងផ្ទុក...", tone: "text-coffee-500 dark:text-cream-300" };
+  } else if (game.status === "ACTIVE" && isRPS) {
+    banner = game.rps?.myChoice
+      ? { text: "រង់ចាំគូប្រកួតជ្រើសរើស... ⏳", tone: "text-coffee-500 dark:text-cream-300" }
+      : { text: "ជ្រើសរើសការវាយប្រហារ! ✊✋✌️", tone: "text-matcha-600 dark:text-matcha-400" };
   } else if (game.status === "ACTIVE") {
     banner = myTurn
       ? { text: "វេនរបស់អ្នក! 🔥", tone: "text-matcha-600 dark:text-matcha-400" }
@@ -123,7 +154,9 @@ export default function ChatGameOverlay({
       {celebrate && <Confetti />}
 
       <div className="flex items-center justify-between px-4 py-3 text-white">
-        <p className="font-heading text-base">Tic-Tac-Toe 🎮</p>
+        <p className="font-heading text-base">
+          {isRPS ? "Rock-Paper-Scissors ✊✋✌️" : "Tic-Tac-Toe 🎮"}
+        </p>
         <button
           type="button"
           onClick={onClose}
@@ -139,12 +172,13 @@ export default function ChatGameOverlay({
         {game && (
           <div className="flex items-center gap-3 text-sm text-white">
             <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 font-semibold">
-              {game.player1.mark} {game.player1.name}
+              {isRPS ? "" : `${game.player1.mark} `}
+              {game.player1.name}
               {game.mySlot === "player1" && <span className="text-[10px] opacity-80">(អ្នក)</span>}
             </span>
             <span className="text-white/60">vs</span>
             <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 font-semibold">
-              {game.player2 ? `${game.player2.mark} ${game.player2.name}` : "..."}
+              {game.player2 ? (isRPS ? game.player2.name : `${game.player2.mark} ${game.player2.name}`) : "..."}
               {game.mySlot === "player2" && <span className="text-[10px] opacity-80">(អ្នក)</span>}
             </span>
           </div>
@@ -155,33 +189,76 @@ export default function ChatGameOverlay({
           {banner.text}
         </p>
 
-        {/* Board — neon glowing grid */}
-        <div className="grid grid-cols-3 gap-2.5">
-          {(game?.board ?? Array(9).fill(null)).map((mark, cell) => {
-            const playable = myTurn && mark === null && pendingCell === null;
-            return (
-              <button
-                key={cell}
-                type="button"
-                onClick={() => play(cell)}
-                disabled={!playable}
-                className={`flex h-20 w-20 items-center justify-center rounded-2xl border-2 text-4xl transition-all duration-150 sm:h-24 sm:w-24 ${
-                  mark
-                    ? "animate-pop-in border-lavender-400 bg-coffee-900/70 shadow-[0_0_18px_-2px_rgba(154,130,234,0.9)]"
-                    : playable
-                      ? "border-matcha-400 bg-coffee-900/40 shadow-[0_0_14px_-4px_rgba(127,209,174,0.9)] hover:scale-105 hover:bg-coffee-900/60 active:scale-95"
-                      : "border-white/20 bg-coffee-900/30"
-                }`}
-              >
-                {pendingCell === cell ? (
-                  <Loader2 size={24} className="animate-spin text-white/70" />
-                ) : (
-                  mark
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {/* Board — neon glowing grid (Tic-Tac-Toe) or choice buttons + reveal (RPS) */}
+        {isRPS ? (
+          isOver && game?.rps ? (
+            <div className="flex items-center gap-4">
+              <span className="flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-lavender-400 bg-coffee-900/70 text-4xl shadow-[0_0_18px_-2px_rgba(154,130,234,0.9)] sm:h-24 sm:w-24">
+                {game.rps.myChoice ? RPS_EMOJI[game.rps.myChoice] : "❔"}
+              </span>
+              <span className="text-lg font-bold text-white/70">vs</span>
+              <span className="flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-crimson-400 bg-coffee-900/70 text-4xl shadow-[0_0_18px_-2px_rgba(244,99,138,0.9)] sm:h-24 sm:w-24">
+                {game.rps.opponentChoice ? RPS_EMOJI[game.rps.opponentChoice] : "❔"}
+              </span>
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              {RPS_CHOICES.map((choice) => {
+                const alreadyChosen = game?.rps?.myChoice !== null && game?.rps?.myChoice !== undefined;
+                const playable = game?.status === "ACTIVE" && !alreadyChosen && !pendingChoice;
+                const isMine = game?.rps?.myChoice === choice;
+                return (
+                  <button
+                    key={choice}
+                    type="button"
+                    onClick={() => chooseRPS(choice)}
+                    disabled={!playable}
+                    className={`flex h-20 w-20 items-center justify-center rounded-2xl border-2 text-4xl transition-all duration-150 sm:h-24 sm:w-24 ${
+                      isMine
+                        ? "animate-pop-in border-lavender-400 bg-coffee-900/70 shadow-[0_0_18px_-2px_rgba(154,130,234,0.9)]"
+                        : playable
+                          ? "border-matcha-400 bg-coffee-900/40 shadow-[0_0_14px_-4px_rgba(127,209,174,0.9)] hover:scale-105 hover:bg-coffee-900/60 active:scale-95"
+                          : "border-white/20 bg-coffee-900/30"
+                    }`}
+                  >
+                    {pendingChoice && isMine ? (
+                      <Loader2 size={24} className="animate-spin text-white/70" />
+                    ) : (
+                      RPS_EMOJI[choice]
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )
+        ) : (
+          <div className="grid grid-cols-3 gap-2.5">
+            {(game?.board ?? Array(9).fill(null)).map((mark, cell) => {
+              const playable = myTurn && mark === null && pendingCell === null;
+              return (
+                <button
+                  key={cell}
+                  type="button"
+                  onClick={() => play(cell)}
+                  disabled={!playable}
+                  className={`flex h-20 w-20 items-center justify-center rounded-2xl border-2 text-4xl transition-all duration-150 sm:h-24 sm:w-24 ${
+                    mark
+                      ? "animate-pop-in border-lavender-400 bg-coffee-900/70 shadow-[0_0_18px_-2px_rgba(154,130,234,0.9)]"
+                      : playable
+                        ? "border-matcha-400 bg-coffee-900/40 shadow-[0_0_14px_-4px_rgba(127,209,174,0.9)] hover:scale-105 hover:bg-coffee-900/60 active:scale-95"
+                        : "border-white/20 bg-coffee-900/30"
+                  }`}
+                >
+                  {pendingCell === cell ? (
+                    <Loader2 size={24} className="animate-spin text-white/70" />
+                  ) : (
+                    mark
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {error && (
           <p className="rounded-full bg-crimson-600/90 px-3 py-1 text-xs font-semibold text-white">

@@ -25,7 +25,7 @@ export default function ChatFab() {
       type="button"
       onClick={openChat}
       aria-label="Open Café Lounge chat"
-      className="fixed bottom-5 right-5 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-lavender-500 via-crimson-500 to-gold-500 text-white shadow-[0_8px_24px_-6px_rgba(154,130,234,0.6)] transition-transform hover:scale-110 active:scale-90 sm:bottom-6 sm:right-6"
+      className="glow-ring fixed bottom-5 right-5 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-lavender-500 via-crimson-500 to-gold-500 text-white shadow-[0_8px_24px_-6px_rgba(154,130,234,0.6)] transition-transform hover:scale-110 active:scale-90 sm:bottom-6 sm:right-6"
     >
       <span className="absolute inset-0 animate-ping rounded-full bg-lavender-500/50" />
       <MessageCircle size={24} className="relative" />
