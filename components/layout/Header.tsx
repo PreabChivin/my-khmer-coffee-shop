@@ -58,9 +58,19 @@ export default function Header() {
           {/* 🔐 Staff badge — replaces the old floating StaffPortalButton.
               Only ever shown once a STAFF/ADMIN session is confirmed. */}
           {!isLoading && isStaff && (
-            <div className="flex animate-pulse items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-matcha-300 to-matcha-500 px-3 py-1.5 text-[11px] font-bold text-white shadow-[0_0_14px_rgba(127,209,174,0.8)]">
-              <Crown size={12} />
-              🧑‍🍳 បុគ្គលិកហាងកាហ្វេ: Active {user?.name}
+            <div className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-matcha-300 to-matcha-500 px-3 py-1.5 text-[11px] font-bold text-white shadow-[0_0_14px_rgba(127,209,174,0.8)]">
+              {/* 🔙 The staff badge doubles as the return path to the admin
+                  dashboard — dotted underline (same affordance as Logout)
+                  signals it's tappable. This is how an Admin previewing the
+                  storefront gets BACK without logging out. */}
+              <Link
+                href="/admin"
+                title="ត្រឡប់ទៅផ្ទាំងគ្រប់គ្រង · Back to Dashboard"
+                className="flex items-center gap-1.5 underline decoration-dotted underline-offset-2 transition-opacity hover:opacity-80"
+              >
+                <Crown size={12} />
+                🧑‍🍳 បុគ្គលិកហាងកាហ្វេ: Active {user?.name}
+              </Link>
               <span className="mx-0.5 opacity-60">|</span>
               <button
                 type="button"

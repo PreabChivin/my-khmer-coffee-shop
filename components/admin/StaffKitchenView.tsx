@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import Link from "next/link";
+import { Home } from "lucide-react";
 import AdminStats from "@/components/admin/AdminStats";
 import OrdersBoard from "@/components/admin/OrdersBoard";
 import ProductManagementPanel from "@/components/admin/ProductManagementPanel";
@@ -43,9 +45,25 @@ export default function StaffKitchenView({
   return (
     <div className="min-h-screen bg-cream-100 dark:bg-coffee-900">
       <div className="mx-auto max-w-[1600px] px-4 pt-6 sm:px-6">
-        <h1 className="text-center font-heading text-2xl font-extrabold text-coffee-900 dark:text-cream-50 sm:text-3xl">
-          ផ្ទាំងគ្រប់គ្រងការកម្ម៉ង់របស់ Besties 🧸
-        </h1>
+        {/* 🏠 Dashboard title + a clear escape hatch back to the customer
+            storefront. On desktop the button sits at the right edge of the
+            title row; on smaller/mobile (Capacitor) screens it stacks
+            centered beneath the title so nothing clips. Navigating away is a
+            plain client-side <Link> — the STAFF/ADMIN session cookie is
+            untouched, so they can flip back and forth freely. */}
+        <div className="relative flex flex-col items-center gap-3">
+          <h1 className="text-center font-heading text-2xl font-extrabold text-coffee-900 dark:text-cream-50 sm:text-3xl">
+            ផ្ទាំងគ្រប់គ្រងការកម្ម៉ង់របស់ Besties 🧸
+          </h1>
+          <Link
+            href="/"
+            aria-label="ទៅកាន់ទំព័រដើម · View Storefront"
+            className="btn-tactile flex items-center gap-2 rounded-full bg-gradient-to-r from-gold-400 to-clay-400 px-5 py-2.5 text-sm font-bold text-white shadow-md lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2"
+          >
+            <Home size={16} />
+            ទៅកាន់ទំព័រដើម · View Storefront 🏠
+          </Link>
+        </div>
         <AdminStats />
         <AdminPredictivePanel />
         <HybridAiStatusCard />

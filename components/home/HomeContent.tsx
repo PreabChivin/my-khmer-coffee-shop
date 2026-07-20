@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import { Bike, Clock, QrCode, Sprout, Store } from "lucide-react";
 import ProductCard from "@/components/menu/ProductCard";
 import HeroSlideshow from "@/components/home/HeroSlideshow";
@@ -12,7 +11,6 @@ import CategoryScroller, { ALL_CATEGORIES_ID } from "@/components/menu/CategoryS
 import HomeSidebar from "@/components/home/HomeSidebar";
 import WelcomePopup from "@/components/home/WelcomePopup";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useSession } from "@/contexts/SessionContext";
 import type { CategoryDTO, ProductDTO } from "@/lib/types";
 import type { TranslationKey } from "@/lib/i18n";
 
@@ -46,8 +44,6 @@ export default function HomeContent({
   initialCategories: CategoryDTO[];
 }) {
   const { t } = useLanguage();
-  const { isStaff } = useSession();
-  const router = useRouter();
   const [products] = useState(initialProducts);
   const [categories] = useState(initialCategories);
   const [activeCategoryId, setActiveCategoryId] = useState(ALL_CATEGORIES_ID);
@@ -69,16 +65,12 @@ export default function HomeContent({
       : products.filter((p) => p.categoryId === activeCategoryId);
   }, [products, activeCategoryId, normalizedQuery]);
 
-  // 🧑‍🍳 The Staff/Admin dashboard now lives at its own /admin route (not
-  // inline here). This is just a safety net for a stray staff session
-  // landing on the storefront directly (e.g. a stale bookmark) — login
-  // itself already redirects straight to /admin.
-  useEffect(() => {
-    if (isStaff) router.replace("/admin");
-  }, [isStaff, router]);
-
-  if (isStaff) return null;
-
+  // 🧑‍🍳 Staff/Admin can view the storefront while staying logged in — the
+  // dashboard lives at its own /admin route, and they reach it from the
+  // "View Storefront"/staff-badge links (see StaffKitchenView + Header). We
+  // deliberately no longer bounce a staff session off "/": login still lands
+  // them on /admin by default (AuthModal), but they're free to flip over to
+  // the customer view and back without ending their session.
   return (
     <div>
       {/* 🎉 First-visit registration promo (unauth guests only, shown once) */}
