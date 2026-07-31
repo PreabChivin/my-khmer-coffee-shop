@@ -63,3 +63,6 @@ class Health(BaseModel):
     service: str
     db_connected: bool
     version: str
+    # Seconds since this process started serving — lets the dashboard show a
+    # live "up 3m" style metric and confirm it's the same running instance.
+    uptime_seconds: float = 0.0

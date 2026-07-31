@@ -69,3 +69,37 @@ PYTHON_AI_SERVICE_SECRET=<same value as backend-py API_SECRET>
 
 With those set, the Next.js `app/api/ai/*` bridge routes proxy to this service.
 Without them (e.g. current Vercel prod), the bridge degrades gracefully.
+
+## One-command local run (recommended)
+
+From the **repo root**, once the venv above exists:
+
+```bash
+npm run dev:all
+```
+
+This boots Next.js **and** Uvicorn together (prefixed `[next]` / `[uvicorn]`
+output, one Ctrl-C stops both). Add the two `PYTHON_AI_SERVICE_*` vars to
+`.env.local` first, and the Admin dashboard's **Hybrid AI Service** card
+flips from *Offline* to **⚡ ONLINE — Hybrid AI Active** on its own within
+~20s (it live-polls `/api/ai/health`). `npm run dev:py` runs just the sidecar.
+
+## Making it ONLINE in production (the only remaining steps)
+
+The Vercel deployment shows **Offline** on purpose: Vercel is serverless and
+**cannot** run a long-lived Uvicorn process. Nothing in the code is missing —
+to light it up in prod you host this service somewhere persistent and point
+Next.js at it:
+
+1. **Deploy `backend-py/` to a host that runs a process** — Fly.io, Render,
+   Railway, or any container platform. Command: `uvicorn app.main:app
+   --host 0.0.0.0 --port $PORT`.
+2. On that host set `DATABASE_URL` (your real `POSTGRES_URL_NON_POOLING`,
+   from Vercel → Storage → Postgres → `.env.local` tab) and a strong
+   `API_SECRET` (`openssl rand -hex 32`).
+3. In **Vercel → Project → Settings → Environment Variables** add
+   `PYTHON_AI_SERVICE_URL=https://<your-python-host>` and
+   `PYTHON_AI_SERVICE_SECRET=<same value as the host's API_SECRET>`, then
+   redeploy.
+
+The dashboard card then flips to ONLINE automatically — no code change.

@@ -16,6 +16,7 @@ Run (hot reload):  uvicorn app.main:app --reload --port 8000
 from __future__ import annotations
 
 import logging
+import time
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
@@ -30,6 +31,8 @@ from app.security import require_api_key
 logging.basicConfig(level=logging.INFO)
 
 VERSION = "1.0.0"
+# Monotonic clock captured at import — immune to wall-clock adjustments.
+_STARTED_AT = time.monotonic()
 
 
 @asynccontextmanager
@@ -63,10 +66,26 @@ app.include_router(recommend.router, prefix="/api/v1")
 app.include_router(moderate.router, prefix="/api/v1")
 
 
+def _build_health() -> Health:
+    return Health(
+        status="ok",
+        service="benchimin-ai",
+        db_connected=db_available(),
+        version=VERSION,
+        uptime_seconds=round(time.monotonic() - _STARTED_AT, 1),
+    )
+
+
 @app.get("/health", response_model=Health, tags=["meta"])
 async def health() -> Health:
     """Public, unauthenticated liveness probe (no secrets, no data)."""
-    return Health(status="ok", service="benchimin-ai", db_connected=db_available(), version=VERSION)
+    return _build_health()
+
+
+@app.get("/status", response_model=Health, tags=["meta"])
+async def status() -> Health:
+    """Alias for /health — some monitors expect /status; identical payload."""
+    return _build_health()
 
 
 @app.get("/api/v1/whoami", tags=["meta"], dependencies=[Depends(require_api_key)])

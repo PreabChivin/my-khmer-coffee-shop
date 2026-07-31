@@ -13,6 +13,7 @@ interface PyHealth {
   service: string;
   db_connected: boolean;
   version: string;
+  uptime_seconds?: number;
 }
 
 export async function GET(request: NextRequest) {
@@ -35,6 +36,7 @@ export async function GET(request: NextRequest) {
       configured: true,
       dbConnected: result.data.db_connected,
       version: result.data.version,
+      uptimeSeconds: result.data.uptime_seconds,
     });
   }
 
