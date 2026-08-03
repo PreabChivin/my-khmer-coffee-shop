@@ -22,13 +22,6 @@ interface Critter {
   line: string;
   craving: Craving;
   bounce: BounceStyle;
-  /** Full round-trip walk duration — smaller = more energetic. */
-  durationS: number;
-  /** Negative so critters don't all start their cycle at the same position. */
-  delayS: number;
-  /** Vertical offset within the lane so paths don't overlap. */
-  laneBottomPx: number;
-  distanceVw: number;
 }
 
 const ROSTER: Critter[] = [
@@ -38,10 +31,6 @@ const ROSTER: Critter[] = [
     line: "ចង់បានភេសជ្ជៈពិសេសអត់ លោកខ្ញុំមានណែនាំ! ✨",
     craving: "host",
     bounce: "bounce-cute",
-    durationS: 20,
-    delayS: 0,
-    laneBottomPx: 8,
-    distanceVw: 55,
   },
   {
     id: "piggy",
@@ -49,10 +38,6 @@ const ROSTER: Critter[] = [
     line: "ញ៉ាំ croissant ជាមួយជ្រូកអត់? 🥐",
     craving: "pastry",
     bounce: "bounce-cute",
-    durationS: 24,
-    delayS: -6,
-    laneBottomPx: 2,
-    distanceVw: 65,
   },
   {
     id: "chick",
@@ -60,10 +45,6 @@ const ROSTER: Critter[] = [
     line: "មាន់ស្រែសុំអាយស៍ឡាតេមួយកែវ! ☕️",
     craving: "coffee",
     bounce: "leap",
-    durationS: 10,
-    delayS: -3,
-    laneBottomPx: 20,
-    distanceVw: 60,
   },
   {
     id: "ducky",
@@ -71,10 +52,6 @@ const ROSTER: Critter[] = [
     line: "ទាកាប៉ាឃ្លានតែបៃតងស្ទើរងាប់! 🍵",
     craving: "tea",
     bounce: "bounce-cute",
-    durationS: 16,
-    delayS: -9,
-    laneBottomPx: 12,
-    distanceVw: 70,
   },
   {
     id: "ellie",
@@ -82,10 +59,6 @@ const ROSTER: Critter[] = [
     line: "ដំរីតូចសុំកែវ XXL មួយ! 🥤",
     craving: "largest",
     bounce: "wiggle",
-    durationS: 18,
-    delayS: -12,
-    laneBottomPx: 0,
-    distanceVw: 50,
   },
   {
     id: "dino",
@@ -93,10 +66,6 @@ const ROSTER: Critter[] = [
     line: "ដាយណូស័រឃ្លានបាយ អត់បានញ៉ាំកាហ្វេ! 🦖⚡️",
     craving: "promo",
     bounce: "leap",
-    durationS: 7,
-    delayS: -2,
-    laneBottomPx: 16,
-    distanceVw: 68,
   },
 ];
 
@@ -105,6 +74,59 @@ const BOUNCE_CLASS: Record<BounceStyle, string> = {
   leap: "animate-leap",
   wiggle: "animate-wiggle",
 };
+
+// 🚶 Calm-movement tuning — at most 3 critters exist on screen at once (one
+// per "slot"); each slot runs its own independent walk -> idle+bubble ->
+// walk cycle, rotating to the next roster member every time it finishes
+// idling. Movement is a CSS `transition` on `transform` driven by React
+// state changes (not an infinite @keyframes loop like the previous version)
+// specifically so JS can know exactly when a critter has STOPPED and only
+// then reveal its speech bubble — still fully compositor-driven/GPU, same
+// performance characteristics as before, just with explicit phase control.
+const MAX_ACTIVE = 3;
+const WALK_MIN_S = 5;
+const WALK_MAX_S = 8;
+const IDLE_MIN_MS = 4000;
+const IDLE_MAX_MS = 6000;
+const STEP_MIN_VW = 14;
+const STEP_MAX_VW = 30;
+const LANE_MAX_VW = 72;
+const SLOT_BOTTOM_PX = [4, 22, 40];
+
+function randomBetween(min: number, max: number): number {
+  return min + Math.random() * (max - min);
+}
+
+/** A gentle, bounded step from the current position — biased away from
+ *  whichever edge it's nearest, so a critter never gets stuck oscillating
+ *  against the same wall of the lane. */
+function nextTarget(currentX: number): number {
+  const step = randomBetween(STEP_MIN_VW, STEP_MAX_VW);
+  const preferRight = currentX < LANE_MAX_VW / 2;
+  const goRight = Math.random() < (preferRight ? 0.65 : 0.35);
+  const target = goRight ? currentX + step : currentX - step;
+  return Math.max(0, Math.min(LANE_MAX_VW, target));
+}
+
+interface SlotState {
+  critterIdx: number;
+  phase: "walking" | "idle";
+  x: number;
+  facingLeft: boolean;
+  durationS: number;
+  showBubble: boolean;
+}
+
+function initialSlots(): SlotState[] {
+  return Array.from({ length: MAX_ACTIVE }, (_, i) => ({
+    critterIdx: i,
+    phase: "walking",
+    x: 8 + i * 4,
+    facingLeft: false,
+    durationS: WALK_MIN_S,
+    showBubble: false,
+  }));
+}
 
 function pickBest(list: ProductDTO[]): ProductDTO | null {
   if (list.length === 0) return null;
@@ -145,20 +167,22 @@ function pickForCraving(products: ProductDTO[], craving: Craving): ProductDTO | 
   }
 }
 
-/** 🐷🐔🦆🐘🦖🐻 Pet Zoo — the storefront's roaming-critter engine. Replaces
- *  the earlier single anchored CutePetMascot: Bong Bear now roams as part of
- *  one consolidated roster instead of a separate always-anchored widget.
- *  Contained to a slim "safety lane" fixed at the very bottom of the
- *  viewport (not true free-roam) so a critter can never wander over the
- *  header, product grid, or cart trigger — z-30, below ChatFab's z-60, so
- *  the chat button always stays on top and clickable even if a critter
- *  passes near it. Scoped to the home page only (product data is already
- *  loaded there; a checkout page is the wrong moment for roaming animals). */
+/** 🐷🐔🦆🐘🦖🐻 Pet Zoo — a calm, decluttered roaming-critter engine.
+ *  Refactored from the original 6-simultaneous-critters version: now at
+ *  most 3 are ever on screen (one per "slot"), each moving slowly (a 5-8s
+ *  walk to a modest nearby spot, not a fast dash across the whole lane),
+ *  then stopping to idle 4-6s — its speech bubble ONLY appears once it has
+ *  actually stopped, so nobody has to chase a moving character to read it.
+ *  Slots rotate through the full 6-member roster over time via a simple
+ *  round-robin pointer, so every character still appears eventually without
+ *  ever exceeding the 3-active cap. Contained to a slim safety lane fixed at
+ *  the very bottom of the viewport — never over the header, product grid, or
+ *  cart trigger — z-30, below ChatFab's z-60. Scoped to the home page only. */
 export default function PetZoo({ products }: { products: ProductDTO[] }) {
   const { lang } = useLanguage();
   const [hydrated, setHydrated] = useState(false);
   const [zooOn, setZooOn] = useState(true);
-  const [activeBubble, setActiveBubble] = useState<Record<string, boolean>>({});
+  const [slots, setSlots] = useState<SlotState[]>(initialSlots);
   const [celebrate, setCelebrate] = useState(false);
   const [activeCritter, setActiveCritter] = useState<Critter | null>(null);
 
@@ -176,29 +200,62 @@ export default function PetZoo({ products }: { products: ProductDTO[] }) {
     return () => window.clearTimeout(timer);
   }, []);
 
-  // 💬 Each critter cycles its own bubble independently on a random 4-8s
-  // gap, so the roster never syncs into one big simultaneous pop.
+  // 🚶 Per-slot walk -> idle+bubble -> walk loop. Each slot's `target`
+  // (this walk's destination) is captured in closure and reused directly as
+  // the next walk's start — no refs needed to read "current position" back.
   useEffect(() => {
     if (!hydrated || !zooOn) return;
+    let cancelled = false;
     const timers: ReturnType<typeof setTimeout>[] = [];
+    let pointer = MAX_ACTIVE;
 
-    ROSTER.forEach((critter) => {
-      function scheduleNext() {
-        const gap = 4000 + Math.random() * 4000;
-        const showTimer = setTimeout(() => {
-          setActiveBubble((prev) => ({ ...prev, [critter.id]: true }));
-          const hideTimer = setTimeout(() => {
-            setActiveBubble((prev) => ({ ...prev, [critter.id]: false }));
-            scheduleNext();
-          }, 3200);
-          timers.push(hideTimer);
-        }, gap);
-        timers.push(showTimer);
-      }
-      scheduleNext();
-    });
+    function runSlot(slotIndex: number, critterIdx: number, startX: number) {
+      if (cancelled) return;
+      const target = nextTarget(startX);
+      const durationS = randomBetween(WALK_MIN_S, WALK_MAX_S);
+      const facingLeft = target < startX;
 
-    return () => timers.forEach(clearTimeout);
+      setSlots((prev) => {
+        const next = [...prev];
+        next[slotIndex] = {
+          critterIdx,
+          phase: "walking",
+          x: target,
+          facingLeft,
+          durationS,
+          showBubble: false,
+        };
+        return next;
+      });
+
+      const walkTimer = setTimeout(() => {
+        if (cancelled) return;
+        setSlots((prev) => {
+          const next = [...prev];
+          next[slotIndex] = { ...next[slotIndex], phase: "idle", showBubble: true };
+          return next;
+        });
+
+        const idleMs = randomBetween(IDLE_MIN_MS, IDLE_MAX_MS);
+        const idleTimer = setTimeout(() => {
+          if (cancelled) return;
+          const nextCritterIdx = pointer % ROSTER.length;
+          pointer += 1;
+          runSlot(slotIndex, nextCritterIdx, target);
+        }, idleMs);
+        timers.push(idleTimer);
+      }, durationS * 1000);
+      timers.push(walkTimer);
+    }
+
+    for (let i = 0; i < MAX_ACTIVE; i++) {
+      runSlot(i, i, 8 + i * 4);
+    }
+
+    return () => {
+      cancelled = true;
+      timers.forEach(clearTimeout);
+    };
   }, [hydrated, zooOn]);
 
   const recommendation = useMemo(
@@ -216,8 +273,12 @@ export default function PetZoo({ products }: { products: ProductDTO[] }) {
     }
   }
 
-  function handleCritterClick(critter: Critter) {
-    setActiveBubble((prev) => ({ ...prev, [critter.id]: false }));
+  function handleCritterClick(critter: Critter, slotIndex: number) {
+    setSlots((prev) => {
+      const next = [...prev];
+      next[slotIndex] = { ...next[slotIndex], showBubble: false };
+      return next;
+    });
     setCelebrate(true);
     setTimeout(() => setCelebrate(false), 1000);
     setActiveCritter(critter);
@@ -254,45 +315,50 @@ export default function PetZoo({ products }: { products: ProductDTO[] }) {
       {zooOn && (
         <div
           aria-hidden
-          className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-24 overflow-hidden sm:h-28"
+          className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-28 overflow-hidden sm:h-32"
         >
-          {ROSTER.map((critter) => (
-            <div
-              key={critter.id}
-              className="zoo-critter pointer-events-none absolute left-2"
-              style={
-                {
-                  bottom: `${critter.laneBottomPx}px`,
-                  animationDuration: `${critter.durationS}s`,
-                  animationDelay: `${critter.delayS}s`,
-                  "--zoo-distance": `${critter.distanceVw}vw`,
-                  "--zoo-bob": "-4px",
-                } as React.CSSProperties
-              }
-            >
-              {activeBubble[critter.id] && (
-                <div className="animate-pop-in pointer-events-none absolute -top-11 left-1/2 w-max max-w-[10rem] -translate-x-1/2 rounded-2xl rounded-bl-sm border-2 border-clay-300 bg-white px-2.5 py-1.5 text-center text-[11px] font-bold leading-snug text-coffee-800 shadow-lg dark:border-coffee-600 dark:bg-coffee-800 dark:text-cream-100">
-                  {critter.line}
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={() => handleCritterClick(critter)}
-                aria-label={critter.line}
-                className="pointer-events-auto block"
+          {slots.map((slot, slotIndex) => {
+            const critter = ROSTER[slot.critterIdx];
+            return (
+              <div
+                key={slotIndex}
+                className="zoo-slot pointer-events-none absolute left-2"
+                style={{
+                  bottom: `${SLOT_BOTTOM_PX[slotIndex]}px`,
+                  transform: `translateX(${slot.x}vw) scaleX(${slot.facingLeft ? -1 : 1})`,
+                  transition: `transform ${slot.durationS}s ease-in-out`,
+                }}
               >
-                <span className={`block ${BOUNCE_CLASS[critter.bounce]}`}>
-                  {critter.emoji === "bongbear" ? (
-                    <BongBear pose="wave" size={56} />
-                  ) : (
-                    <span className="block text-4xl drop-shadow-md sm:text-5xl">
-                      {critter.emoji}
-                    </span>
-                  )}
-                </span>
-              </button>
-            </div>
-          ))}
+                {/* 💬 Only rendered once this slot has actually stopped —
+                    large, high-contrast, and legible per spec. */}
+                {slot.showBubble && (
+                  <div className="animate-pop-in pointer-events-none absolute -top-16 left-1/2 w-max max-w-[15rem] -translate-x-1/2 rounded-2xl border border-amber-100 bg-white/95 p-3 text-center text-sm font-semibold leading-snug text-amber-950 shadow-xl">
+                    {critter.line}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleCritterClick(critter, slotIndex)}
+                  aria-label={critter.line}
+                  className="pointer-events-auto block"
+                >
+                  <span
+                    className={`block ${
+                      slot.phase === "walking" ? BOUNCE_CLASS[critter.bounce] : ""
+                    }`}
+                  >
+                    {critter.emoji === "bongbear" ? (
+                      <BongBear pose="wave" size={56} />
+                    ) : (
+                      <span className="block text-4xl drop-shadow-md sm:text-5xl">
+                        {critter.emoji}
+                      </span>
+                    )}
+                  </span>
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
 

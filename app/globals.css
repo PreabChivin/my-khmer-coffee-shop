@@ -591,45 +591,21 @@ select:focus {
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* 🐷🐔🦆🐘🦖 Pet Zoo — a roaming critter's horizontal walk, GPU-accelerated
- * (transform only, no layout/position properties) so it runs on the
- * compositor thread independent of React entirely: zero JS animation loop,
- * zero re-renders, smooth on low-power Capacitor WebViews. --zoo-distance
- * (how far it walks) and --zoo-bob (a tiny hop right at each turnaround) are
- * set per-instance via inline style; duration/delay vary per critter so the
- * roster doesn't move in lockstep. The vertical idle bounce is a SEPARATE
- * inner element reusing the existing .animate-bounce-cute/.animate-leap/
- * .animate-wiggle keyframes — two elements because two simultaneous
- * transform animations on the same element can't compose, they'd just
- * overwrite each other.
- */
-@keyframes zoo-walk {
-  0% {
-    transform: translate(0, 0) scaleX(1);
-  }
-  47% {
-    transform: translate(var(--zoo-distance, 60vw), 0) scaleX(1);
-  }
-  50% {
-    transform: translate(var(--zoo-distance, 60vw), var(--zoo-bob, -4px)) scaleX(-1);
-  }
-  97% {
-    transform: translate(0, 0) scaleX(-1);
-  }
-  100% {
-    transform: translate(0, 0) scaleX(1);
-  }
-}
-
-.zoo-critter {
-  animation: zoo-walk linear infinite;
+/* 🐷🐔🦆🐘🦖 Pet Zoo — each roaming critter's slot is positioned via a plain
+ * CSS `transition` on `transform` (translateX + scaleX flip), with the
+ * target value and duration set from React state (see PetZoo.tsx's
+ * walk -> idle -> walk state machine) rather than an infinite @keyframes
+ * loop — that's what lets JS know exactly when a critter has stopped, so
+ * its speech bubble can wait for that moment instead of chasing it mid-walk.
+ * Still fully compositor-driven (transform only), so this stays just as
+ * smooth as a pure-CSS animation would have been. */
+.zoo-slot {
   will-change: transform;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .zoo-critter,
-  .zoo-critter * {
-    animation: none !important;
+  .zoo-slot {
+    transition: none !important;
   }
 }
 
