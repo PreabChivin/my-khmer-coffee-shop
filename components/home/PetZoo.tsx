@@ -88,10 +88,16 @@ const WALK_MIN_S = 5;
 const WALK_MAX_S = 8;
 const IDLE_MIN_MS = 4000;
 const IDLE_MAX_MS = 6000;
-const STEP_MIN_VW = 14;
-const STEP_MAX_VW = 30;
-const LANE_MAX_VW = 72;
-const SLOT_BOTTOM_PX = [4, 22, 40];
+// Widened from 14-30 so the SAME calm 5-8s walk duration covers more visible
+// ground — bigger sprites make identical movement much more perceptible, but
+// a slightly longer stride also helps: at the old narrow step the motion was
+// easy to miss entirely (read as "stuck") even before the size bump.
+const STEP_MIN_VW = 20;
+const STEP_MAX_VW = 42;
+const LANE_MAX_VW = 68;
+// More vertical spacing between slots now that sprites are much larger —
+// the old 4/22/40px stagger would have overlapped at the new size.
+const SLOT_BOTTOM_PX = [4, 46, 88];
 
 function randomBetween(min: number, max: number): number {
   return min + Math.random() * (max - min);
@@ -315,7 +321,7 @@ export default function PetZoo({ products }: { products: ProductDTO[] }) {
       {zooOn && (
         <div
           aria-hidden
-          className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-28 sm:h-32"
+          className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-48 sm:h-56"
         >
           {slots.map((slot, slotIndex) => {
             const critter = ROSTER[slot.critterIdx];
@@ -326,12 +332,21 @@ export default function PetZoo({ products }: { products: ProductDTO[] }) {
             // critter normally, but pinned to the near edge once the critter
             // is close enough to one that a centered 15rem-wide bubble would
             // overhang it.
-            const nearLeftEdge = slot.x < 15;
-            const nearRightEdge = slot.x > LANE_MAX_VW - 15;
+            const nearLeftEdge = slot.x < 18;
+            const nearRightEdge = slot.x > LANE_MAX_VW - 18;
             const bubbleAnchorClass = nearLeftEdge
               ? "left-0"
               : nearRightEdge
                 ? "right-0 left-auto"
+                : "left-1/2 -translate-x-1/2";
+            // The tail wedge points down at wherever the pet actually is,
+            // which shifts with the same edge-aware anchor as the bubble
+            // itself (see the clipping-fix task's note on why this can't
+            // just always be centered).
+            const tailPositionClass = nearLeftEdge
+              ? "left-8"
+              : nearRightEdge
+                ? "right-8 left-auto"
                 : "left-1/2 -translate-x-1/2";
             return (
               <div
@@ -353,21 +368,33 @@ export default function PetZoo({ products }: { products: ProductDTO[] }) {
                 }}
               >
                 {/* 💬 Only rendered once this slot has actually stopped —
-                    large, high-contrast, and legible per spec. Anchored per
+                    scaled up to match the larger sprites, with a tail wedge
+                    pointing at whichever pet is "talking". Anchored per
                     bubbleAnchorClass so it never overhangs the viewport edge. */}
                 {slot.showBubble && (
                   <div
-                    className={`animate-pop-in pointer-events-none absolute -top-16 w-max max-w-[15rem] rounded-2xl border border-amber-100 bg-white/95 p-3 text-center text-sm font-semibold leading-snug text-amber-950 shadow-xl ${bubbleAnchorClass}`}
+                    className={`animate-pop-in pointer-events-none absolute -top-28 w-max max-w-[18rem] rounded-2xl border-2 border-amber-200/80 bg-white/95 px-4 py-2.5 text-center text-base font-bold leading-snug text-slate-900 shadow-2xl ${bubbleAnchorClass}`}
                   >
                     {critter.line}
+                    <span
+                      aria-hidden
+                      className={`absolute -bottom-1.5 h-4 w-4 rotate-45 border-b-2 border-r-2 border-amber-200/80 bg-white/95 ${tailPositionClass}`}
+                    />
                   </div>
                 )}
                 <button
                   type="button"
                   onClick={() => handleCritterClick(critter, slotIndex)}
                   aria-label={critter.line}
-                  className="pointer-events-auto block"
+                  className="pointer-events-auto relative block"
                 >
+                  {/* Soft contrast halo — helps a pet pop boldly against
+                      whatever page content/color happens to be behind it,
+                      without needing to draw custom art. */}
+                  <span
+                    aria-hidden
+                    className="absolute inset-0 -z-10 scale-90 rounded-full bg-white/50 blur-lg dark:bg-coffee-950/40"
+                  />
                   <span
                     className={`block ${
                       slot.phase === "walking" ? BOUNCE_CLASS[critter.bounce] : ""
@@ -375,9 +402,9 @@ export default function PetZoo({ products }: { products: ProductDTO[] }) {
                     style={slot.facingLeft ? { transform: "scaleX(-1)" } : undefined}
                   >
                     {critter.emoji === "bongbear" ? (
-                      <BongBear pose="wave" size={56} />
+                      <BongBear pose="wave" size={88} className="drop-shadow-2xl" />
                     ) : (
-                      <span className="block text-4xl drop-shadow-md sm:text-5xl">
+                      <span className="block text-7xl drop-shadow-2xl sm:text-8xl">
                         {critter.emoji}
                       </span>
                     )}
