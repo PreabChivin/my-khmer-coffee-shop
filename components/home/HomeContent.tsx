@@ -7,6 +7,7 @@ import HeroSlideshow from "@/components/home/HeroSlideshow";
 import PromoBannerCarousel from "@/components/home/PromoBannerCarousel";
 import StoriesPanel from "@/components/home/StoriesPanel";
 import CafeLoungeBanner from "@/components/home/CafeLoungeBanner";
+import CutePetMascot from "@/components/home/CutePetMascot";
 import CategoryScroller, { ALL_CATEGORIES_ID } from "@/components/menu/CategoryScroller";
 import HomeSidebar from "@/components/home/HomeSidebar";
 import WelcomePopup from "@/components/home/WelcomePopup";
@@ -177,6 +178,10 @@ export default function HomeContent({
           </div>
         </div>
       </section>
+
+      {/* 🐻 Cute Cafe Pet — floating Bong Bear companion, bottom-left so it
+          never collides with the ChatFab (bottom-right) */}
+      <CutePetMascot products={products} />
     </div>
   );
 }

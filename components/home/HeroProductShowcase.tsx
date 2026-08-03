@@ -4,60 +4,12 @@ import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { localizedName } from "@/lib/i18n";
-import { computeAverageRating, computeDiscountedPrice } from "@/lib/pricing";
-import { hasAnyPromo } from "@/components/menu/PromoBadge";
+import { computeDiscountedPrice } from "@/lib/pricing";
+import { pickSpotlightProducts, spotlightChipFor } from "@/lib/productSpotlight";
 import ProductImage from "@/components/ProductImage";
 import type { ProductDTO } from "@/lib/types";
 
 const MAX_SHOWCASE = 3;
-
-/** Picks up to 3 REAL standout products (never invented content): top-rated
- *  first, then promo items, then partner items — deduped, available only. */
-function pickShowcase(products: ProductDTO[]): ProductDTO[] {
-  const available = products.filter((p) => p.isAvailable);
-  const rated = [...available]
-    .filter((p) => p.ratingCount > 0)
-    .sort(
-      (a, b) =>
-        computeAverageRating(b.ratingSum, b.ratingCount) -
-        computeAverageRating(a.ratingSum, a.ratingCount)
-    );
-  const promo = available.filter((p) => hasAnyPromo(p));
-  const partner = available.filter((p) => p.isPartner);
-
-  const picks: ProductDTO[] = [];
-  const seen = new Set<string>();
-  for (const list of [rated, promo, partner]) {
-    for (const p of list) {
-      if (picks.length >= MAX_SHOWCASE) break;
-      if (!seen.has(p.id)) {
-        picks.push(p);
-        seen.add(p.id);
-      }
-    }
-  }
-  return picks;
-}
-
-/** The real signal that earned this product a showcase spot — grounded in
- *  actual data (rating/promo/partner), never a fabricated "fresh" timestamp
- *  since this app has no such field to back that claim honestly. */
-function chipFor(
-  product: ProductDTO,
-  lang: "en" | "km"
-): { emoji: string; label: string } | null {
-  const avg = computeAverageRating(product.ratingSum, product.ratingCount);
-  if (product.ratingCount > 0 && avg >= 4.995) {
-    return { emoji: "🔥", label: lang === "km" ? "គេពេញនិយម" : "Top Voted" };
-  }
-  if (hasAnyPromo(product)) {
-    return { emoji: "⚡", label: lang === "km" ? "បញ្ចុះតម្លៃ" : "On Sale" };
-  }
-  if (product.isPartner) {
-    return { emoji: "🤝", label: lang === "km" ? "ដៃគូ" : "Partner" };
-  }
-  return null;
-}
 
 /** 📸 Floating glassmorphic showcase strip layered inside the hero — a
  *  curated look at real standout products (not a marketing slide) with a
@@ -68,7 +20,7 @@ function chipFor(
 export default function HeroProductShowcase({ products }: { products: ProductDTO[] }) {
   const { lang } = useLanguage();
   const router = useRouter();
-  const showcase = useMemo(() => pickShowcase(products), [products]);
+  const showcase = useMemo(() => pickSpotlightProducts(products, MAX_SHOWCASE), [products]);
 
   if (showcase.length === 0) return null;
 
@@ -81,7 +33,7 @@ export default function HeroProductShowcase({ products }: { products: ProductDTO
     <div className="relative z-10 mt-2 flex w-full max-w-2xl gap-3 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {showcase.map((product) => {
         const name = localizedName(product, lang);
-        const chip = chipFor(product, lang);
+        const chip = spotlightChipFor(product, lang);
         const discounted = computeDiscountedPrice(
           product.price,
           product.discountPercent,
