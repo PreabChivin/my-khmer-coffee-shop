@@ -583,6 +583,14 @@ select:focus {
   transform: scale(0.95);
 }
 
+/* 🌀 Genuine spring-overshoot feel for small floating action buttons (the
+ * menu card quick-add FAB) — same overshoot curve as the .animate-pop-in
+ * keyframe, but as a transition so it responds to hover/active rather than
+ * playing once on mount. */
+.fab-spring {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 /* 📸 IG-style rotating gradient story ring — wraps a circular avatar/thumb
  * to signal "tap for highlights", built entirely from the existing
  * lavender→crimson→gold accent trio (no new palette). */

@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import DrinkFinderBar from "@/components/home/DrinkFinderBar";
+import HeroProductShowcase from "@/components/home/HeroProductShowcase";
 import BongBear from "@/components/mascots/BongBear";
 import { useLanguage } from "@/contexts/LanguageContext";
+import type { ProductDTO } from "@/lib/types";
 
 // Pure-CSS Gen-Z slides — candy pastel gradients + floating emoji, no photos.
 // Medium-saturated gradients so the white headline stays readable throughout.
@@ -47,9 +49,11 @@ const AUTO_INTERVAL_MS = 5000;
 export default function HeroSlideshow({
   searchQuery,
   onSearchChange,
+  products,
 }: {
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  products: ProductDTO[];
 }) {
   const { lang, t } = useLanguage();
   const [index, setIndex] = useState(0);
@@ -116,6 +120,9 @@ export default function HeroSlideshow({
         </p>
 
         <DrinkFinderBar searchQuery={searchQuery} onSearchChange={onSearchChange} />
+
+        {/* 🌟 Hero Product Showcase — real standout items, not marketing copy */}
+        <HeroProductShowcase products={products} />
       </div>
 
       {/* 🐻 Bong Bear greets guests from the corner */}

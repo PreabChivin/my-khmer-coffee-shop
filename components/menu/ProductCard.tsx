@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, SlidersHorizontal, Star } from "lucide-react";
+import { Check, Plus, SlidersHorizontal, Star } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useGroupCart } from "@/contexts/GroupCartContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -118,6 +118,10 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
           alt={name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
+        {/* 🌇 Bottom scrim — a full-bleed gradient so floating chips/the FAB
+            stay legible directly over the photo, editorial-app style. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-coffee-950/70 to-transparent" />
+
         {/* 🔖 Foodpanda-style promo badges take priority over the slang badge */}
         {product.isAvailable && hasPromo && <PromoBadge product={product} />}
         {/* 💖 Playful slang badge — only when there's no promo to show */}
@@ -132,6 +136,13 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
             {product.partnerName ? `🤝 ${product.partnerName}` : t("product.partnerBadge")}
           </span>
         )}
+        {/* 🔥 Floating status chip — real signal only (rating-based), sits on
+            the scrim at the bottom-left, foodpanda/Uber-Eats style. */}
+        {isPerfectScore && (
+          <span className="absolute bottom-2 left-2 z-10 flex items-center gap-1 rounded-full bg-gold-500/95 px-2.5 py-1 text-[11px] font-extrabold text-coffee-900 shadow-sm">
+            🔥 Top Voted
+          </span>
+        )}
         {!product.isAvailable && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-clay-400/70 backdrop-blur-[2px]">
             <span className="text-3xl">🧸</span>
@@ -140,10 +151,31 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
             </span>
           </div>
         )}
+
+        {/* ➕ Floating quick-add FAB — breaks out over the bottom-right corner
+            of the photo into the info panel below, the single add-to-cart
+            control for this card (replaces the old full-width button). Spring
+            overshoot on tap via .fab-spring; a checkmark flashes on success. */}
+        {product.isAvailable && (
+          <button
+            type="button"
+            onClick={handleAdd}
+            aria-label={justAdded ? t("menu.added") : t("menu.addToCart")}
+            className="fab-spring absolute -bottom-4 right-3 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-gold-400 to-clay-500 text-coffee-900 shadow-lg ring-4 ring-cream-50 hover:scale-110 active:scale-90 dark:ring-coffee-800"
+          >
+            {justAdded ? (
+              <Check size={18} />
+            ) : customizable ? (
+              <SlidersHorizontal size={16} />
+            ) : (
+              <Plus size={20} />
+            )}
+          </button>
+        )}
       </div>
 
-      <div className="glass-card-premium relative flex flex-1 flex-col rounded-b-3xl p-4">
-        <div className="relative flex items-start justify-between gap-2">
+      <div className="glass-card-premium relative flex flex-1 flex-col rounded-b-3xl p-4 pt-5">
+        <div className="relative flex items-start justify-between gap-2 pr-10">
           <h3 className="font-heading text-base text-coffee-900 dark:text-cream-50">
             {name}
           </h3>
@@ -171,11 +203,20 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
             <span className="font-medium text-coffee-400 dark:text-cream-400">
               ({product.ratingCount}+)
             </span>
-            {isPerfectScore && (
-              <span className="ml-1 rounded-full bg-gold-100 px-1.5 py-0.5 text-[10px] font-extrabold text-gold-700 dark:bg-coffee-900 dark:text-gold-400">
-                ឆ្ងាញ់ដាច់អាកាស 💯
-              </span>
-            )}
+          </div>
+        )}
+
+        {/* 🍯🧊 Inline customization preview — a decorative hint only; the
+            real sweetness/ice selection still happens in DrinkCustomizer
+            (opened by the FAB above) so checkout pricing/logic is untouched. */}
+        {customizable && (
+          <div className="mt-1.5 flex flex-wrap gap-1">
+            <span className="rounded-full bg-clay-50 px-2 py-0.5 text-[10px] font-bold text-clay-600 dark:bg-coffee-900 dark:text-clay-400">
+              🍯 {lang === "km" ? "ភាពផ្អែម" : "Sweetness"}
+            </span>
+            <span className="rounded-full bg-clay-50 px-2 py-0.5 text-[10px] font-bold text-clay-600 dark:bg-coffee-900 dark:text-clay-400">
+              🧊 {lang === "km" ? "ទឹកកក" : "Ice"}
+            </span>
           </div>
         )}
 
@@ -184,16 +225,6 @@ export default function ProductCard({ product }: { product: ProductDTO }) {
             {description}
           </p>
         )}
-
-        <button
-          type="button"
-          onClick={handleAdd}
-          disabled={!product.isAvailable}
-          className="relative mt-4 flex items-center justify-center gap-2 rounded-full bg-gold-500 py-2.5 text-sm font-bold text-coffee-900 shadow-sm transition-transform hover:-translate-y-0.5 hover:scale-[1.03] hover:bg-gold-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-coffee-200 disabled:text-coffee-400 disabled:hover:translate-y-0 disabled:hover:scale-100"
-        >
-          {customizable ? <SlidersHorizontal size={16} /> : <Plus size={16} />}
-          {justAdded ? t("menu.added") : t("menu.addToCart")}
-        </button>
       </div>
 
       {showCustomizer && (

@@ -76,7 +76,7 @@ export default function HomeContent({
       {/* 🎉 First-visit registration promo (unauth guests only, shown once) */}
       <WelcomePopup />
 
-      <HeroSlideshow searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+      <HeroSlideshow searchQuery={searchQuery} onSearchChange={setSearchQuery} products={products} />
 
       {/* 🎉 Top Promotional Banner Carousel */}
       <PromoBannerCarousel />
