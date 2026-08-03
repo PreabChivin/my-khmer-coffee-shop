@@ -4,8 +4,8 @@ import type { ProductDTO } from "@/lib/types";
 
 /** Picks up to `max` REAL standout products (never invented content):
  *  top-rated first, then promo items, then partner items — deduped,
- *  available only. Shared by HeroProductShowcase and CutePetMascot so
- *  "what counts as a standout" never drifts between the two. */
+ *  available only. Shared by HeroProductShowcase and PetZoo (Bong Bear's
+ *  host recommendation) so "what counts as a standout" never drifts. */
 export function pickSpotlightProducts(products: ProductDTO[], max: number): ProductDTO[] {
   const available = products.filter((p) => p.isAvailable);
   const rated = [...available]
