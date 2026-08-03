@@ -315,24 +315,50 @@ export default function PetZoo({ products }: { products: ProductDTO[] }) {
       {zooOn && (
         <div
           aria-hidden
-          className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-28 overflow-hidden sm:h-32"
+          className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-28 sm:h-32"
         >
           {slots.map((slot, slotIndex) => {
             const critter = ROSTER[slot.critterIdx];
+            // 📍 The lane container no longer clips overflow (a bubble needs
+            // to render above AND sometimes past the lane's own left/right
+            // edge), so instead we keep the bubble from sailing past the
+            // actual VIEWPORT edge by switching its anchor: centered on the
+            // critter normally, but pinned to the near edge once the critter
+            // is close enough to one that a centered 15rem-wide bubble would
+            // overhang it.
+            const nearLeftEdge = slot.x < 15;
+            const nearRightEdge = slot.x > LANE_MAX_VW - 15;
+            const bubbleAnchorClass = nearLeftEdge
+              ? "left-0"
+              : nearRightEdge
+                ? "right-0 left-auto"
+                : "left-1/2 -translate-x-1/2";
             return (
               <div
                 key={slotIndex}
                 className="zoo-slot pointer-events-none absolute left-2"
                 style={{
                   bottom: `${SLOT_BOTTOM_PX[slotIndex]}px`,
-                  transform: `translateX(${slot.x}vw) scaleX(${slot.facingLeft ? -1 : 1})`,
+                  // ⚠️ Only translateX lives here now — deliberately NOT the
+                  // facing-direction flip. This wrapper is also the bubble's
+                  // positioning parent, and a scaleX(-1) up here would mirror
+                  // the bubble's text AND silently invert its left-0/right-0
+                  // edge anchoring (nested transforms compose, so undoing it
+                  // on the bubble alone can restore the text but not the
+                  // position). Simpler and correct: keep the flip scoped to
+                  // just the character sprite below, which is the only part
+                  // that actually needs to face a direction.
+                  transform: `translateX(${slot.x}vw)`,
                   transition: `transform ${slot.durationS}s ease-in-out`,
                 }}
               >
                 {/* 💬 Only rendered once this slot has actually stopped —
-                    large, high-contrast, and legible per spec. */}
+                    large, high-contrast, and legible per spec. Anchored per
+                    bubbleAnchorClass so it never overhangs the viewport edge. */}
                 {slot.showBubble && (
-                  <div className="animate-pop-in pointer-events-none absolute -top-16 left-1/2 w-max max-w-[15rem] -translate-x-1/2 rounded-2xl border border-amber-100 bg-white/95 p-3 text-center text-sm font-semibold leading-snug text-amber-950 shadow-xl">
+                  <div
+                    className={`animate-pop-in pointer-events-none absolute -top-16 w-max max-w-[15rem] rounded-2xl border border-amber-100 bg-white/95 p-3 text-center text-sm font-semibold leading-snug text-amber-950 shadow-xl ${bubbleAnchorClass}`}
+                  >
                     {critter.line}
                   </div>
                 )}
@@ -346,6 +372,7 @@ export default function PetZoo({ products }: { products: ProductDTO[] }) {
                     className={`block ${
                       slot.phase === "walking" ? BOUNCE_CLASS[critter.bounce] : ""
                     }`}
+                    style={slot.facingLeft ? { transform: "scaleX(-1)" } : undefined}
                   >
                     {critter.emoji === "bongbear" ? (
                       <BongBear pose="wave" size={56} />
