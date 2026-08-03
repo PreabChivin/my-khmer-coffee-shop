@@ -12,7 +12,6 @@ import NotificationsPanel from "@/components/admin/NotificationsPanel";
 import LuckyDrawPanel from "@/components/admin/LuckyDrawPanel";
 import AdminChatMonitorPanel from "@/components/admin/AdminChatMonitorPanel";
 import AdminPredictivePanel from "@/components/admin/AdminPredictivePanel";
-import HybridAiStatusCard from "@/components/admin/HybridAiStatusCard";
 import AdminToast from "@/components/admin/AdminToast";
 import type { ProductDTO } from "@/lib/types";
 
@@ -66,7 +65,6 @@ export default function StaffKitchenView({
         </div>
         <AdminStats />
         <AdminPredictivePanel />
-        <HybridAiStatusCard />
       </div>
 
       {/* Compact two-column workspace: Live Orders Control | Menu & Partner CMS */}
