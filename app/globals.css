@@ -102,6 +102,27 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), "Segoe UI", system-ui, sans-serif;
+  /* 📱 Mobile/Capacitor tactile response — "manipulation" drops the browser's
+     ~300ms double-tap-to-zoom wait on every tap (a single tap now fires its
+     click immediately) while still allowing normal pinch-zoom/panning, and
+     the tap-highlight override removes the gray flash WebViews paint on
+     touch. Set once here rather than per-element: touch-action's used value
+     is resolved against the whole ancestor chain, so this single rule covers
+     every button/link/card in the app. */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ✨ Warm focus glow — a soft gold ring on every text input/textarea/select
+ * in the app, layered on top of each field's own `focus:border-*` Tailwind
+ * class (different property, so they compose rather than fight). One global
+ * rule instead of touching every form across Auth/Checkout/Admin/Chat. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-gold-500) 35%, transparent);
+  transition: box-shadow 0.15s ease-out;
 }
 
 /* Playful confetti-dot backdrop for cute sections */

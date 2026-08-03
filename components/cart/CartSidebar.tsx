@@ -84,7 +84,7 @@ export default function CartSidebar() {
                     const unitPrice =
                       item.product.price + customizationSurcharge(item.customization);
                     return (
-                      <li key={item.id} className="flex gap-3">
+                      <li key={item.id} className="animate-pop-in flex gap-3">
                         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-coffee-100">
                           <ProductImage
                             src={item.product.image}
@@ -105,7 +105,7 @@ export default function CartSidebar() {
                               type="button"
                               onClick={() => removeGroupItem(item.id)}
                               aria-label={`${t("cart.remove")} ${name}`}
-                              className="text-coffee-400 hover:text-red-500 dark:text-cream-400"
+                              className="text-coffee-400 transition-transform hover:scale-110 hover:text-red-500 active:scale-90 dark:text-cream-400"
                             >
                               <Trash2 size={16} />
                             </button>
@@ -125,7 +125,7 @@ export default function CartSidebar() {
                                 updateGroupItemQuantity(item.id, item.quantity - 1)
                               }
                               aria-label="Decrease quantity"
-                              className="flex h-7 w-7 items-center justify-center rounded-full border border-coffee-300 text-coffee-700 hover:bg-coffee-100 dark:border-coffee-600 dark:text-cream-200 dark:hover:bg-coffee-800"
+                              className="flex h-7 w-7 items-center justify-center rounded-full border border-coffee-300 text-coffee-700 transition-transform hover:scale-110 hover:bg-coffee-100 active:scale-90 dark:border-coffee-600 dark:text-cream-200 dark:hover:bg-coffee-800"
                             >
                               <Minus size={14} />
                             </button>
@@ -138,7 +138,7 @@ export default function CartSidebar() {
                                 updateGroupItemQuantity(item.id, item.quantity + 1)
                               }
                               aria-label="Increase quantity"
-                              className="flex h-7 w-7 items-center justify-center rounded-full border border-coffee-300 text-coffee-700 hover:bg-coffee-100 dark:border-coffee-600 dark:text-cream-200 dark:hover:bg-coffee-800"
+                              className="flex h-7 w-7 items-center justify-center rounded-full border border-coffee-300 text-coffee-700 transition-transform hover:scale-110 hover:bg-coffee-100 active:scale-90 dark:border-coffee-600 dark:text-cream-200 dark:hover:bg-coffee-800"
                             >
                               <Plus size={14} />
                             </button>
@@ -223,7 +223,7 @@ export default function CartSidebar() {
                     const name = lang === "km" ? item.nameKh : item.nameEn;
                     const mods = describeCustomization(item.customization, lang);
                     return (
-                      <li key={item.lineId} className="flex gap-3">
+                      <li key={item.lineId} className="animate-pop-in flex gap-3">
                         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-coffee-100">
                           <ProductImage
                             src={item.image}
@@ -241,7 +241,7 @@ export default function CartSidebar() {
                               type="button"
                               onClick={() => removeItem(item.lineId)}
                               aria-label={`${t("cart.remove")} ${name}`}
-                              className="text-coffee-400 hover:text-red-500 dark:text-cream-400"
+                              className="text-coffee-400 transition-transform hover:scale-110 hover:text-red-500 active:scale-90 dark:text-cream-400"
                             >
                               <Trash2 size={16} />
                             </button>
@@ -264,7 +264,7 @@ export default function CartSidebar() {
                                 updateQuantity(item.lineId, item.quantity - 1)
                               }
                               aria-label="Decrease quantity"
-                              className="flex h-7 w-7 items-center justify-center rounded-full border border-coffee-300 text-coffee-700 hover:bg-coffee-100 dark:border-coffee-600 dark:text-cream-200 dark:hover:bg-coffee-800"
+                              className="flex h-7 w-7 items-center justify-center rounded-full border border-coffee-300 text-coffee-700 transition-transform hover:scale-110 hover:bg-coffee-100 active:scale-90 dark:border-coffee-600 dark:text-cream-200 dark:hover:bg-coffee-800"
                             >
                               <Minus size={14} />
                             </button>
@@ -277,7 +277,7 @@ export default function CartSidebar() {
                                 updateQuantity(item.lineId, item.quantity + 1)
                               }
                               aria-label="Increase quantity"
-                              className="flex h-7 w-7 items-center justify-center rounded-full border border-coffee-300 text-coffee-700 hover:bg-coffee-100 dark:border-coffee-600 dark:text-cream-200 dark:hover:bg-coffee-800"
+                              className="flex h-7 w-7 items-center justify-center rounded-full border border-coffee-300 text-coffee-700 transition-transform hover:scale-110 hover:bg-coffee-100 active:scale-90 dark:border-coffee-600 dark:text-cream-200 dark:hover:bg-coffee-800"
                             >
                               <Plus size={14} />
                             </button>

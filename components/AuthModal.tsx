@@ -6,6 +6,7 @@ import { Cake, Lock, Mail, Phone, User as UserIcon, X } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { generationFromDOB } from "@/lib/generation";
+import SlidingTabs from "@/components/SlidingTabs";
 
 // Social providers are scaffolded (DB fields + these slots) but need OAuth
 // credentials to be wired — shown disabled until then.
@@ -93,26 +94,19 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
           </p>
         </div>
 
-        {/* Login/Register tabs */}
-        <div className="mt-4 flex rounded-full bg-coffee-100 p-1 dark:bg-coffee-900">
-          {(["login", "register"] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => {
-                setMode(m);
-                setError(null);
-              }}
-              className={`flex-1 rounded-full py-1.5 text-sm font-bold transition-colors ${
-                mode === m
-                  ? "bg-gradient-to-r from-clay-400 to-crimson-400 text-white shadow"
-                  : "text-coffee-500 dark:text-cream-300"
-              }`}
-            >
-              {m === "login" ? t("auth.tabLogin") : t("auth.tabRegister")}
-            </button>
-          ))}
-        </div>
+        {/* Login/Register tabs — sliding pill background */}
+        <SlidingTabs
+          className="mt-4"
+          active={mode}
+          onChange={(m) => {
+            setMode(m);
+            setError(null);
+          }}
+          options={[
+            { value: "login", label: t("auth.tabLogin") },
+            { value: "register", label: t("auth.tabRegister") },
+          ]}
+        />
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-3">
           {mode === "register" && (

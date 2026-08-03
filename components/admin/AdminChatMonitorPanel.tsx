@@ -17,6 +17,7 @@ import {
   Loader2,
 } from "lucide-react";
 import CustomerHistoryModal from "@/components/admin/CustomerHistoryModal";
+import SlidingTabs from "@/components/SlidingTabs";
 import type { AdminChatMessageDTO } from "@/lib/types";
 
 function formatDateTime(iso: string) {
@@ -216,28 +217,14 @@ export default function AdminChatMonitorPanel({
       {isOpen && (
         <div className="border-t border-coffee-200 px-4 py-3 dark:border-coffee-700">
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setFilter("all")}
-              className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${
-                filter === "all"
-                  ? "bg-coffee-800 text-gold-400"
-                  : "bg-coffee-100 text-coffee-600 dark:bg-coffee-900 dark:text-cream-300"
-              }`}
-            >
-              សារទាំងអស់ · All
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilter("flagged")}
-              className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${
-                filter === "flagged"
-                  ? "bg-crimson-600 text-white"
-                  : "bg-coffee-100 text-coffee-600 dark:bg-coffee-900 dark:text-cream-300"
-              }`}
-            >
-              បានដាក់ទង់ · Flagged 🚩
-            </button>
+            <SlidingTabs
+              active={filter}
+              onChange={setFilter}
+              options={[
+                { value: "all", label: "សារទាំងអស់ · All" },
+                { value: "flagged", label: "បានដាក់ទង់ · Flagged 🚩" },
+              ]}
+            />
 
             {isAdminRole && (
               <>
