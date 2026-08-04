@@ -247,19 +247,65 @@ export interface RewardDTO {
   isAvailable: boolean;
 }
 
-/** 🧢 An Avatar Shop item, with this user's ownership/equip state. */
+/** 🧊 Placeholder-geometry descriptor for the 3D avatar engine
+ *  (components/3d/AvatarCanvas3D.tsx) — see ShopItem.model3d's doc comment
+ *  in schema.prisma for why this isn't a glbUrl. */
+export type Model3DShape =
+  | "capsule-figure"
+  | "panda-round"
+  | "dino-blocky"
+  | "cyber-angular"
+  | "box"
+  | "cylinder"
+  | "cone"
+  | "torus"
+  | "sphere";
+
+export interface Model3DDescriptor {
+  shape: Model3DShape;
+  color: string;
+  accentColor?: string;
+  scale?: [number, number, number];
+}
+
+export type ShopItemCategory = "HAT" | "EYEWEAR" | "OUTFIT" | "HANDHELD" | "BASE_CHARACTER";
+
+/** 🧢 An Avatar Shop item (cosmetic OR a purchasable 3D base character —
+ *  BASE_CHARACTER is just a 5th category, reusing the same buy/equip
+ *  flow), with this user's ownership/equip state. */
 export interface ShopItemDTO {
   id: string;
   slug: string;
   name: string;
   nameKh: string;
-  category: "HAT" | "EYEWEAR" | "OUTFIT" | "HANDHELD";
+  category: ShopItemCategory;
   tier: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
   cost: number;
   emoji: string;
   description: string | null;
+  model3d: Model3DDescriptor | null;
   owned: boolean;
   equipped: boolean;
+}
+
+/** 🔍 The intentionally-public subset of another user's profile, shown via
+ *  PublicPlayerModal — id/name/points/badges/equipped items ONLY, never
+ *  email/phone/passwordHash. `equipped` includes the BASE_CHARACTER slot
+ *  alongside HAT/EYEWEAR/OUTFIT/HANDHELD (at most one per category). */
+export interface PublicEquippedItemDTO {
+  category: ShopItemCategory;
+  name: string;
+  nameKh: string;
+  emoji: string;
+  model3d: Model3DDescriptor | null;
+}
+
+export interface PublicPlayerProfileDTO {
+  id: string;
+  name: string;
+  loyaltyPoints: number;
+  badges: string[];
+  equipped: PublicEquippedItemDTO[];
 }
 
 /** 🎯 A daily mission, with this user's progress for today. */

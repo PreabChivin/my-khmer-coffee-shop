@@ -547,6 +547,7 @@ enum ShopItemCategory {
   EYEWEAR
   OUTFIT
   HANDHELD
+  BASE_CHARACTER
 }
 
 enum ShopItemTier {
@@ -567,6 +568,12 @@ model ShopItem {
   emoji       String
   description String?
   isAvailable Boolean          @default(true)
+  // 🧊 Procedural placeholder-geometry descriptor for the 3D avatar engine
+  // — e.g. { shape: "capsule-figure", color: "#hex", accentColor?, scale? }.
+  // Deliberately NOT a glbUrl: no rigged 3D character assets exist yet.
+  // Structured so a real `{ type: "glb", url }` variant could be added
+  // later without another migration (client branches on a "type" key).
+  model3d     Json?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   owners      UserInventory[]

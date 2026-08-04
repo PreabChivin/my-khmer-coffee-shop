@@ -455,7 +455,16 @@ const dictionary = {
     "shop.categoryEyewear": "Eyewear",
     "shop.categoryOutfit": "Outfits",
     "shop.categoryHandheld": "Handheld",
+    "shop.categoryCharacter": "Characters",
+    "shop.previewProfile": "Preview profile",
     "shop.empty": "No items yet — coming soon! 🌈",
+
+    "playerCard.title": "Player Profile",
+    "playerCard.loadError": "Couldn't load this profile.",
+    "playerCard.points": "Cafe Points",
+    "playerCard.badges": "Badges",
+    "playerCard.equipped": "Equipped",
+    "playerCard.noItems": "Nothing equipped yet.",
 
     "loyalty2.label": "Loyalty Points",
     "loyalty2.toNext": "Just {n} points to reach {tier}!",
@@ -938,7 +947,16 @@ const dictionary = {
     "shop.categoryEyewear": "វ៉ែនតា",
     "shop.categoryOutfit": "សម្លៀកបំពាក់",
     "shop.categoryHandheld": "វត្ថុកាន់",
+    "shop.categoryCharacter": "តួអង្គ",
+    "shop.previewProfile": "មើលទម្រង់",
     "shop.empty": "មិនទាន់មានវត្ថុទេ — ឆាប់ៗនេះ! 🌈",
+
+    "playerCard.title": "ទម្រង់អ្នកលេង",
+    "playerCard.loadError": "មិនអាចផ្ទុកទម្រង់នេះបានទេ។",
+    "playerCard.points": "ពិន្ទុហាងកាហ្វេ",
+    "playerCard.badges": "ស្លាកកិត្តិយស",
+    "playerCard.equipped": "កំពុងស្លៀកពាក់",
+    "playerCard.noItems": "មិនទាន់ស្លៀកពាក់អ្វីនៅឡើយទេ។",
 
     "loyalty2.label": "ពិន្ទុសន្សំ",
     "loyalty2.toNext": "នៅសល់ {n} ពិន្ទុ ដើម្បីឡើងកម្រិត {tier}!",

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Eye } from "lucide-react";
 import Confetti from "@/components/Confetti";
+import PublicPlayerModal from "@/components/games/PublicPlayerModal";
 import { RPS_CHOICES, RPS_EMOJI, type RPSChoice } from "@/lib/rps";
 import type { GameDetailDTO } from "@/lib/types";
 
@@ -31,6 +32,7 @@ export default function ChatGameOverlay({
   const [pendingChoice, setPendingChoice] = useState(false);
   const celebratedRef = useRef(false);
   const [celebrate, setCelebrate] = useState(false);
+  const [inspectId, setInspectId] = useState<string | null>(null);
 
   const isOver = game?.status === "COMPLETED";
   const iWon = isOver && game?.winnerId === myUserId;
@@ -152,6 +154,7 @@ export default function ChatGameOverlay({
   return (
     <div className="absolute inset-0 z-20 flex flex-col bg-gradient-to-b from-coffee-900/95 to-lavender-500/30 backdrop-blur-md">
       {celebrate && <Confetti />}
+      {inspectId && <PublicPlayerModal userId={inspectId} onClose={() => setInspectId(null)} />}
 
       <div className="flex items-center justify-between px-4 py-3 text-white">
         <p className="font-heading text-base">
@@ -181,6 +184,16 @@ export default function ChatGameOverlay({
               {game.player2 ? (isRPS ? game.player2.name : `${game.player2.mark} ${game.player2.name}`) : "..."}
               {game.mySlot === "player2" && <span className="text-[10px] opacity-80">(អ្នក)</span>}
             </span>
+            {opponent && (
+              <button
+                type="button"
+                onClick={() => setInspectId(opponent.id)}
+                aria-label={`ពិនិត្យមើលទម្រង់ ${opponent.name}`}
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-white transition-transform hover:scale-110 active:scale-90"
+              >
+                <Eye size={12} />
+              </button>
+            )}
           </div>
         )}
 

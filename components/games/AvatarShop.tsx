@@ -1,16 +1,34 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { Loader2, Eye } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import AvatarStage, { TIER_RING_CLASS } from "@/components/avatar/AvatarStage";
+import { TIER_RING_CLASS } from "@/lib/shopTiers";
 import type { ShopItemDTO } from "@/lib/types";
 import type { TranslationKey } from "@/lib/i18n";
+
+// 🧊 WebGL touches the DOM/canvas directly — client-only, same pattern as
+// this app's one other Canvas-ish component (AddressMapPicker's Leaflet map).
+const AvatarCanvas3D = dynamic(() => import("@/components/3d/AvatarCanvas3D"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[260px] w-full items-center justify-center">
+      <Loader2 size={28} className="animate-spin text-clay-400" />
+    </div>
+  ),
+});
+
+const PublicPlayerModal = dynamic(() => import("@/components/games/PublicPlayerModal"), {
+  ssr: false,
+});
 
 type Category = "ALL" | ShopItemDTO["category"];
 
 const CATEGORIES: { key: Category; labelKey: TranslationKey }[] = [
   { key: "ALL", labelKey: "shop.categoryAll" },
+  { key: "BASE_CHARACTER", labelKey: "shop.categoryCharacter" },
   { key: "HAT", labelKey: "shop.categoryHat" },
   { key: "EYEWEAR", labelKey: "shop.categoryEyewear" },
   { key: "OUTFIT", labelKey: "shop.categoryOutfit" },
@@ -41,12 +59,18 @@ export default function AvatarShop() {
       .catch(() => setItems([]));
   }, []);
 
+  const [showOwnProfile, setShowOwnProfile] = useState(false);
+
   const points = user?.loyaltyPoints ?? 0;
-  const equippedLayers = useMemo(
+  const baseCharacter = useMemo(
+    () => items.find((i) => i.category === "BASE_CHARACTER" && i.equipped)?.model3d ?? null,
+    [items]
+  );
+  const equipped3D = useMemo(
     () =>
       items
-        .filter((i) => i.equipped)
-        .map((i) => ({ category: i.category, emoji: i.emoji, tier: i.tier })),
+        .filter((i) => i.equipped && i.category !== "BASE_CHARACTER")
+        .map((i) => ({ category: i.category, model3d: i.model3d })),
     [items]
   );
   const visibleItems = useMemo(
@@ -106,14 +130,23 @@ export default function AvatarShop() {
         {t("shop.title")}
       </h2>
 
-      <div className="mb-4 flex items-center justify-center rounded-2xl bg-cream-50 py-5 dark:bg-coffee-800">
-        <AvatarStage
-          avatarUrl={user?.avatarUrl}
-          dateOfBirth={user?.dateOfBirth}
-          equipped={equippedLayers}
-          size={112}
-        />
+      <div className="relative mb-4 overflow-hidden rounded-2xl bg-cream-50 dark:bg-coffee-800">
+        <AvatarCanvas3D baseCharacter={baseCharacter} equipped={equipped3D} interactive height={260} />
+        {user && (
+          <button
+            type="button"
+            onClick={() => setShowOwnProfile(true)}
+            className="btn-tactile absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-coffee-900/70 px-3 py-1.5 text-[11px] font-bold text-white backdrop-blur-sm transition-transform hover:scale-105 active:scale-95"
+          >
+            <Eye size={12} />
+            {t("shop.previewProfile")}
+          </button>
+        )}
       </div>
+
+      {showOwnProfile && user && (
+        <PublicPlayerModal userId={user.id} onClose={() => setShowOwnProfile(false)} />
+      )}
 
       <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1">
         {CATEGORIES.map((c) => (
