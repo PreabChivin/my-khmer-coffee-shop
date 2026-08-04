@@ -267,6 +267,40 @@ const PRODUCTS: SeedProduct[] = [
   },
 ];
 
+// 🎩 Avatar Shop starter catalog — mirrors the hand-written INSERTs in
+// prisma/migrations/20260804120000_add_avatar_shop_missions/migration.sql
+// (that migration seeds prod directly since there's no local DB access to
+// run this seed script against it; this copy is for local/dev-DB parity).
+// slug is the upsert key, same convention as CATEGORIES/PRODUCTS above.
+type SeedShopItem = {
+  slug: string;
+  name: string;
+  nameKh: string;
+  category: "HAT" | "EYEWEAR" | "OUTFIT" | "HANDHELD";
+  tier: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
+  cost: number;
+  emoji: string;
+};
+
+const SHOP_ITEMS: SeedShopItem[] = [
+  { slug: "coffee-bean-cap", name: "Coffee Bean Cap", nameKh: "មួកគ្រាប់កាហ្វេ", category: "HAT", tier: "COMMON", cost: 40, emoji: "🧢" },
+  { slug: "graduate-cap", name: "Graduate Cap", nameKh: "មួកបញ្ចប់ការសិក្សា", category: "HAT", tier: "COMMON", cost: 50, emoji: "🎓" },
+  { slug: "dapper-top-hat", name: "Dapper Top Hat", nameKh: "មួកអ្នកមានទឹកមុខ", category: "HAT", tier: "RARE", cost: 120, emoji: "🎩" },
+  { slug: "golden-crown", name: "Golden Crown", nameKh: "មកុដមាស", category: "HAT", tier: "LEGENDARY", cost: 500, emoji: "👑" },
+  { slug: "nerd-glasses", name: "Nerd Glasses", nameKh: "វ៉ែនតាបញ្ញវន្ត", category: "EYEWEAR", tier: "COMMON", cost: 35, emoji: "👓" },
+  { slug: "cool-sunglasses", name: "Cool Sunglasses", nameKh: "វ៉ែនតាការពារកម្ដៅ", category: "EYEWEAR", tier: "COMMON", cost: 40, emoji: "🕶️" },
+  { slug: "barista-goggles", name: "Barista Goggles", nameKh: "វ៉ែនតាការពារបារីស្តា", category: "EYEWEAR", tier: "RARE", cost: 110, emoji: "🥽" },
+  { slug: "sparkle-vision", name: "Sparkle Vision", nameKh: "ភ្នែកចែងចាំង", category: "EYEWEAR", tier: "EPIC", cost: 250, emoji: "✨" },
+  { slug: "barista-apron", name: "Barista Apron", nameKh: "អាវការពាររបស់បារីស្តា", category: "OUTFIT", tier: "COMMON", cost: 45, emoji: "🧑‍🍳" },
+  { slug: "cozy-hoodie", name: "Cozy Hoodie", nameKh: "អាវហ៊្គូឌីកក់ក្ដៅ", category: "OUTFIT", tier: "COMMON", cost: 45, emoji: "🧥" },
+  { slug: "party-dress", name: "Party Dress", nameKh: "រ៉ូបពិធីជប់លៀង", category: "OUTFIT", tier: "RARE", cost: 130, emoji: "👗" },
+  { slug: "ninja-gi", name: "Ninja Gi", nameKh: "សម្លៀកបំពាក់និនចា", category: "OUTFIT", tier: "EPIC", cost: 260, emoji: "🥋" },
+  { slug: "classic-coffee-cup", name: "Classic Coffee Cup", nameKh: "ពែងកាហ្វេបុរាណ", category: "HANDHELD", tier: "COMMON", cost: 35, emoji: "☕" },
+  { slug: "boba-cup", name: "Boba Cup", nameKh: "ពែងតែពុះពងត្រី", category: "HANDHELD", tier: "COMMON", cost: 40, emoji: "🧋" },
+  { slug: "baristas-wand", name: "Barista's Wand", nameKh: "ដំបងវេទមន្តរបស់បារីស្តា", category: "HANDHELD", tier: "EPIC", cost: 240, emoji: "🪄" },
+  { slug: "golden-mug", name: "Golden Mug", nameKh: "ពែងមាស", category: "HANDHELD", tier: "LEGENDARY", cost: 480, emoji: "🏆" },
+];
+
 async function main() {
   const categoryIdByName = new Map<string, string>();
   for (const category of CATEGORIES) {
@@ -288,6 +322,14 @@ async function main() {
     });
   }
 
+  for (const item of SHOP_ITEMS) {
+    await prisma.shopItem.upsert({
+      where: { slug: item.slug },
+      update: item,
+      create: item,
+    });
+  }
+
   // 🔐 Admin accounts are now just User rows with role=ADMIN (unified login).
   const adminPassword = await bcrypt.hash("admin123", 10);
   await prisma.user.upsert({
@@ -303,7 +345,7 @@ async function main() {
   });
 
   console.log(
-    `Seeded ${CATEGORIES.length} categories, ${PRODUCTS.length} products, and 1 admin account.`
+    `Seeded ${CATEGORIES.length} categories, ${PRODUCTS.length} products, ${SHOP_ITEMS.length} shop items, and 1 admin account.`
   );
   console.log("Admin login -> username: admin / password: admin123");
   console.log("");

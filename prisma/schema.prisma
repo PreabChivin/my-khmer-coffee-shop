@@ -198,6 +198,10 @@ model User {
   directConversationsAsA DirectConversation[] @relation("ConversationUserA")
   directConversationsAsB DirectConversation[] @relation("ConversationUserB")
   directMessagesSent     DirectMessage[]      @relation("DirectMessageSender")
+  // 🎩 Avatar Shop + Daily Missions — spends the SAME loyaltyPoints balance
+  // above ("Cafe Points" is a display label, not a separate currency).
+  inventory              UserInventory[]
+  missionProgress        UserMissionProgress[]
 }
 
 // 📍 Address book — a logged-in customer's saved delivery locations, each
@@ -531,4 +535,73 @@ model GameSession {
   updatedAt DateTime @updatedAt
 
   @@index([status])
+}
+
+// 🎩 Avatar Shop & Daily Missions — spends/earns the SAME `User.loyaltyPoints`
+// balance as the Reward store above ("Cafe Points" is a display label for
+// that one balance, not a second currency). 2D layered avatar: emoji items
+// composited over the user's existing profile photo, no 3D/new dependency.
+
+enum ShopItemCategory {
+  HAT
+  EYEWEAR
+  OUTFIT
+  HANDHELD
+}
+
+enum ShopItemTier {
+  COMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+model ShopItem {
+  id          String           @id @default(uuid())
+  slug        String           @unique
+  name        String
+  nameKh      String
+  category    ShopItemCategory
+  tier        ShopItemTier     @default(COMMON)
+  cost        Int
+  emoji       String
+  description String?
+  isAvailable Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  owners      UserInventory[]
+}
+
+// One owned item per user. "Equipped" (at most one per category) is enforced
+// at the application layer inside the equip transaction, not a DB
+// constraint — see app/api/shop/equip/route.ts.
+model UserInventory {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId     String
+  item       ShopItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  equipped   Boolean  @default(false)
+  acquiredAt DateTime @default(now())
+
+  @@unique([userId, itemId])
+  @@index([userId])
+}
+
+// One row per user per mission per day (`periodKey`, e.g. "2026-08-04") —
+// a fresh row each day IS the daily reset, no cron/scheduled job needed.
+// Mission definitions themselves live in code (lib/missions.ts), not here.
+model UserMissionProgress {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  missionKey    String
+  periodKey     String
+  progressCount Int       @default(0)
+  completedAt   DateTime?
+  claimedAt     DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@unique([userId, missionKey, periodKey])
+  @@index([userId, periodKey])
 }

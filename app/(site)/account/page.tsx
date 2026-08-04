@@ -7,6 +7,8 @@ import { useSession } from "@/contexts/SessionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LoyaltyProgress from "@/components/loyalty/LoyaltyProgress";
 import RewardStore from "@/components/loyalty/RewardStore";
+import MissionsPanel from "@/components/games/MissionsPanel";
+import AvatarShop from "@/components/games/AvatarShop";
 import OrderHistoryList from "@/components/orders/OrderHistoryList";
 import RecommendationsCard from "@/components/loyalty/RecommendationsCard";
 import LoyaltyLevelBadge from "@/components/loyalty/LoyaltyLevelBadge";
@@ -355,6 +357,12 @@ export default function AccountPage() {
 
       {/* 🎁 Redeem Rewards store */}
       <RewardStore />
+
+      {/* 🎯 Daily Missions — earn bonus Cafe Points */}
+      <MissionsPanel />
+
+      {/* 🧢 Avatar Shop — spend Cafe Points on cosmetics */}
+      <AvatarShop />
 
       {/* 🧾 My Orders */}
       <h2 className="mb-3 mt-8 font-heading text-lg font-extrabold text-coffee-900 dark:text-cream-50">

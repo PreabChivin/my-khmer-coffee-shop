@@ -11,6 +11,7 @@ import {
   type TicTacToeState,
 } from "@/lib/ticTacToe";
 import { isValidRPSState, resolveRPS, RPS_EMOJI, type RPSState } from "@/lib/rps";
+import { bumpMissionProgress } from "@/lib/missionProgress";
 import type { Prisma } from "@prisma/client";
 
 /**
@@ -107,6 +108,8 @@ export async function POST(
               where: { id: game.player2Id! },
               data: { gameTies: { increment: 1 } },
             });
+            await bumpMissionProgress(tx, game.player1Id, "play_game_daily");
+            await bumpMissionProgress(tx, game.player2Id, "play_game_daily");
             const [p1, p2] = await Promise.all([
               tx.user.findUnique({ where: { id: game.player1Id }, select: { name: true } }),
               tx.user.findUnique({ where: { id: game.player2Id! }, select: { name: true } }),
@@ -140,6 +143,8 @@ export async function POST(
               where: { id: loserId },
               data: { gameLosses: { increment: 1 } },
             });
+            await bumpMissionProgress(tx, winnerId, "play_game_daily");
+            await bumpMissionProgress(tx, loserId, "play_game_daily");
             const [winner, loser] = await Promise.all([
               tx.user.findUnique({ where: { id: winnerId }, select: { name: true } }),
               tx.user.findUnique({ where: { id: loserId }, select: { name: true } }),
@@ -203,6 +208,8 @@ export async function POST(
         });
         await tx.user.update({ where: { id: winnerId }, data: { gameWins: { increment: 1 } } });
         await tx.user.update({ where: { id: loserId }, data: { gameLosses: { increment: 1 } } });
+        await bumpMissionProgress(tx, winnerId, "play_game_daily");
+        await bumpMissionProgress(tx, loserId, "play_game_daily");
 
         const [winner, loser] = await Promise.all([
           tx.user.findUnique({ where: { id: winnerId }, select: { name: true } }),
@@ -231,6 +238,8 @@ export async function POST(
         });
         await tx.user.update({ where: { id: game.player1Id }, data: { gameTies: { increment: 1 } } });
         await tx.user.update({ where: { id: game.player2Id! }, data: { gameTies: { increment: 1 } } });
+        await bumpMissionProgress(tx, game.player1Id, "play_game_daily");
+        await bumpMissionProgress(tx, game.player2Id, "play_game_daily");
 
         const [p1, p2] = await Promise.all([
           tx.user.findUnique({ where: { id: game.player1Id }, select: { name: true } }),

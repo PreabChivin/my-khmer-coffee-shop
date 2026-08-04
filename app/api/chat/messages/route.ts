@@ -5,6 +5,7 @@ import { toChatMessageDTO, chatMessageInclude } from "@/lib/chatDto";
 import { checkChatModeration, moderationErrorBody } from "@/lib/chatModeration";
 import { shouldAutoFlag } from "@/lib/chatModerationFilter";
 import { getSticker } from "@/lib/stickers";
+import { bumpMissionProgress } from "@/lib/missionProgress";
 import type { ChatMessageDTO } from "@/lib/types";
 
 const PAGE_SIZE = 50;
@@ -120,6 +121,7 @@ export async function POST(request: NextRequest) {
         include: messageInclude,
       });
       await prisma.chatTyping.deleteMany({ where: { userId: session.id } }).catch(() => {});
+      await bumpMissionProgress(prisma, session.id, "send_message_daily");
       return NextResponse.json(toChatMessageDTO(created, session.id), { status: 201 });
     } catch {
       return NextResponse.json(
@@ -175,6 +177,7 @@ export async function POST(request: NextRequest) {
     // Sending a message is itself proof of activity — clear any stale
     // "still typing" row so the sender doesn't appear to type their own echo.
     await prisma.chatTyping.deleteMany({ where: { userId: session.id } }).catch(() => {});
+    await bumpMissionProgress(prisma, session.id, "send_message_daily");
 
     return NextResponse.json(toChatMessageDTO(created, session.id), { status: 201 });
   } catch {

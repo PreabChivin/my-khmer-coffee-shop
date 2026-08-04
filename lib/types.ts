@@ -247,6 +247,32 @@ export interface RewardDTO {
   isAvailable: boolean;
 }
 
+/** 🧢 An Avatar Shop item, with this user's ownership/equip state. */
+export interface ShopItemDTO {
+  id: string;
+  slug: string;
+  name: string;
+  nameKh: string;
+  category: "HAT" | "EYEWEAR" | "OUTFIT" | "HANDHELD";
+  tier: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
+  cost: number;
+  emoji: string;
+  description: string | null;
+  owned: boolean;
+  equipped: boolean;
+}
+
+/** 🎯 A daily mission, with this user's progress for today. */
+export interface MissionDTO {
+  key: string;
+  title: string;
+  titleKh: string;
+  emoji: string;
+  rewardPoints: number;
+  completed: boolean;
+  claimed: boolean;
+}
+
 /** 🧾 A customer's redemption record. */
 export interface RedemptionDTO {
   id: string;

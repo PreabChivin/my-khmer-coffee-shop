@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
 import { normalizePhone } from "@/lib/loyalty";
 import { pointsForAmount } from "@/lib/loyaltyPoints";
+import { bumpMissionProgress } from "@/lib/missionProgress";
 import { buildCustomerStatusMessage, sendCustomerAlert } from "@/lib/telegram";
 import type { OrderStatus, OrderType } from "@/lib/types";
 
@@ -99,6 +100,7 @@ export async function PATCH(
             data: { loyaltyPoints: { increment: points } },
           });
         }
+        await bumpMissionProgress(tx, existing.userId, "buy_coffee_daily");
       }
 
       // 🕒 Timeline: stamp the moment each stage is first reached (never
