@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { PawPrint, X } from "lucide-react";
 import BongBear from "@/components/mascots/BongBear";
 import Confetti from "@/components/Confetti";
@@ -99,6 +99,46 @@ const LANE_MAX_VW = 68;
 // the old 4/22/40px stagger would have overlapped at the new size.
 const SLOT_BOTTOM_PX = [4, 46, 88];
 
+// 🎉 Periodic "gathering" — every 45-60s, all 6 roster members leave their
+// independent roaming loop, cluster together in one spot, and take turns
+// (one at a time, ~1.7s each) showing their speech bubble over a fixed 10s
+// window before dispersing back to normal roaming. One-at-a-time speaking
+// is deliberate: showing all 6 bubbles at once in a tight cluster is exactly
+// the overlap problem flagged (and left unfixed) in the roaming lane — a
+// shared "spotlight" avoids reintroducing it here.
+const GATHER_MIN_S = 45;
+const GATHER_MAX_S = 60;
+const GATHER_DURATION_MS = 10000;
+const GATHER_TURN_MS = GATHER_DURATION_MS / ROSTER.length;
+const GATHER_CENTER_VW = 30;
+
+// A loose circle formation (not a straight line) so 6 large sprites read as
+// a "huddle" rather than a queue. Index-aligned with ROSTER.
+const GATHER_SPOTS: { dxVw: number; bottomPx: number }[] = [
+  { dxVw: -16, bottomPx: 8 },
+  { dxVw: -9, bottomPx: 64 },
+  { dxVw: 0, bottomPx: 104 },
+  { dxVw: 9, bottomPx: 64 },
+  { dxVw: 16, bottomPx: 8 },
+  { dxVw: 0, bottomPx: 8 },
+];
+
+// Each critter gets its OWN gesture while gathered (distinct from its
+// roaming bounce style) — all reusing existing keyframes, no new CSS. Dino's
+// apsara-dance is normally a single 0.9s "pop" (`animation: ... both`), so
+// it's looped here via an inline override rather than the Tailwind utility.
+const GATHER_GESTURE: Record<string, { className: string; style?: CSSProperties }> = {
+  bongbear: { className: "animate-bounce-cute" },
+  piggy: { className: "animate-wiggle" },
+  chick: { className: "animate-leap" },
+  ducky: { className: "animate-float-cute" },
+  ellie: { className: "animate-scooter-bob" },
+  dino: {
+    className: "",
+    style: { animation: "apsara-dance 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) infinite" },
+  },
+};
+
 function randomBetween(min: number, max: number): number {
   return min + Math.random() * (max - min);
 }
@@ -183,7 +223,10 @@ function pickForCraving(products: ProductDTO[], craving: Craving): ProductDTO | 
  *  round-robin pointer, so every character still appears eventually without
  *  ever exceeding the 3-active cap. Contained to a slim safety lane fixed at
  *  the very bottom of the viewport — never over the header, product grid, or
- *  cart trigger — z-30, below ChatFab's z-60. Scoped to the home page only. */
+ *  cart trigger — z-30, below ChatFab's z-60. Every 45-60s roaming pauses
+ *  for a 10s "gathering": all 6 cluster in one spot, each with its own
+ *  gesture, taking turns (one at a time) showing their line, before
+ *  dispersing back to independent roaming. Scoped to the home page only. */
 export default function PetZoo({ products }: { products: ProductDTO[] }) {
   const { lang } = useLanguage();
   const [hydrated, setHydrated] = useState(false);
@@ -191,6 +234,8 @@ export default function PetZoo({ products }: { products: ProductDTO[] }) {
   const [slots, setSlots] = useState<SlotState[]>(initialSlots);
   const [celebrate, setCelebrate] = useState(false);
   const [activeCritter, setActiveCritter] = useState<Critter | null>(null);
+  const [mode, setMode] = useState<"roaming" | "gathering">("roaming");
+  const [speakingIdx, setSpeakingIdx] = useState(0);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -210,7 +255,7 @@ export default function PetZoo({ products }: { products: ProductDTO[] }) {
   // (this walk's destination) is captured in closure and reused directly as
   // the next walk's start — no refs needed to read "current position" back.
   useEffect(() => {
-    if (!hydrated || !zooOn) return;
+    if (!hydrated || !zooOn || mode !== "roaming") return;
     let cancelled = false;
     const timers: ReturnType<typeof setTimeout>[] = [];
     let pointer = MAX_ACTIVE;
@@ -262,7 +307,34 @@ export default function PetZoo({ products }: { products: ProductDTO[] }) {
       cancelled = true;
       timers.forEach(clearTimeout);
     };
-  }, [hydrated, zooOn]);
+  }, [hydrated, zooOn, mode]);
+
+  // 🎉 Schedules the next gathering while roaming is active — a fresh random
+  // 45-60s delay each time roaming (re)starts, including right after a
+  // gathering ends, so gatherings keep recurring for the life of the page.
+  useEffect(() => {
+    if (!hydrated || !zooOn || mode !== "roaming") return;
+    const delayMs = randomBetween(GATHER_MIN_S, GATHER_MAX_S) * 1000;
+    const timer = setTimeout(() => setMode("gathering"), delayMs);
+    return () => clearTimeout(timer);
+  }, [hydrated, zooOn, mode]);
+
+  // 🎉 Runs the 10s gathering window itself: cycles which single critter is
+  // "speaking" (bubble visible) roughly every 1.7s, then disperses everyone
+  // back to independent roaming once the window ends.
+  useEffect(() => {
+    if (mode !== "gathering") return;
+    const resetTimer = window.setTimeout(() => setSpeakingIdx(0), 0);
+    const turnTimer = setInterval(() => {
+      setSpeakingIdx((i) => (i + 1) % ROSTER.length);
+    }, GATHER_TURN_MS);
+    const endTimer = setTimeout(() => setMode("roaming"), GATHER_DURATION_MS);
+    return () => {
+      window.clearTimeout(resetTimer);
+      clearInterval(turnTimer);
+      clearTimeout(endTimer);
+    };
+  }, [mode]);
 
   const recommendation = useMemo(
     () => (activeCritter ? pickForCraving(products, activeCritter.craving) : null),
@@ -279,12 +351,14 @@ export default function PetZoo({ products }: { products: ProductDTO[] }) {
     }
   }
 
-  function handleCritterClick(critter: Critter, slotIndex: number) {
-    setSlots((prev) => {
-      const next = [...prev];
-      next[slotIndex] = { ...next[slotIndex], showBubble: false };
-      return next;
-    });
+  function handleCritterClick(critter: Critter, slotIndex: number | null) {
+    if (slotIndex !== null) {
+      setSlots((prev) => {
+        const next = [...prev];
+        next[slotIndex] = { ...next[slotIndex], showBubble: false };
+        return next;
+      });
+    }
     setCelebrate(true);
     setTimeout(() => setCelebrate(false), 1000);
     setActiveCritter(critter);
@@ -318,7 +392,7 @@ export default function PetZoo({ products }: { products: ProductDTO[] }) {
         <PawPrint size={14} />
       </button>
 
-      {zooOn && (
+      {zooOn && mode === "roaming" && (
         <div
           aria-hidden
           className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-48 sm:h-56"
@@ -400,6 +474,65 @@ export default function PetZoo({ products }: { products: ProductDTO[] }) {
                       slot.phase === "walking" ? BOUNCE_CLASS[critter.bounce] : ""
                     }`}
                     style={slot.facingLeft ? { transform: "scaleX(-1)" } : undefined}
+                  >
+                    {critter.emoji === "bongbear" ? (
+                      <BongBear pose="wave" size={88} className="drop-shadow-2xl" />
+                    ) : (
+                      <span className="block text-7xl drop-shadow-2xl sm:text-8xl">
+                        {critter.emoji}
+                      </span>
+                    )}
+                  </span>
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* 🎉 Gathering — all 6 roster members cluster in one spot for a fixed
+          10s window, each playing its own gesture, taking turns speaking. */}
+      {zooOn && mode === "gathering" && (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-64 sm:h-72"
+        >
+          {ROSTER.map((critter, i) => {
+            const spot = GATHER_SPOTS[i];
+            const gesture = GATHER_GESTURE[critter.id];
+            const isSpeaking = speakingIdx === i;
+            return (
+              <div
+                key={critter.id}
+                className="zoo-slot pointer-events-none absolute left-2 animate-pop-in"
+                style={{
+                  bottom: `${spot.bottomPx}px`,
+                  transform: `translateX(${GATHER_CENTER_VW + spot.dxVw}vw)`,
+                  animationDelay: `${i * 90}ms`,
+                }}
+              >
+                {isSpeaking && (
+                  <div className="animate-pop-in pointer-events-none absolute -top-28 left-1/2 w-max max-w-[18rem] -translate-x-1/2 rounded-2xl border-2 border-amber-200/80 bg-white/95 px-4 py-2.5 text-center text-base font-bold leading-snug text-slate-900 shadow-2xl">
+                    {critter.line}
+                    <span
+                      aria-hidden
+                      className="absolute -bottom-1.5 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 border-b-2 border-r-2 border-amber-200/80 bg-white/95"
+                    />
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleCritterClick(critter, null)}
+                  aria-label={critter.line}
+                  className="pointer-events-auto relative block"
+                >
+                  <span
+                    aria-hidden
+                    className="absolute inset-0 -z-10 scale-90 rounded-full bg-white/50 blur-lg dark:bg-coffee-950/40"
+                  />
+                  <span
+                    className={`block transition-transform ${gesture.className} ${isSpeaking ? "scale-110" : ""}`}
+                    style={gesture.style}
                   >
                     {critter.emoji === "bongbear" ? (
                       <BongBear pose="wave" size={88} className="drop-shadow-2xl" />
