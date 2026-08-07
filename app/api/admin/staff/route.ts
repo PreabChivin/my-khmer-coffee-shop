@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
       id: created.id,
       name: created.name,
       email: created.email,
+      phone: created.phone,
       username: created.username,
       dateOfBirth: null,
       loyaltyPoints: created.loyaltyPoints,

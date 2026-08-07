@@ -47,7 +47,10 @@ export default function RegisteredCustomersPanel({
     const q = query.trim().toLowerCase();
     if (!q) return customers;
     return customers.filter(
-      (r) => r.name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q)
+      (r) =>
+        r.name.toLowerCase().includes(q) ||
+        r.email.toLowerCase().includes(q) ||
+        (r.phone ?? "").toLowerCase().includes(q)
     );
   }, [customers, query]);
 
@@ -74,7 +77,7 @@ export default function RegisteredCustomersPanel({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="ស្វែងរកតាមឈ្មោះ ឬ អ៊ីមែល..."
+            placeholder="ស្វែងរកតាមឈ្មោះ អ៊ីមែល ឬ លេខទូរស័ព្ទ..."
             className="mb-3 w-full rounded-xl border border-coffee-200 bg-white px-3 py-2 text-sm text-coffee-900 outline-none focus:border-gold-500 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"
           />
 

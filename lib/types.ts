@@ -48,6 +48,7 @@ export interface AdminCustomerRowDTO {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
   username: string | null;
   dateOfBirth: string | null;
   loyaltyPoints: number;
@@ -251,7 +252,9 @@ export interface RewardDTO {
  *  (components/3d/AvatarCanvas3D.tsx) — see ShopItem.model3d's doc comment
  *  in schema.prisma for why this isn't a glbUrl. */
 export type Model3DShape =
-  | "capsule-figure"
+  | "humanoid-male"
+  | "humanoid-female"
+  | "capsule-figure" // legacy alias, kept so old data never renders nothing
   | "panda-round"
   | "dino-blocky"
   | "cyber-angular"
@@ -306,6 +309,17 @@ export interface PublicPlayerProfileDTO {
   loyaltyPoints: number;
   badges: string[];
   equipped: PublicEquippedItemDTO[];
+}
+
+/** 💎 One row of the admin-facing Cafe Points audit trail (grant or
+ *  deduction) — see PointsAdjustment in schema.prisma. */
+export interface PointsAdjustmentDTO {
+  id: string;
+  amount: number;
+  reason: string;
+  balanceAfter: number;
+  adminName: string | null;
+  createdAt: string;
 }
 
 /** 🎯 A daily mission, with this user's progress for today. */

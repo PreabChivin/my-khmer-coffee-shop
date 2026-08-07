@@ -17,7 +17,7 @@ export interface AvatarCanvas3DProps {
 }
 
 const DEFAULT_BASE: Model3DDescriptor = {
-  shape: "capsule-figure",
+  shape: "humanoid-male",
   color: "#bd8360",
   accentColor: "#4a2c11",
 };
@@ -25,13 +25,17 @@ const DEFAULT_BASE: Model3DDescriptor = {
 // 📐 Item anchor offsets, per base-character shape — this is what makes
 // fitting real rather than one universal offset that clips on a
 // differently-proportioned character. Every shape defines all 4 anchors.
+const HUMANOID_ANCHORS: { head: Vec3; face: Vec3; body: Vec3; hand: Vec3 } = {
+  head: [0, 1.66, 0],
+  face: [0, 1.46, 0.24],
+  body: [0, 0.95, 0.26],
+  hand: [0.34, 0.62, 0.12],
+};
+
 const ANCHORS: Record<string, { head: Vec3; face: Vec3; body: Vec3; hand: Vec3 }> = {
-  "capsule-figure": {
-    head: [0, 1.62, 0],
-    face: [0, 1.4, 0.28],
-    body: [0, 0.75, 0.28],
-    hand: [0.42, 0.55, 0.15],
-  },
+  "humanoid-male": HUMANOID_ANCHORS,
+  "humanoid-female": HUMANOID_ANCHORS,
+  "capsule-figure": HUMANOID_ANCHORS, // legacy alias — same rig as humanoid-male
   "panda-round": {
     head: [0, 1.62, 0],
     face: [0, 1.25, 0.32],
@@ -128,6 +132,87 @@ function Item3D({ model3d }: { model3d: Model3DDescriptor }) {
   }
 }
 
+/** A standing procedural humanoid — legs, torso, neck, head, arms, and
+ *  simple cartoonish facial features (matching this app's existing
+ *  cute/illustrated visual identity, e.g. BongBear — not attempted
+ *  photorealism, which flat-shaded primitive geometry can't deliver
+ *  honestly). `shoulderWidth`/`torsoRadius` distinguish the male/female
+ *  silhouettes; `hasHair` adds a simple rounded hair-cap mesh. */
+function HumanoidFigure({
+  color,
+  accentColor,
+  shoulderWidth,
+  torsoRadius,
+  hasHair,
+}: {
+  color: string;
+  accentColor: string;
+  shoulderWidth: number;
+  torsoRadius: number;
+  hasHair: boolean;
+}) {
+  const skin = <meshStandardMaterial color={color} />;
+  const trim = <meshStandardMaterial color={accentColor} />;
+  const eye = <meshStandardMaterial color="#2a180b" />;
+
+  return (
+    <>
+      {/* Legs */}
+      <mesh position={[-0.13, 0.31, 0]}>
+        <capsuleGeometry args={[0.11, 0.5, 4, 8]} />
+        {trim}
+      </mesh>
+      <mesh position={[0.13, 0.31, 0]}>
+        <capsuleGeometry args={[0.11, 0.5, 4, 8]} />
+        {trim}
+      </mesh>
+      {/* Torso */}
+      <mesh position={[0, 0.92, 0]}>
+        <capsuleGeometry args={[torsoRadius, 0.42, 6, 12]} />
+        {skin}
+      </mesh>
+      {/* Neck */}
+      <mesh position={[0, 1.28, 0]}>
+        <cylinderGeometry args={[0.09, 0.1, 0.1, 12]} />
+        {skin}
+      </mesh>
+      {/* Head */}
+      <mesh position={[0, 1.46, 0]}>
+        <sphereGeometry args={[0.24, 22, 22]} />
+        {skin}
+      </mesh>
+      {hasHair && (
+        <mesh position={[0, 1.53, -0.02]} scale={[1.08, 0.75, 1.08]}>
+          <sphereGeometry args={[0.25, 18, 18]} />
+          {trim}
+        </mesh>
+      )}
+      {/* Simple face — two eyes + a mouth, cartoonish on purpose */}
+      <mesh position={[-0.08, 1.48, 0.21]}>
+        <sphereGeometry args={[0.03, 8, 8]} />
+        {eye}
+      </mesh>
+      <mesh position={[0.08, 1.48, 0.21]}>
+        <sphereGeometry args={[0.03, 8, 8]} />
+        {eye}
+      </mesh>
+      <mesh position={[0, 1.4, 0.22]} rotation={[0, 0, 0]}>
+        <capsuleGeometry args={[0.012, 0.08, 3, 6]} />
+        {eye}
+      </mesh>
+      {/* Arms */}
+      <mesh position={[-shoulderWidth, 0.95, 0]} rotation={[0, 0, Math.PI / 14]}>
+        <capsuleGeometry args={[0.075, 0.46, 4, 8]} />
+        {skin}
+      </mesh>
+      <mesh position={[shoulderWidth, 0.95, 0]} rotation={[0, 0, -Math.PI / 14]}>
+        <capsuleGeometry args={[0.075, 0.46, 4, 8]} />
+        {skin}
+      </mesh>
+    </>
+  );
+}
+
 type AnchorSlots = Record<"head" | "face" | "body" | "hand", React.ReactNode>;
 
 /** Procedural stand-in body for a base character — every branch returns
@@ -205,27 +290,26 @@ function BaseCharacterMesh({ descriptor, slots }: { descriptor: Model3DDescripto
         </mesh>
       </>
     );
-  } else {
-    // capsule-figure — default humanoid barista.
+  } else if (shape === "humanoid-female") {
     figure = (
-      <>
-        <mesh position={[0, 0.75, 0]}>
-          <capsuleGeometry args={[0.32, 0.6, 6, 12]} />
-          {body}
-        </mesh>
-        <mesh position={[0, 1.42, 0]}>
-          <sphereGeometry args={[0.28, 20, 20]} />
-          {body}
-        </mesh>
-        <mesh position={[-0.34, 0.75, 0]} rotation={[0, 0, Math.PI / 10]}>
-          <capsuleGeometry args={[0.08, 0.5, 4, 8]} />
-          {accent}
-        </mesh>
-        <mesh position={[0.34, 0.75, 0]} rotation={[0, 0, -Math.PI / 10]}>
-          <capsuleGeometry args={[0.08, 0.5, 4, 8]} />
-          {accent}
-        </mesh>
-      </>
+      <HumanoidFigure
+        color={color}
+        accentColor={accentColor ?? color}
+        shoulderWidth={0.28}
+        torsoRadius={0.22}
+        hasHair
+      />
+    );
+  } else {
+    // "humanoid-male" and the legacy "capsule-figure" alias.
+    figure = (
+      <HumanoidFigure
+        color={color}
+        accentColor={accentColor ?? color}
+        shoulderWidth={0.34}
+        torsoRadius={0.27}
+        hasHair={false}
+      />
     );
   }
 

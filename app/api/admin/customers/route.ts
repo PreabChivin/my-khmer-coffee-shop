@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
       id: u.id,
       name: u.name,
       email: u.email,
+      phone: u.phone,
       username: u.username,
       dateOfBirth: u.dateOfBirth ? u.dateOfBirth.toISOString() : null,
       loyaltyPoints: u.loyaltyPoints,

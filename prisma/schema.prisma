@@ -202,6 +202,10 @@ model User {
   // above ("Cafe Points" is a display label, not a separate currency).
   inventory              UserInventory[]
   missionProgress        UserMissionProgress[]
+  // 💎 Points-adjustment audit trail — split so an admin's OWN adjustment
+  // history (as the actor) is distinguishable from adjustments made TO them.
+  pointsAdjustmentsReceived PointsAdjustment[] @relation("PointsAdjustmentTarget")
+  pointsAdjustmentsGiven    PointsAdjustment[] @relation("PointsAdjustmentAdmin")
 }
 
 // 📍 Address book — a logged-in customer's saved delivery locations, each
@@ -611,4 +615,25 @@ model UserMissionProgress {
 
   @@unique([userId, missionKey, periodKey])
   @@index([userId, periodKey])
+}
+
+// 💎 Audit trail for admin-initiated Cafe Points corrections — distinct
+// from the existing "gift" flow (badges/thank-you messages, always
+// positive) in app/api/admin/customers/[id]/gift/route.ts, which is
+// unchanged. `amount` can be negative (a deduction/correction);
+// `balanceAfter` is a snapshot so the trail reads correctly even if later
+// rows are added out of order. `reason` is a short category (e.g. "Manual
+// Reward", "POS Correction") with free text folded in when "Other".
+model PointsAdjustment {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation("PointsAdjustmentTarget", fields: [userId], references: [id], onDelete: Cascade)
+  amount       Int
+  reason       String
+  balanceAfter Int
+  adminId      String?
+  admin        User?    @relation("PointsAdjustmentAdmin", fields: [adminId], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
