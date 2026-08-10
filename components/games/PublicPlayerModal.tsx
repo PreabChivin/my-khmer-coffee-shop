@@ -12,7 +12,7 @@ import type { PublicPlayerProfileDTO } from "@/lib/types";
 const AvatarCanvas3D = dynamic(() => import("@/components/3d/AvatarCanvas3D"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[240px] w-full items-center justify-center">
+    <div className="flex h-[280px] w-full items-center justify-center">
       <Loader2 size={28} className="animate-spin text-white/70" />
     </div>
   ),
@@ -69,7 +69,7 @@ export default function PublicPlayerModal({
         {error && <p className="px-4 pb-4 text-sm text-crimson-300">{error}</p>}
 
         {!error && (
-          <AvatarCanvas3D baseCharacter={baseCharacter} equipped={equipped3D} interactive height={240} />
+          <AvatarCanvas3D baseCharacter={baseCharacter} equipped={equipped3D} interactive height={280} />
         )}
 
         {profile && (

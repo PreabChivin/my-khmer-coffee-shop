@@ -14,7 +14,7 @@ import type { TranslationKey } from "@/lib/i18n";
 const AvatarCanvas3D = dynamic(() => import("@/components/3d/AvatarCanvas3D"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[260px] w-full items-center justify-center">
+    <div className="flex h-[300px] w-full items-center justify-center">
       <Loader2 size={28} className="animate-spin text-clay-400" />
     </div>
   ),
@@ -131,7 +131,7 @@ export default function AvatarShop() {
       </h2>
 
       <div className="relative mb-4 overflow-hidden rounded-2xl bg-cream-50 dark:bg-coffee-800">
-        <AvatarCanvas3D baseCharacter={baseCharacter} equipped={equipped3D} interactive height={260} />
+        <AvatarCanvas3D baseCharacter={baseCharacter} equipped={equipped3D} interactive height={300} />
         {user && (
           <button
             type="button"

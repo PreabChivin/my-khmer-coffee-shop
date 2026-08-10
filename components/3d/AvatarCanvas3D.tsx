@@ -1,13 +1,12 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { OrbitControls, Environment, Lightformer, ContactShadows } from "@react-three/drei";
 import type { Model3DDescriptor, ShopItemCategory } from "@/lib/types";
 
 export interface AvatarCanvas3DProps {
   /** The equipped BASE_CHARACTER's descriptor — falls back to a default
-   *  barista shape if the user hasn't equipped/bought one yet, same
-   *  fallback-when-nothing-equipped idea the old 2D AvatarStage used. */
+   *  barista shape if the user hasn't equipped/bought one yet. */
   baseCharacter?: Model3DDescriptor | null;
   /** HAT/EYEWEAR/OUTFIT/HANDHELD items to snap onto the character. */
   equipped: { category: ShopItemCategory; model3d: Model3DDescriptor | null }[];
@@ -24,196 +23,355 @@ const DEFAULT_BASE: Model3DDescriptor = {
 
 type Vec3 = [number, number, number];
 
-// 📐 Item anchor offsets, per base-character shape — this is what makes
-// fitting real rather than one universal offset that clips on a
-// differently-proportioned character. Every shape defines all 4 anchors,
-// matched to the shared chibi rig's proportions (see ChibiBody).
-const CHIBI_ANCHORS: { head: Vec3; face: Vec3; body: Vec3; hand: Vec3 } = {
-  head: [0, 1.66, 0],
-  face: [0, 1.24, 0.34],
-  body: [0, 0.62, 0.3],
-  hand: [0.4, 0.42, 0.12],
+// 🧸 Doll proportions — every anchor below is MEASURED from these, so items
+// land on real geometry instead of guessed coordinates.
+const HEAD_Y = 1.28;
+const HEAD_R = 0.38;
+const EYE_Y = 1.3;
+const FACE_Z = 0.38;
+
+/** 📐 Where each item slot attaches, in the doll's local space. Derived from
+ *  the constants above rather than hand-typed magic numbers: a hat sits just
+ *  below the crown so it doesn't float, glasses sit on the actual eye line
+ *  at the face surface, clothing wraps the chest, and a cup meets the right
+ *  hand. All characters share one rig (see ChibiBody), so one set is
+ *  correct for every base character. */
+const ANCHORS: Record<"head" | "face" | "body" | "hand", Vec3> = {
+  // Hair adds volume above the bare skull (cap top ≈1.70), so a hat must
+  // clear the HAIR, not the head — sitting at HEAD_R alone buries it.
+  head: [0, 1.6, 0],
+  face: [0, EYE_Y, 0.34], // on the real eye line, at the face surface
+  // z is shallow on purpose: the bib is WIDER/DEEPER than the widest torso
+  // (r=0.28) so it wraps the chest from inside-out rather than floating in
+  // front of a slim torso or vanishing inside a broad one.
+  body: [0, 0.64, 0.08],
+  hand: [0.36, 0.49, 0.1],
 };
 
-const ANCHORS: Record<string, { head: Vec3; face: Vec3; body: Vec3; hand: Vec3 }> = {
-  "humanoid-male": CHIBI_ANCHORS,
-  "humanoid-female": CHIBI_ANCHORS,
-  "capsule-figure": CHIBI_ANCHORS, // legacy alias — same rig as humanoid-male
-  "panda-round": CHIBI_ANCHORS,
-  "dino-blocky": CHIBI_ANCHORS,
-  "cyber-angular": CHIBI_ANCHORS,
+/** 🔒 Per-slot scale locks — an item is sized to the body part it occupies
+ *  (a mug in a hand must be far smaller than an apron on a chest) rather
+ *  than rendering at whatever size its own primitive happens to be. Since
+ *  we author the item geometry ourselves, the correct fit is known up front;
+ *  runtime bounding-box measurement would only re-derive what's fixed here.
+ *  Head is >1 because a crown ring has to encircle a hair-covered chibi
+ *  skull (~0.26 radius at hat height), not sit inside it. */
+const SLOT_SCALE: Record<"head" | "face" | "body" | "hand", number> = {
+  head: 1.5,
+  face: 1.0,
+  body: 1.0,
+  hand: 1.0,
 };
 
-const CATEGORY_ANCHOR: Partial<Record<ShopItemCategory, keyof typeof CHIBI_ANCHORS>> = {
+const CATEGORY_ANCHOR: Partial<Record<ShopItemCategory, keyof typeof ANCHORS>> = {
   HAT: "head",
   EYEWEAR: "face",
   OUTFIT: "body",
   HANDHELD: "hand",
 };
 
-/** Glossy "toy plastic" finish — a bit of sheen instead of flat matte, the
- *  single biggest lever for reading as a doll rather than raw geometry. */
-function toyMaterial(color: string) {
-  return <meshStandardMaterial color={color} roughness={0.35} metalness={0.06} />;
+/** Glossy "toy plastic" finish — sheen instead of flat matte, the single
+ *  biggest lever for reading as a doll rather than raw geometry. */
+function toyMaterial(color: string, roughness = 0.35) {
+  return <meshStandardMaterial color={color} roughness={roughness} metalness={0.05} />;
 }
 
-/** One small primitive standing in for a real 3D asset — see
- *  ShopItem.model3d's doc comment in schema.prisma. `accentColor`, when
- *  present, adds a thin trim ring so the descriptor isn't wasted. */
-function Item3D({ model3d }: { model3d: Model3DDescriptor }) {
+/** 👒 An equipped item, built for the SLOT it occupies — not just for its
+ *  own `shape`. This matters because one shape means different things in
+ *  different slots: a `torus` on the head is a crown (a flat horizontal
+ *  ring) but on the face it's eyewear (upright lenses facing forward).
+ *  Rendering shape alone is what produced glasses as a halo buried in the
+ *  skull. Clothing and handhelds are always built to drape/be-held rather
+ *  than floating as a raw primitive slab. */
+function Item3D({
+  model3d,
+  slot,
+}: {
+  model3d: Model3DDescriptor;
+  slot: "head" | "face" | "body" | "hand";
+}) {
   const { shape, color, accentColor, scale } = model3d;
   const material = toyMaterial(color);
-  const trim = accentColor && (
-    <mesh rotation={[Math.PI / 2, 0, 0]}>
-      <torusGeometry args={[0.24, 0.02, 8, 20]} />
-      {toyMaterial(accentColor)}
-    </mesh>
-  );
+  const accentMaterial = toyMaterial(accentColor ?? color);
 
+  // 👓 Eyewear — twin upright lenses + bridge + temple arms.
+  if (slot === "face") {
+    return (
+      <group>
+        {[-1, 1].map((side) => (
+          <mesh key={side} position={[side * 0.15, 0, 0.01]}>
+            <torusGeometry args={[0.1, 0.026, 10, 24]} />
+            {material}
+          </mesh>
+        ))}
+        <mesh position={[0, 0, 0.01]}>
+          <boxGeometry args={[0.12, 0.022, 0.022]} />
+          {material}
+        </mesh>
+        {[-1, 1].map((side) => (
+          <mesh
+            key={`temple${side}`}
+            position={[side * 0.27, 0.01, -0.09]}
+            rotation={[0, side * 0.55, 0]}
+          >
+            <boxGeometry args={[0.19, 0.022, 0.022]} />
+            {material}
+          </mesh>
+        ))}
+      </group>
+    );
+  }
+
+  // 👕 Clothing — a rounded bib that hugs the chest instead of a flat slab.
+  if (slot === "body") {
+    return (
+      <group>
+        <mesh scale={[1, 0.95, 0.7]}>
+          <sphereGeometry args={[0.32, 26, 26]} />
+          {material}
+        </mesh>
+        {accentColor && (
+          <mesh position={[0, 0.19, 0.05]} scale={[0.94, 0.18, 0.72]}>
+            <sphereGeometry args={[0.32, 22, 22]} />
+            {accentMaterial}
+          </mesh>
+        )}
+      </group>
+    );
+  }
+
+  // 🧋 Handheld — a held cup/vessel (or a wand, via the descriptor's scale).
+  if (slot === "hand") {
+    return (
+      <group scale={scale}>
+        <mesh>
+          <cylinderGeometry args={[0.115, 0.095, 0.2, 20]} />
+          {material}
+        </mesh>
+        <mesh position={[0, 0.1, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.115, 0.018, 8, 22]} />
+          {accentMaterial}
+        </mesh>
+      </group>
+    );
+  }
+
+  // 🎩 Headwear — per shape, always oriented to sit ON the head.
   switch (shape) {
-    case "cone":
-      return (
-        <group scale={scale}>
-          <mesh>
-            <coneGeometry args={[0.26, 0.32, 16]} />
-            {material}
-          </mesh>
-          {trim}
-        </group>
-      );
-    case "cylinder":
-      return (
-        <group scale={scale}>
-          <mesh>
-            <cylinderGeometry args={[0.2, 0.2, 0.36, 16]} />
-            {material}
-          </mesh>
-          {trim}
-        </group>
-      );
-    case "torus":
+    case "torus": // crown / halo — flat horizontal ring
       return (
         <group scale={scale} rotation={[Math.PI / 2, 0, 0]}>
           <mesh>
-            <torusGeometry args={[0.2, 0.055, 12, 24]} />
+            <torusGeometry args={[0.2, 0.05, 12, 28]} />
             {material}
           </mesh>
         </group>
       );
-    case "sphere":
+    case "cone": // pointed / beanie cap
       return (
-        <group scale={scale}>
+        <group scale={scale} position={[0, 0.06, 0]}>
           <mesh>
-            <sphereGeometry args={[0.22, 16, 16]} />
+            <coneGeometry args={[0.24, 0.3, 22]} />
             {material}
           </mesh>
-          {trim}
+          <mesh position={[0, -0.13, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[0.23, 0.03, 8, 24]} />
+            {accentMaterial}
+          </mesh>
         </group>
       );
-    case "box":
+    case "cylinder": // top hat — crown + brim
+      return (
+        <group scale={scale} position={[0, 0.1, 0]}>
+          <mesh>
+            <cylinderGeometry args={[0.19, 0.19, 0.3, 24]} />
+            {material}
+          </mesh>
+          <mesh position={[0, -0.15, 0]}>
+            <cylinderGeometry args={[0.3, 0.3, 0.03, 24]} />
+            {material}
+          </mesh>
+          <mesh position={[0, -0.11, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[0.19, 0.022, 8, 24]} />
+            {accentMaterial}
+          </mesh>
+        </group>
+      );
+    case "box": // cap / mortarboard — dome + forward brim
     default:
       return (
-        <group scale={scale}>
-          <mesh>
-            <boxGeometry args={[0.46, 0.34, 0.42]} />
+        <group scale={scale} position={[0, 0.03, 0]}>
+          <mesh scale={[1, 0.62, 1]}>
+            <sphereGeometry args={[0.25, 20, 20, 0, Math.PI * 2, 0, Math.PI / 2]} />
             {material}
           </mesh>
-          {trim}
+          <mesh position={[0, 0.0, 0.19]} rotation={[0.12, 0, 0]} scale={[1, 0.14, 1]}>
+            <sphereGeometry args={[0.2, 18, 18]} />
+            {accentColor ? accentMaterial : material}
+          </mesh>
         </group>
       );
   }
 }
+
+type HairStyle = "none" | "short" | "long";
 
 interface ChibiProps {
   color: string;
   accentColor: string;
   shoulderWidth: number;
   torsoRadius: number;
+  hair: HairStyle;
+  showEars: boolean;
 }
 
-/** 🧸 Shared "doll" anatomy — every character shape renders THIS as its
- *  base (legs, torso, neck, arms with mitten hands, an oversized head with
- *  big sparkly eyes + blush) so nothing is ever a disconnected floating
- *  box. Chibi proportions (big head, short body) deliberately: it reads as
- *  an intentional cute-toy design on flat-shaded primitive geometry, where
- *  realistic human proportions would just look unfinished. Per-character
- *  decorations (ears, spikes, a visor, hair) render on top of this in
- *  BaseCharacterMesh, so each character keeps a distinct silhouette. */
-function ChibiBody({ color, accentColor, shoulderWidth, torsoRadius }: ChibiProps) {
+/** 🧸 The shared doll anatomy every character renders. Full feature set:
+ *  head, stylized hair, ears, brows, big anime-chibi eyes with twin
+ *  highlights, a nose, a smile, blush, neck, torso, arms with mitten hands,
+ *  and legs with feet. Chibi proportions (big head, short body) are the
+ *  deliberate design language — on flat-shaded procedural geometry they read
+ *  as an intentional cute-toy style, where realistic human proportions would
+ *  just look unfinished. Per-character decorations layer on top in
+ *  BaseCharacterMesh, so each character keeps a distinct silhouette while
+ *  sharing one anchor rig. */
+function ChibiBody({ color, accentColor, shoulderWidth, torsoRadius, hair, showEars }: ChibiProps) {
   const skin = toyMaterial(color);
   const trim = toyMaterial(accentColor);
-  const eyeMat = <meshStandardMaterial color="#2a180b" roughness={0.15} />;
-  const sparkleMat = <meshStandardMaterial color="#ffffff" roughness={0.1} />;
-  const blushMat = (
-    <meshStandardMaterial color="#ff9fb8" roughness={0.6} transparent opacity={0.55} />
+  const hairMat = toyMaterial(accentColor, 0.45);
+  const dark = <meshStandardMaterial color="#241407" roughness={0.18} />;
+  const white = <meshStandardMaterial color="#ffffff" roughness={0.1} />;
+  const blush = (
+    <meshStandardMaterial color="#ff9fb8" roughness={0.65} transparent opacity={0.5} />
   );
 
   return (
     <>
-      {/* Legs — short and chunky */}
-      <mesh position={[-0.15, 0.19, 0]}>
-        <capsuleGeometry args={[0.12, 0.24, 4, 10]} />
-        {trim}
-      </mesh>
-      <mesh position={[0.15, 0.19, 0]}>
-        <capsuleGeometry args={[0.12, 0.24, 4, 10]} />
-        {trim}
-      </mesh>
-
-      {/* Torso */}
-      <mesh position={[0, 0.62, 0]}>
-        <capsuleGeometry args={[torsoRadius, 0.26, 6, 14]} />
-        {skin}
-      </mesh>
-
-      {/* Neck stub */}
-      <mesh position={[0, 0.92, 0]}>
-        <cylinderGeometry args={[0.11, 0.13, 0.08, 12]} />
-        {skin}
-      </mesh>
-
-      {/* Head — big, chibi-proportioned */}
-      <mesh position={[0, 1.28, 0]}>
-        <sphereGeometry args={[0.38, 28, 28]} />
-        {skin}
-      </mesh>
-
-      {/* Big sparkly eyes */}
+      {/* ── Legs + feet ─────────────────────────────────────────── */}
       {[-1, 1].map((side) => (
-        <group key={side}>
-          <mesh position={[side * 0.15, 1.29, 0.33]} scale={[0.62, 0.8, 0.5]}>
-            <sphereGeometry args={[0.075, 16, 16]} />
-            {eyeMat}
+        <group key={`leg${side}`}>
+          <mesh position={[side * 0.15, 0.22, 0]}>
+            <capsuleGeometry args={[0.115, 0.2, 4, 12]} />
+            {trim}
           </mesh>
-          <mesh position={[side * 0.15 + side * 0.02, 1.33, 0.375]}>
-            <sphereGeometry args={[0.02, 8, 8]} />
-            {sparkleMat}
-          </mesh>
-          {/* Blush */}
-          <mesh position={[side * 0.24, 1.19, 0.3]} scale={[1, 0.7, 0.4]}>
-            <sphereGeometry args={[0.06, 10, 10]} />
-            {blushMat}
+          {/* Foot — rounded, extended forward so the doll reads as standing */}
+          <mesh position={[side * 0.15, 0.06, 0.06]} scale={[1, 0.62, 1.45]}>
+            <sphereGeometry args={[0.115, 14, 14]} />
+            {trim}
           </mesh>
         </group>
       ))}
-      {/* Smile */}
-      <mesh position={[0, 1.14, 0.365]} rotation={[0, 0, Math.PI]}>
-        <torusGeometry args={[0.05, 0.012, 8, 12, Math.PI]} />
-        {eyeMat}
+
+      {/* ── Torso ───────────────────────────────────────────────── */}
+      <mesh position={[0, 0.64, 0]}>
+        <capsuleGeometry args={[torsoRadius, 0.26, 6, 16]} />
+        {skin}
       </mesh>
 
-      {/* Arms — mitten-hand tipped so nothing ends in a bare stump */}
-      {[-1, 1].map((side) => (
-        <group key={side}>
+      {/* ── Neck ────────────────────────────────────────────────── */}
+      <mesh position={[0, 0.93, 0]}>
+        <cylinderGeometry args={[0.11, 0.13, 0.09, 14]} />
+        {skin}
+      </mesh>
+
+      {/* ── Head ────────────────────────────────────────────────── */}
+      <mesh position={[0, HEAD_Y, 0]}>
+        <sphereGeometry args={[HEAD_R, 32, 32]} />
+        {skin}
+      </mesh>
+
+      {/* Ears */}
+      {showEars &&
+        [-1, 1].map((side) => (
           <mesh
-            position={[side * shoulderWidth, 0.66, 0]}
-            rotation={[0, 0, side * (Math.PI / 9)]}
+            key={`ear${side}`}
+            position={[side * (HEAD_R - 0.02), HEAD_Y - 0.02, 0]}
+            scale={[0.42, 1, 0.72]}
           >
-            <capsuleGeometry args={[0.08, 0.3, 4, 10]} />
+            <sphereGeometry args={[0.1, 14, 14]} />
             {skin}
           </mesh>
-          <mesh position={[side * (shoulderWidth + 0.08), 0.42, 0]}>
-            <sphereGeometry args={[0.1, 14, 14]} />
+        ))}
+
+      {/* Hair */}
+      {hair !== "none" && (
+        <>
+          {/* Crown cap — sits over the top/back of the skull */}
+          <mesh position={[0, HEAD_Y + 0.07, -0.02]} scale={[1.06, 0.92, 1.06]}>
+            <sphereGeometry args={[HEAD_R, 26, 26, 0, Math.PI * 2, 0, Math.PI * 0.58]} />
+            {hairMat}
+          </mesh>
+          {/* Fringe/bangs across the forehead */}
+          <mesh position={[0, HEAD_Y + 0.17, 0.12]} scale={[1, 0.5, 0.72]} rotation={[0.3, 0, 0]}>
+            <sphereGeometry args={[0.33, 20, 20]} />
+            {hairMat}
+          </mesh>
+          {hair === "long" &&
+            [-1, 1].map((side) => (
+              <mesh
+                key={`hairside${side}`}
+                position={[side * 0.33, HEAD_Y - 0.14, -0.05]}
+                scale={[0.72, 1.35, 0.85]}
+              >
+                <sphereGeometry args={[0.17, 16, 16]} />
+                {hairMat}
+              </mesh>
+            ))}
+        </>
+      )}
+
+      {/* ── Face ────────────────────────────────────────────────── */}
+      {[-1, 1].map((side) => (
+        <group key={`face${side}`}>
+          {/* Brow */}
+          <mesh
+            position={[side * 0.15, EYE_Y + 0.135, FACE_Z - 0.06]}
+            rotation={[0, 0, side * -0.12]}
+          >
+            <capsuleGeometry args={[0.015, 0.075, 3, 8]} />
+            {hair === "none" ? dark : hairMat}
+          </mesh>
+          {/* Big anime eye */}
+          <mesh position={[side * 0.15, EYE_Y, FACE_Z - 0.045]} scale={[0.66, 0.92, 0.42]}>
+            <sphereGeometry args={[0.085, 20, 20]} />
+            {dark}
+          </mesh>
+          {/* Twin highlights — the detail that makes chibi eyes read as alive */}
+          <mesh position={[side * 0.135, EYE_Y + 0.035, FACE_Z + 0.005]}>
+            <sphereGeometry args={[0.024, 10, 10]} />
+            {white}
+          </mesh>
+          <mesh position={[side * 0.175, EYE_Y - 0.035, FACE_Z]}>
+            <sphereGeometry args={[0.012, 8, 8]} />
+            {white}
+          </mesh>
+          {/* Blush */}
+          <mesh position={[side * 0.26, EYE_Y - 0.115, FACE_Z - 0.08]} scale={[1, 0.68, 0.35]}>
+            <sphereGeometry args={[0.065, 12, 12]} />
+            {blush}
+          </mesh>
+        </group>
+      ))}
+
+      {/* Nose — small and rounded, just enough to break the flat face */}
+      <mesh position={[0, EYE_Y - 0.1, FACE_Z - 0.005]} scale={[1, 0.85, 0.7]}>
+        <sphereGeometry args={[0.032, 12, 12]} />
+        {toyMaterial(color, 0.5)}
+      </mesh>
+
+      {/* Smile */}
+      <mesh position={[0, EYE_Y - 0.19, FACE_Z - 0.035]} rotation={[0, 0, Math.PI]}>
+        <torusGeometry args={[0.055, 0.013, 8, 16, Math.PI]} />
+        {dark}
+      </mesh>
+
+      {/* ── Arms + mitten hands ─────────────────────────────────── */}
+      {[-1, 1].map((side) => (
+        <group key={`arm${side}`}>
+          <mesh position={[side * shoulderWidth, 0.68, 0]} rotation={[0, 0, side * (Math.PI / 9)]}>
+            <capsuleGeometry args={[0.08, 0.28, 4, 12]} />
+            {skin}
+          </mesh>
+          <mesh position={[side * (shoulderWidth + 0.08), 0.44, 0.02]} scale={[1, 1.05, 0.85]}>
+            <sphereGeometry args={[0.1, 16, 16]} />
             {trim}
           </mesh>
         </group>
@@ -222,10 +380,11 @@ function ChibiBody({ color, accentColor, shoulderWidth, torsoRadius }: ChibiProp
   );
 }
 
-/** Procedural stand-in body for a base character — every branch shares
- *  ChibiBody's anatomy and layers distinct decorations on top, so items
- *  parented to the 4 named anchors always land correctly (see ANCHORS)
- *  while each character keeps its own silhouette. */
+type AnchorSlots = Record<"head" | "face" | "body" | "hand", React.ReactNode>;
+
+/** Every character shares ChibiBody's anatomy + anchor rig and layers its own
+ *  decorations on top, so items always attach correctly no matter which base
+ *  character is equipped. */
 function BaseCharacterMesh({
   descriptor,
   slots,
@@ -234,28 +393,30 @@ function BaseCharacterMesh({
   slots: AnchorSlots;
 }) {
   const { shape, color, accentColor } = descriptor;
-  const anchors = ANCHORS[shape] ?? ANCHORS["capsule-figure"];
   const accent = toyMaterial(accentColor ?? color);
 
   const isFemale = shape === "humanoid-female";
-  const shoulderWidth = isFemale ? 0.29 : 0.34;
-  const torsoRadius = isFemale ? 0.24 : 0.28;
+  const isHumanoid = isFemale || shape === "humanoid-male" || shape === "capsule-figure";
 
   let decorations: React.ReactNode = null;
   if (shape === "panda-round") {
     decorations = (
       <>
-        <mesh position={[-0.24, 1.58, 0]}>
-          <sphereGeometry args={[0.13, 14, 14]} />
-          {accent}
-        </mesh>
-        <mesh position={[0.24, 1.58, 0]}>
-          <sphereGeometry args={[0.13, 14, 14]} />
-          {accent}
-        </mesh>
         {[-1, 1].map((side) => (
-          <mesh key={side} position={[side * 0.15, 1.3, 0.3]} rotation={[0, 0, side * 0.35]}>
-            <sphereGeometry args={[0.11, 14, 14]} />
+          <mesh key={`ear${side}`} position={[side * 0.26, HEAD_Y + 0.29, -0.02]}>
+            <sphereGeometry args={[0.14, 16, 16]} />
+            {accent}
+          </mesh>
+        ))}
+        {/* Signature eye patches, behind the eyes */}
+        {[-1, 1].map((side) => (
+          <mesh
+            key={`patch${side}`}
+            position={[side * 0.155, EYE_Y + 0.01, FACE_Z - 0.035]}
+            scale={[0.85, 1.15, 0.3]}
+            rotation={[0, 0, side * 0.3]}
+          >
+            <sphereGeometry args={[0.115, 16, 16]} />
             {accent}
           </mesh>
         ))}
@@ -264,14 +425,19 @@ function BaseCharacterMesh({
   } else if (shape === "dino-blocky") {
     decorations = (
       <>
-        {[0.98, 1.18, 1.36].map((y, i) => (
-          <mesh key={y} position={[0, y, -0.28 + i * 0.02]} rotation={[0.3, 0, 0]}>
-            <coneGeometry args={[0.06, 0.14, 6]} />
+        {[
+          [0, 1.02, -0.3],
+          [0, 1.26, -0.36],
+          [0, 1.5, -0.28],
+        ].map(([x, y, z]) => (
+          <mesh key={`${y}`} position={[x, y, z]} rotation={[0.45, 0, 0]}>
+            <coneGeometry args={[0.065, 0.16, 8]} />
             {accent}
           </mesh>
         ))}
-        <mesh position={[0, 0.42, -0.32]} rotation={[Math.PI / 2.3, 0, 0]}>
-          <coneGeometry args={[0.1, 0.34, 8]} />
+        {/* Tail */}
+        <mesh position={[0, 0.4, -0.34]} rotation={[Math.PI / 2.3, 0, 0]}>
+          <coneGeometry args={[0.1, 0.36, 10]} />
           {toyMaterial(color)}
         </mesh>
       </>
@@ -279,27 +445,34 @@ function BaseCharacterMesh({
   } else if (shape === "cyber-angular") {
     decorations = (
       <>
-        {/* Visor instead of plain eyes */}
-        <mesh position={[0, 1.29, 0.36]} scale={[0.62, 0.34, 0.3]}>
-          <sphereGeometry args={[0.16, 16, 16]} />
-          <meshStandardMaterial color={accentColor ?? "#00e5ff"} roughness={0.15} metalness={0.4} />
+        {/* Visor across the eye line */}
+        <mesh position={[0, EYE_Y + 0.01, FACE_Z - 0.02]} scale={[0.72, 0.34, 0.34]}>
+          <sphereGeometry args={[0.19, 20, 20]} />
+          <meshStandardMaterial
+            color={accentColor ?? "#00e5ff"}
+            roughness={0.12}
+            metalness={0.55}
+            emissive={accentColor ?? "#00e5ff"}
+            emissiveIntensity={0.35}
+          />
         </mesh>
-        <mesh position={[0, 1.7, 0]}>
-          <cylinderGeometry args={[0.015, 0.015, 0.14, 6]} />
+        {/* Antenna */}
+        <mesh position={[0.17, HEAD_Y + 0.42, 0]} rotation={[0, 0, -0.18]}>
+          <cylinderGeometry args={[0.014, 0.014, 0.18, 8]} />
           {accent}
         </mesh>
-        <mesh position={[0, 1.78, 0]}>
-          <sphereGeometry args={[0.035, 10, 10]} />
+        <mesh position={[0.19, HEAD_Y + 0.52, 0]}>
+          <sphereGeometry args={[0.037, 12, 12]} />
           {accent}
         </mesh>
+        {/* Ear units */}
+        {[-1, 1].map((side) => (
+          <mesh key={`unit${side}`} position={[side * 0.38, HEAD_Y - 0.02, 0]}>
+            <cylinderGeometry args={[0.075, 0.075, 0.06, 12]} />
+            {accent}
+          </mesh>
+        ))}
       </>
-    );
-  } else if (isFemale) {
-    decorations = (
-      <mesh position={[0, 1.36, -0.03]} scale={[1.12, 0.8, 1.12]}>
-        <sphereGeometry args={[0.4, 20, 20]} />
-        {accent}
-      </mesh>
     );
   }
 
@@ -308,25 +481,28 @@ function BaseCharacterMesh({
       <ChibiBody
         color={color}
         accentColor={accentColor ?? color}
-        shoulderWidth={shoulderWidth}
-        torsoRadius={torsoRadius}
+        shoulderWidth={isFemale ? 0.29 : 0.34}
+        torsoRadius={isFemale ? 0.24 : 0.28}
+        hair={isHumanoid ? (isFemale ? "long" : "short") : "none"}
+        showEars={isHumanoid}
       />
       {decorations}
-      <group position={anchors.head}>{slots.head}</group>
-      <group position={anchors.face}>{slots.face}</group>
-      <group position={anchors.body}>{slots.body}</group>
-      <group position={anchors.hand}>{slots.hand}</group>
+
+      {/* 🔗 Item slots — anchor position + per-slot scale lock. */}
+      {(Object.keys(ANCHORS) as (keyof typeof ANCHORS)[]).map((slot) => (
+        <group key={slot} position={ANCHORS[slot]} scale={SLOT_SCALE[slot]}>
+          {slots[slot]}
+        </group>
+      ))}
     </group>
   );
 }
-
-type AnchorSlots = Record<"head" | "face" | "body" | "hand", React.ReactNode>;
 
 export default function AvatarCanvas3D({
   baseCharacter,
   equipped,
   interactive = true,
-  height = 260,
+  height = 300,
 }: AvatarCanvas3DProps) {
   const descriptor = baseCharacter ?? DEFAULT_BASE;
 
@@ -335,26 +511,54 @@ export default function AvatarCanvas3D({
     if (!eq.model3d) continue;
     const anchor = CATEGORY_ANCHOR[eq.category];
     if (!anchor) continue;
-    slots[anchor] = <Item3D model3d={eq.model3d} />;
+    slots[anchor] = <Item3D model3d={eq.model3d} slot={anchor} />;
   }
 
   return (
     <div style={{ height }} className="w-full">
-      <Canvas camera={{ position: [0, 1.15, 2.6], fov: 38 }}>
-        {/* Soft sky/ground gradient instead of flat ambient — reads as a
-            real render rather than a flatly-lit primitive. */}
-        <hemisphereLight args={["#fff7ef", "#8a5636", 0.55]} />
-        <directionalLight position={[2.5, 4, 2.5]} intensity={1} />
-        {/* Cool fill + warm rim, classic 3-point toy-render lighting. */}
-        <directionalLight position={[-3, 1.5, -1]} intensity={0.25} color="#a5c8ff" />
-        <directionalLight position={[0, 2, -3]} intensity={0.4} color="#ffd9a0" />
+      {/* Framed to fit the whole doll INCLUDING a tall hat (crown ≈1.9) —
+          a tighter frame clipped headwear off the top of the canvas. */}
+      <Canvas camera={{ position: [0, 1.25, 2.9], fov: 38 }} dpr={[1, 2]}>
+        <ambientLight intensity={0.8} />
+        <directionalLight position={[2.5, 4, 2.5]} intensity={1.1} />
+        <directionalLight position={[-3, 1.5, -1]} intensity={0.28} color="#a5c8ff" />
+        <directionalLight position={[0, 2, -3]} intensity={0.45} color="#ffd9a0" />
+
+        {/* 🏙️ Studio environment WITHOUT drei's `preset` — a preset downloads a
+            multi-MB HDRI from a CDN on every mount, which is a real cost (and
+            an offline failure) for this app's Capacitor/Android build and its
+            mobile-network users. These Lightformers generate an equivalent
+            studio env map locally: same soft reflections, zero network. */}
+        <Environment resolution={64} frames={1}>
+          <Lightformer intensity={2.2} position={[0, 3, 2]} scale={[6, 3, 1]} color="#fff7ef" />
+          <Lightformer intensity={0.9} position={[-3, 1, 1]} scale={[3, 3, 1]} color="#a5c8ff" />
+          <Lightformer intensity={1.1} position={[3, 1, -2]} scale={[3, 3, 1]} color="#ffd9a0" />
+        </Environment>
+
         <BaseCharacterMesh descriptor={descriptor} slots={slots} />
+
+        {/* Soft grounding shadow. frames={1} bakes it once — the doll and key
+            light are both static, so there's nothing to recompute per frame. */}
+        <ContactShadows
+          position={[0, 0, 0]}
+          opacity={0.42}
+          scale={3}
+          blur={2.6}
+          far={1.4}
+          frames={1}
+          color="#3a1e05"
+        />
+
         <OrbitControls
           enablePan={false}
-          minDistance={1.6}
-          maxDistance={4.5}
+          minDistance={2}
+          maxDistance={5}
+          minPolarAngle={Math.PI / 3}
+          maxPolarAngle={Math.PI / 2}
+          enableDamping
+          dampingFactor={0.08}
           enabled={interactive}
-          target={[0, 0.9, 0]}
+          target={[0, 0.95, 0]}
         />
       </Canvas>
     </div>
