@@ -1,22 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import AvatarPortrait from "@/components/avatar/AvatarPortrait";
 import type { PublicPlayerProfileDTO } from "@/lib/types";
-
-// Safe to statically import THIS modal from anywhere (e.g. ChatGameOverlay,
-// which may render inside a server-rendered tree) — the actual WebGL touch
-// point is dynamic-imported here internally, not left to callers to remember.
-const AvatarCanvas3D = dynamic(() => import("@/components/3d/AvatarCanvas3D"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-[280px] w-full items-center justify-center">
-      <Loader2 size={28} className="animate-spin text-white/70" />
-    </div>
-  ),
-});
 
 export default function PublicPlayerModal({
   userId,
@@ -37,11 +25,15 @@ export default function PublicPlayerModal({
   }, [userId, t]);
 
   const baseEquipped = profile?.equipped.find((e) => e.category === "BASE_CHARACTER") ?? null;
-  const baseCharacter = baseEquipped?.model3d ?? null;
-  const equipped3D =
+  const equippedLayers =
     profile?.equipped
       .filter((e) => e.category !== "BASE_CHARACTER")
-      .map((e) => ({ category: e.category, model3d: e.model3d, slug: e.slug })) ?? [];
+      .map((e) => ({
+        category: e.category,
+        emoji: e.emoji,
+        imageUrl: e.imageUrl,
+        imageOffset: e.imageOffset,
+      })) ?? [];
 
   return (
     <div
@@ -69,13 +61,9 @@ export default function PublicPlayerModal({
         {error && <p className="px-4 pb-4 text-sm text-crimson-300">{error}</p>}
 
         {!error && (
-          <AvatarCanvas3D
-            baseCharacter={baseCharacter}
-            baseSlug={baseEquipped?.slug}
-            equipped={equipped3D}
-            interactive
-            height={280}
-          />
+          <div className="flex justify-center bg-white/5 py-4">
+            <AvatarPortrait baseCharacter={baseEquipped} equipped={equippedLayers} height={280} />
+          </div>
         )}
 
         {profile && (

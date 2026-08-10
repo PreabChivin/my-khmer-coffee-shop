@@ -248,38 +248,18 @@ export interface RewardDTO {
   isAvailable: boolean;
 }
 
-/** 🧊 Placeholder-geometry descriptor for the 3D avatar engine
- *  (components/3d/AvatarCanvas3D.tsx) — see ShopItem.model3d's doc comment
- *  in schema.prisma for why this isn't a glbUrl. */
-export type Model3DShape =
-  | "humanoid-male"
-  | "humanoid-female"
-  | "capsule-figure" // legacy alias, kept so old data never renders nothing
-  | "panda-round"
-  | "dino-blocky"
-  | "cyber-angular"
-  | "box"
-  | "cylinder"
-  | "cone"
-  | "torus"
-  | "sphere";
-
-export interface Model3DDescriptor {
-  shape: Model3DShape;
-  color: string;
-  accentColor?: string;
-  scale?: [number, number, number];
-  /** 🎨 When set, a REAL sculpted GLTF/GLB model is loaded instead of the
-   *  procedural primitive geometry, and every field above is ignored. Path
-   *  is relative to /public (e.g. "/models/characters/barista-girl.glb").
-   *  See public/models/README.md. Falls back to procedural if it fails to
-   *  load, so a missing/broken file never blanks the avatar. */
-  glbUrl?: string;
+/** 🖼️ Optional per-item layer positioning override — for asset packs whose
+ *  layers AREN'T pre-aligned to one shared canvas. See
+ *  components/avatar/AvatarPortrait.tsx's doc comment. */
+export interface ImageOffset {
+  xPercent?: number;
+  yPercent?: number;
+  scalePercent?: number;
 }
 
 export type ShopItemCategory = "HAT" | "EYEWEAR" | "OUTFIT" | "HANDHELD" | "BASE_CHARACTER";
 
-/** 🧢 An Avatar Shop item (cosmetic OR a purchasable 3D base character —
+/** 🧢 An Avatar Shop item (cosmetic OR a purchasable 2D base character —
  *  BASE_CHARACTER is just a 5th category, reusing the same buy/equip
  *  flow), with this user's ownership/equip state. */
 export interface ShopItemDTO {
@@ -292,7 +272,8 @@ export interface ShopItemDTO {
   cost: number;
   emoji: string;
   description: string | null;
-  model3d: Model3DDescriptor | null;
+  imageUrl: string | null;
+  imageOffset: ImageOffset | null;
   owned: boolean;
   equipped: boolean;
 }
@@ -307,7 +288,8 @@ export interface PublicEquippedItemDTO {
   name: string;
   nameKh: string;
   emoji: string;
-  model3d: Model3DDescriptor | null;
+  imageUrl: string | null;
+  imageOffset: ImageOffset | null;
 }
 
 export interface PublicPlayerProfileDTO {

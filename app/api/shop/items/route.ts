@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/customerAuth";
-import type { Model3DDescriptor, ShopItemDTO } from "@/lib/types";
+import type { ImageOffset, ShopItemDTO } from "@/lib/types";
 
 /** GET /api/shop/items — the Avatar Shop catalog, plus this user's
  *  ownership/equip state for each item. */
@@ -30,7 +30,8 @@ export async function GET(request: NextRequest) {
         cost: item.cost,
         emoji: item.emoji,
         description: item.description,
-        model3d: (item.model3d as Model3DDescriptor | null) ?? null,
+        imageUrl: item.imageUrl,
+        imageOffset: (item.imageOffset as ImageOffset | null) ?? null,
         owned: Boolean(own),
         equipped: Boolean(own?.equipped),
       };

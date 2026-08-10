@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/customerAuth";
-import type { Model3DDescriptor, PublicPlayerProfileDTO } from "@/lib/types";
+import type { ImageOffset, PublicPlayerProfileDTO } from "@/lib/types";
 
 /**
  * GET /api/players/[id]/profile — the public player-inspection card.
@@ -10,7 +10,7 @@ import type { Model3DDescriptor, PublicPlayerProfileDTO } from "@/lib/types";
  * TARGET user named in the URL. Deliberately narrow: name, points, badges,
  * and equipped items ONLY — never email/phone/passwordHash. Points/badges
  * being peer-visible (not just self/admin) is a new exposure category,
- * introduced here on purpose per the 3D Avatar Engine brief.
+ * introduced deliberately for the avatar-inspection feature.
  */
 export async function GET(
   request: NextRequest,
@@ -48,7 +48,8 @@ export async function GET(
         name: inv.item.name,
         nameKh: inv.item.nameKh,
         emoji: inv.item.emoji,
-        model3d: (inv.item.model3d as Model3DDescriptor | null) ?? null,
+        imageUrl: inv.item.imageUrl,
+        imageOffset: (inv.item.imageOffset as ImageOffset | null) ?? null,
       })),
     };
 

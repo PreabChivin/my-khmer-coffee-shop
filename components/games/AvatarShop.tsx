@@ -1,28 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import dynamic from "next/dynamic";
-import { Loader2, Eye } from "lucide-react";
+import { Eye } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { TIER_RING_CLASS } from "@/lib/shopTiers";
+import AvatarPortrait from "@/components/avatar/AvatarPortrait";
+import PublicPlayerModal from "@/components/games/PublicPlayerModal";
 import type { ShopItemDTO } from "@/lib/types";
 import type { TranslationKey } from "@/lib/i18n";
-
-// 🧊 WebGL touches the DOM/canvas directly — client-only, same pattern as
-// this app's one other Canvas-ish component (AddressMapPicker's Leaflet map).
-const AvatarCanvas3D = dynamic(() => import("@/components/3d/AvatarCanvas3D"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-[300px] w-full items-center justify-center">
-      <Loader2 size={28} className="animate-spin text-clay-400" />
-    </div>
-  ),
-});
-
-const PublicPlayerModal = dynamic(() => import("@/components/games/PublicPlayerModal"), {
-  ssr: false,
-});
 
 type Category = "ALL" | ShopItemDTO["category"];
 
@@ -66,12 +52,16 @@ export default function AvatarShop() {
     () => items.find((i) => i.category === "BASE_CHARACTER" && i.equipped) ?? null,
     [items]
   );
-  const baseCharacter = baseItem?.model3d ?? null;
-  const equipped3D = useMemo(
+  const equippedLayers = useMemo(
     () =>
       items
         .filter((i) => i.equipped && i.category !== "BASE_CHARACTER")
-        .map((i) => ({ category: i.category, model3d: i.model3d, slug: i.slug })),
+        .map((i) => ({
+          category: i.category,
+          emoji: i.emoji,
+          imageUrl: i.imageUrl,
+          imageOffset: i.imageOffset,
+        })),
     [items]
   );
   const visibleItems = useMemo(
@@ -131,12 +121,19 @@ export default function AvatarShop() {
         {t("shop.title")}
       </h2>
 
-      <div className="relative mb-4 overflow-hidden rounded-2xl bg-cream-50 dark:bg-coffee-800">
-        <AvatarCanvas3D
-          baseCharacter={baseCharacter}
-          baseSlug={baseItem?.slug}
-          equipped={equipped3D}
-          interactive
+      <div className="relative mb-4 flex items-center justify-center overflow-hidden rounded-2xl bg-cream-50 py-4 dark:bg-coffee-800">
+        <AvatarPortrait
+          baseCharacter={
+            baseItem
+              ? {
+                  category: "BASE_CHARACTER",
+                  emoji: baseItem.emoji,
+                  imageUrl: baseItem.imageUrl,
+                  imageOffset: baseItem.imageOffset,
+                }
+              : null
+          }
+          equipped={equippedLayers}
           height={300}
         />
         {user && (

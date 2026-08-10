@@ -584,12 +584,17 @@ model ShopItem {
   emoji       String
   description String?
   isAvailable Boolean          @default(true)
-  // 🧊 Procedural placeholder-geometry descriptor for the 3D avatar engine
-  // — e.g. { shape: "capsule-figure", color: "#hex", accentColor?, scale? }.
-  // Deliberately NOT a glbUrl: no rigged 3D character assets exist yet.
-  // Structured so a real `{ type: "glb", url }` variant could be added
-  // later without another migration (client branches on a "type" key).
-  model3d     Json?
+  // 🖼️ The 2D layered-avatar art. For BASE_CHARACTER, the full portrait
+  // image; for HAT/EYEWEAR/OUTFIT/HANDHELD, a transparent-background layer
+  // PNG. Null until real art is sourced — components/avatar/AvatarPortrait
+  // falls back to the `emoji` above so nothing ever renders blank. See
+  // public/images/avatars/README.md for the drop-in format.
+  imageUrl    String?
+  // Optional per-item override for packs whose layers AREN'T pre-aligned
+  // to one shared canvas — { xPercent, yPercent, scalePercent }. Most
+  // asset packs align every layer to the same base already, so this is
+  // rarely needed; see AvatarPortrait's doc comment.
+  imageOffset Json?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   owners      UserInventory[]
