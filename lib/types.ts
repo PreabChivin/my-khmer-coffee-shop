@@ -322,6 +322,31 @@ export interface PointsAdjustmentDTO {
   createdAt: string;
 }
 
+/** 🔔 One registered customer's Telegram notification status, for the admin
+ *  panel. There is no `User.telegramChatId` column — this is DERIVED from
+ *  that customer's most-recently-linked Order (see
+ *  lib/telegramSubscribers.ts), which is the real source of truth. */
+export interface TelegramSubscriberDTO {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  telegramChatId: string | null;
+  telegramUsername: string | null;
+  isTelegramConnected: boolean;
+  telegramConnectedAt: string | null;
+}
+
+export interface TelegramSubscriberStatsDTO {
+  totalUsers: number;
+  connectedCount: number;
+  /** Distinct chat ids ever seen (TelegramSession + Order), including ones
+   *  never tied to a registered account (device-linked before any order,
+   *  or a guest checkout) — always >= connectedCount. */
+  discoveredChatIdCount: number;
+  subscribers: TelegramSubscriberDTO[];
+}
+
 /** 🎯 A daily mission, with this user's progress for today. */
 export interface MissionDTO {
   key: string;

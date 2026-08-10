@@ -103,6 +103,15 @@ model Order {
   // /start <orderId>. Null until then — status-change notifications only
   // fire once this is present. Never the staff group id (see lib/telegram.ts).
   customerTelegramChatId String?
+  // @username on the linked Telegram account, when the customer has one set
+  // (Telegram doesn't require one, so this stays null for many). Captured
+  // from the webhook payload at link time — see app/api/telegram/webhook.
+  customerTelegramUsername String?
+  // Set once, the first time customerTelegramChatId is attached — a
+  // purpose-built timestamp so the admin Telegram panel doesn't have to
+  // (mis)use createdAt/updatedAt, which also move for unrelated reasons
+  // (status changes, gift redemption, etc).
+  telegramLinkedAt         DateTime?
 
   // 👤 Customer account link — set when a logged-in user checks out (guests
   // leave it null). onDelete: SetNull keeps the order + its history intact if
@@ -328,6 +337,9 @@ model LoyaltyAccount {
 model TelegramSession {
   token     String   @id
   chatId    String
+  // @username on the linked Telegram account, when set — see the matching
+  // comment on Order.customerTelegramUsername.
+  username  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

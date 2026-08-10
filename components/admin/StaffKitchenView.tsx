@@ -9,6 +9,7 @@ import ProductManagementPanel from "@/components/admin/ProductManagementPanel";
 import RegisteredCustomersPanel from "@/components/admin/RegisteredCustomersPanel";
 import RedemptionsPanel from "@/components/admin/RedemptionsPanel";
 import NotificationsPanel from "@/components/admin/NotificationsPanel";
+import TelegramSubscribersPanel from "@/components/admin/TelegramSubscribersPanel";
 import LuckyDrawPanel from "@/components/admin/LuckyDrawPanel";
 import AdminChatMonitorPanel from "@/components/admin/AdminChatMonitorPanel";
 import AdminPredictivePanel from "@/components/admin/AdminPredictivePanel";
@@ -90,6 +91,11 @@ export default function StaffKitchenView({
       </div>
       <div className="px-4 sm:px-6">
         <LuckyDrawPanel onError={showError} />
+      </div>
+
+      {/* 🔔 Telegram notification connection status per registered customer */}
+      <div className="px-4 sm:px-6">
+        <TelegramSubscribersPanel onError={showError} />
       </div>
 
       {/* 👥 Full registered-customer roster with generation + LTV drill-down */}

@@ -9,7 +9,7 @@ const START_COMMAND = /^\/start(?:@\w+)?(?:\s+([A-Za-z0-9_-]{1,64}))?/;
 interface TelegramUpdate {
   message?: {
     text?: string;
-    chat?: { id?: number | string };
+    chat?: { id?: number | string; username?: string };
   };
 }
 
@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
     const update: TelegramUpdate = await request.json();
     const text = update.message?.text?.trim();
     const chatId = update.message?.chat?.id;
+    const username = update.message?.chat?.username;
 
     if (!text || chatId === undefined) {
       return NextResponse.json({ ok: true });
@@ -48,9 +49,9 @@ export async function POST(request: NextRequest) {
       // token); a bare payload = per-order link from the payment/tracking
       // screen (saves to that Order). Distinct prefix → no ambiguity.
       if (payload?.startsWith("s_")) {
-        await handleSessionStart(String(chatId), payload.slice(2));
+        await handleSessionStart(String(chatId), payload.slice(2), username);
       } else {
-        await handleStart(String(chatId), payload);
+        await handleStart(String(chatId), payload, username);
       }
     }
   } catch (err) {
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-async function handleSessionStart(chatId: string, token: string) {
+async function handleSessionStart(chatId: string, token: string, username?: string) {
   // Tokens are client-generated UUIDs — sanity-check shape before storing.
   if (!/^[A-Za-z0-9_-]{8,64}$/.test(token)) {
     await sendCustomerAlert(
@@ -72,8 +73,8 @@ async function handleSessionStart(chatId: string, token: string) {
 
   await prisma.telegramSession.upsert({
     where: { token },
-    create: { token, chatId },
-    update: { chatId },
+    create: { token, chatId, username },
+    update: { chatId, username },
   });
 
   await sendCustomerAlert(
@@ -82,7 +83,7 @@ async function handleSessionStart(chatId: string, token: string) {
   );
 }
 
-async function handleStart(chatId: string, orderId: string | undefined) {
+async function handleStart(chatId: string, orderId: string | undefined, username?: string) {
   if (!orderId) {
     await sendCustomerAlert(
       chatId,
@@ -102,7 +103,13 @@ async function handleStart(chatId: string, orderId: string | undefined) {
 
   await prisma.order.update({
     where: { id: orderId },
-    data: { customerTelegramChatId: chatId },
+    data: {
+      customerTelegramChatId: chatId,
+      customerTelegramUsername: username,
+      // Preserve the original link moment if this order was already linked
+      // (e.g. the customer re-taps the deep link) — only stamp it once.
+      telegramLinkedAt: order.telegramLinkedAt ?? new Date(),
+    },
   });
 
   const shortId = orderId.slice(0, 8).toUpperCase();
