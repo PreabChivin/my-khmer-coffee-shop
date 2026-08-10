@@ -44,6 +44,7 @@ export async function GET(
       badges: target.badges,
       equipped: inventory.map((inv) => ({
         category: inv.item.category,
+        slug: inv.item.slug,
         name: inv.item.name,
         nameKh: inv.item.nameKh,
         emoji: inv.item.emoji,

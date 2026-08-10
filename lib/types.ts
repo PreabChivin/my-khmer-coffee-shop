@@ -269,6 +269,12 @@ export interface Model3DDescriptor {
   color: string;
   accentColor?: string;
   scale?: [number, number, number];
+  /** 🎨 When set, a REAL sculpted GLTF/GLB model is loaded instead of the
+   *  procedural primitive geometry, and every field above is ignored. Path
+   *  is relative to /public (e.g. "/models/characters/barista-girl.glb").
+   *  See public/models/README.md. Falls back to procedural if it fails to
+   *  load, so a missing/broken file never blanks the avatar. */
+  glbUrl?: string;
 }
 
 export type ShopItemCategory = "HAT" | "EYEWEAR" | "OUTFIT" | "HANDHELD" | "BASE_CHARACTER";
@@ -297,6 +303,7 @@ export interface ShopItemDTO {
  *  alongside HAT/EYEWEAR/OUTFIT/HANDHELD (at most one per category). */
 export interface PublicEquippedItemDTO {
   category: ShopItemCategory;
+  slug: string;
   name: string;
   nameKh: string;
   emoji: string;

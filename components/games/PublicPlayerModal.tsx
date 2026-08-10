@@ -36,12 +36,12 @@ export default function PublicPlayerModal({
       .catch(() => setError(t("playerCard.loadError")));
   }, [userId, t]);
 
-  const baseCharacter =
-    profile?.equipped.find((e) => e.category === "BASE_CHARACTER")?.model3d ?? null;
+  const baseEquipped = profile?.equipped.find((e) => e.category === "BASE_CHARACTER") ?? null;
+  const baseCharacter = baseEquipped?.model3d ?? null;
   const equipped3D =
     profile?.equipped
       .filter((e) => e.category !== "BASE_CHARACTER")
-      .map((e) => ({ category: e.category, model3d: e.model3d })) ?? [];
+      .map((e) => ({ category: e.category, model3d: e.model3d, slug: e.slug })) ?? [];
 
   return (
     <div
@@ -69,7 +69,13 @@ export default function PublicPlayerModal({
         {error && <p className="px-4 pb-4 text-sm text-crimson-300">{error}</p>}
 
         {!error && (
-          <AvatarCanvas3D baseCharacter={baseCharacter} equipped={equipped3D} interactive height={280} />
+          <AvatarCanvas3D
+            baseCharacter={baseCharacter}
+            baseSlug={baseEquipped?.slug}
+            equipped={equipped3D}
+            interactive
+            height={280}
+          />
         )}
 
         {profile && (

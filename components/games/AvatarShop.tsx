@@ -62,15 +62,16 @@ export default function AvatarShop() {
   const [showOwnProfile, setShowOwnProfile] = useState(false);
 
   const points = user?.loyaltyPoints ?? 0;
-  const baseCharacter = useMemo(
-    () => items.find((i) => i.category === "BASE_CHARACTER" && i.equipped)?.model3d ?? null,
+  const baseItem = useMemo(
+    () => items.find((i) => i.category === "BASE_CHARACTER" && i.equipped) ?? null,
     [items]
   );
+  const baseCharacter = baseItem?.model3d ?? null;
   const equipped3D = useMemo(
     () =>
       items
         .filter((i) => i.equipped && i.category !== "BASE_CHARACTER")
-        .map((i) => ({ category: i.category, model3d: i.model3d })),
+        .map((i) => ({ category: i.category, model3d: i.model3d, slug: i.slug })),
     [items]
   );
   const visibleItems = useMemo(
@@ -131,7 +132,13 @@ export default function AvatarShop() {
       </h2>
 
       <div className="relative mb-4 overflow-hidden rounded-2xl bg-cream-50 dark:bg-coffee-800">
-        <AvatarCanvas3D baseCharacter={baseCharacter} equipped={equipped3D} interactive height={300} />
+        <AvatarCanvas3D
+          baseCharacter={baseCharacter}
+          baseSlug={baseItem?.slug}
+          equipped={equipped3D}
+          interactive
+          height={300}
+        />
         {user && (
           <button
             type="button"

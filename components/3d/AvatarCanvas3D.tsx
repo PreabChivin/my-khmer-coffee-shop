@@ -1,18 +1,50 @@
 "use client";
 
+import { Component, Suspense, useMemo, type ReactNode } from "react";
+import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Environment, Lightformer, ContactShadows } from "@react-three/drei";
+import {
+  OrbitControls,
+  Environment,
+  Lightformer,
+  ContactShadows,
+  useGLTF,
+} from "@react-three/drei";
+import { SkeletonUtils } from "three-stdlib";
+import GltfCharacter from "@/components/3d/GltfCharacter";
+import { resolveModelUrl } from "@/lib/avatarModels";
 import type { Model3DDescriptor, ShopItemCategory } from "@/lib/types";
 
 export interface AvatarCanvas3DProps {
   /** The equipped BASE_CHARACTER's descriptor — falls back to a default
    *  barista shape if the user hasn't equipped/bought one yet. */
   baseCharacter?: Model3DDescriptor | null;
+  /** Equipped BASE_CHARACTER's slug — keys the real-model lookup in
+   *  lib/avatarModels.ts. */
+  baseSlug?: string;
   /** HAT/EYEWEAR/OUTFIT/HANDHELD items to snap onto the character. */
-  equipped: { category: ShopItemCategory; model3d: Model3DDescriptor | null }[];
+  equipped: { category: ShopItemCategory; model3d: Model3DDescriptor | null; slug?: string }[];
   /** Enables drag-to-rotate + zoom (OrbitControls). Default true. */
   interactive?: boolean;
   height?: number;
+}
+
+/** A broken/missing .glb must never blank the avatar — fall back to the
+ *  procedural doll and log, rather than tearing down the canvas. */
+class ModelFallback extends Component<
+  { fallback: ReactNode; children: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(error: unknown) {
+    console.error("[AvatarCanvas3D] 3D model failed to load, using procedural doll:", error);
+  }
+  render() {
+    return this.state.failed ? this.props.fallback : this.props.children;
+  }
 }
 
 const DEFAULT_BASE: Model3DDescriptor = {
@@ -380,6 +412,34 @@ function ChibiBody({ color, accentColor, shoulderWidth, torsoRadius, hair, showE
   );
 }
 
+/** A real GLB item (hat/glasses/outfit/handheld), normalized so an asset of
+ *  any authored scale fits the slot it's attached to. Kept deliberately
+ *  small: the character loader does the heavy lifting; an item just needs to
+ *  arrive at a sane size relative to the body part holding it. */
+function GltfItem({ url, fitSize = 0.34 }: { url: string; fitSize?: number }) {
+  const { scene } = useGLTF(url, false);
+  const object = useMemo(() => SkeletonUtils.clone(scene) as THREE.Object3D, [scene]);
+  const { scale, offset } = useMemo(() => {
+    const box = new THREE.Box3().setFromObject(object);
+    const size = new THREE.Vector3();
+    const center = new THREE.Vector3();
+    box.getSize(size);
+    box.getCenter(center);
+    const largest = Math.max(size.x, size.y, size.z);
+    const s = largest > 0.0001 ? fitSize / largest : 1;
+    return {
+      scale: s,
+      offset: [-center.x * s, -center.y * s, -center.z * s] as [number, number, number],
+    };
+  }, [object, fitSize]);
+
+  return (
+    <group scale={scale} position={offset}>
+      <primitive object={object} />
+    </group>
+  );
+}
+
 type AnchorSlots = Record<"head" | "face" | "body" | "hand", React.ReactNode>;
 
 /** Every character shares ChibiBody's anatomy + anchor rig and layers its own
@@ -500,19 +560,40 @@ function BaseCharacterMesh({
 
 export default function AvatarCanvas3D({
   baseCharacter,
+  baseSlug,
   equipped,
   interactive = true,
   height = 300,
 }: AvatarCanvas3DProps) {
   const descriptor = baseCharacter ?? DEFAULT_BASE;
+  const characterUrl = resolveModelUrl(baseCharacter, baseSlug, "character");
 
   const slots: AnchorSlots = { head: null, face: null, body: null, hand: null };
   for (const eq of equipped) {
     if (!eq.model3d) continue;
     const anchor = CATEGORY_ANCHOR[eq.category];
     if (!anchor) continue;
-    slots[anchor] = <Item3D model3d={eq.model3d} slot={anchor} />;
+    const itemUrl = resolveModelUrl(eq.model3d, eq.slug, "item");
+    slots[anchor] = itemUrl ? (
+      <ModelFallback fallback={<Item3D model3d={eq.model3d} slot={anchor} />}>
+        <Suspense fallback={null}>
+          <GltfItem url={itemUrl} />
+        </Suspense>
+      </ModelFallback>
+    ) : (
+      <Item3D model3d={eq.model3d} slot={anchor} />
+    );
   }
+
+  const character = characterUrl ? (
+    <ModelFallback fallback={<BaseCharacterMesh descriptor={descriptor} slots={slots} />}>
+      <Suspense fallback={<BaseCharacterMesh descriptor={descriptor} slots={slots} />}>
+        <GltfCharacter url={characterUrl} slug={baseSlug} slots={slots} />
+      </Suspense>
+    </ModelFallback>
+  ) : (
+    <BaseCharacterMesh descriptor={descriptor} slots={slots} />
+  );
 
   return (
     <div style={{ height }} className="w-full">
@@ -535,7 +616,7 @@ export default function AvatarCanvas3D({
           <Lightformer intensity={1.1} position={[3, 1, -2]} scale={[3, 3, 1]} color="#ffd9a0" />
         </Environment>
 
-        <BaseCharacterMesh descriptor={descriptor} slots={slots} />
+        {character}
 
         {/* Soft grounding shadow. frames={1} bakes it once — the doll and key
             light are both static, so there's nothing to recompute per frame. */}
