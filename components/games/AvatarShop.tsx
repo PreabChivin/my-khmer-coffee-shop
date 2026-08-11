@@ -160,7 +160,7 @@ export default function AvatarShop() {
             onClick={() => setCategory(c.key)}
             className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${
               category === c.key
-                ? "bg-gradient-to-r from-clay-400 to-crimson-400 text-white"
+                ? "bg-gradient-to-r from-accent to-accent-hover text-white"
                 : "bg-cream-100 text-coffee-500 dark:bg-coffee-800 dark:text-cream-300"
             }`}
           >
@@ -222,7 +222,7 @@ export default function AvatarShop() {
                   className={`mt-1 w-full rounded-full px-2 py-1.5 text-[11px] font-bold shadow-sm transition-transform hover:scale-105 active:scale-95 disabled:cursor-not-allowed ${
                     item.equipped
                       ? "bg-matcha-500 text-white"
-                      : "bg-gradient-to-r from-clay-400 to-crimson-400 text-white"
+                      : "bg-gradient-to-r from-accent to-accent-hover text-white"
                   }`}
                 >
                   {busy ? "..." : item.equipped ? t("shop.unequipBtn") : t("shop.equipBtn")}
@@ -232,7 +232,7 @@ export default function AvatarShop() {
                   type="button"
                   disabled={!user || !affordable || busy}
                   onClick={() => buy(item)}
-                  className="mt-1 w-full rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:from-coffee-200 disabled:to-coffee-200 disabled:text-coffee-400"
+                  className="mt-1 w-full rounded-full bg-gradient-to-r from-accent to-accent-hover px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:from-coffee-200 disabled:to-coffee-200 disabled:text-coffee-400"
                 >
                   {busy ? "..." : affordable ? t("shop.buyBtn") : t("shop.notEnough")}
                 </button>

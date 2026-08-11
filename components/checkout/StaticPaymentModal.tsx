@@ -243,7 +243,7 @@ export default function StaticPaymentModal({
                 type="button"
                 onClick={handleConfirmPaid}
                 disabled={isConfirming}
-                className="mt-3 w-full rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 py-3 text-sm font-bold text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
+                className="mt-3 w-full rounded-full bg-gradient-to-r from-accent to-accent-hover py-3 text-sm font-bold text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
               >
                 បាញ់លុយរួចហើយម៉ាយដំឡូង ចុចលិប! 👆
               </button>

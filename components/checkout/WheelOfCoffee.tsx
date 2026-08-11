@@ -85,7 +85,7 @@ export default function WheelOfCoffee({
       </div>
 
       {won ? (
-        <div className="animate-pop-in mt-4 rounded-2xl bg-gradient-to-r from-clay-400 to-crimson-400 px-5 py-3 text-center text-white shadow-md">
+        <div className="animate-pop-in mt-4 rounded-2xl bg-gradient-to-r from-accent to-accent-hover px-5 py-3 text-center text-white shadow-md">
           <p className="text-[10px] font-bold uppercase tracking-widest opacity-90">
             {t("wheel.youWon")}
           </p>

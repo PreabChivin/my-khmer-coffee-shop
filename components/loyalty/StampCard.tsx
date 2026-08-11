@@ -21,7 +21,7 @@ export default function StampCard({
           {t("loyalty.title")}
         </p>
         {availableFreeDrinks > 0 && (
-          <span className="animate-pop-in rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-2.5 py-0.5 text-[11px] font-bold text-white">
+          <span className="animate-pop-in rounded-full bg-gradient-to-r from-accent to-accent-hover px-2.5 py-0.5 text-[11px] font-bold text-white">
             {t("loyalty.freeDrinkUnlocked")}
           </span>
         )}

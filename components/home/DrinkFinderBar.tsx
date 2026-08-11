@@ -57,7 +57,7 @@ export default function DrinkFinderBar({
         <button
           type="button"
           onClick={handleShake}
-          className={`flex shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-5 py-3.5 text-sm font-bold text-white shadow-xl transition-transform hover:scale-105 active:scale-95 ${
+          className={`flex shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-accent to-accent-hover px-5 py-3.5 text-sm font-bold text-white shadow-xl transition-transform hover:scale-105 active:scale-95 ${
             isShaking ? "animate-wiggle" : ""
           }`}
         >

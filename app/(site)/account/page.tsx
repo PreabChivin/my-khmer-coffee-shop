@@ -167,7 +167,7 @@ export default function AccountPage() {
         </p>
         <Link
           href="/"
-          className="mt-6 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
+          className="mt-6 rounded-full bg-gradient-to-r from-accent to-accent-hover px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
         >
           {t("account.backHome")}
         </Link>

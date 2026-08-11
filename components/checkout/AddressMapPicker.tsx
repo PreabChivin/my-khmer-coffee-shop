@@ -330,7 +330,7 @@ export default function AddressMapPicker({
                       type="button"
                       disabled={isSaving || !saveLabel.trim()}
                       onClick={handleSaveAddress}
-                      className="shrink-0 rounded-lg bg-gradient-to-r from-clay-400 to-crimson-400 px-3 py-1.5 text-xs font-bold text-white shadow-sm disabled:opacity-60"
+                      className="shrink-0 rounded-lg bg-gradient-to-r from-accent to-accent-hover px-3 py-1.5 text-xs font-bold text-white shadow-sm disabled:opacity-60"
                     >
                       {isSaving ? "…" : t("map.saveButton")}
                     </button>
@@ -349,7 +349,7 @@ export default function AddressMapPicker({
             type="button"
             disabled={manualMode ? !manualAddress.trim() : !pin}
             onClick={handleConfirm}
-            className="w-full rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 py-3 text-sm font-bold text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-full bg-gradient-to-r from-accent to-accent-hover py-3 text-sm font-bold text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {t("map.confirmLocation")}
           </button>

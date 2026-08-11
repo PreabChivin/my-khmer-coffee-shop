@@ -186,7 +186,7 @@ export default function NotificationBell() {
                       setIsOpen(false);
                       openAuth();
                     }}
-                    className="mt-3 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-5 py-2 text-xs font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95"
+                    className="mt-3 rounded-full bg-gradient-to-r from-accent to-accent-hover px-5 py-2 text-xs font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95"
                   >
                     {t("notif.loginBtn")}
                   </button>

@@ -207,7 +207,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
           <button
             type="submit"
             disabled={busy}
-            className="w-full rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 py-3 text-sm font-bold text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
+            className="w-full rounded-full bg-gradient-to-r from-accent to-accent-hover py-3 text-sm font-bold text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
           >
             {busy
               ? t("auth.processing")

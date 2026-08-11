@@ -31,7 +31,7 @@ export default function SlidingTabs<T extends string>({
     >
       <div
         aria-hidden
-        className="absolute bottom-1 left-1 top-1 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 shadow transition-transform duration-300 ease-out"
+        className="absolute bottom-1 left-1 top-1 rounded-full bg-gradient-to-r from-accent to-accent-hover shadow transition-transform duration-300 ease-out"
         style={{
           width: `calc((100% - 0.5rem) / ${options.length})`,
           transform: `translateX(${activeIndex * 100}%)`,

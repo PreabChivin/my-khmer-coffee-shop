@@ -100,7 +100,7 @@ export default function MissionsPanel() {
                 className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold shadow-sm transition-transform hover:scale-105 active:scale-95 disabled:cursor-not-allowed ${
                   m.claimed
                     ? "bg-matcha-500 text-white"
-                    : "bg-gradient-to-r from-clay-400 to-crimson-400 text-white disabled:from-coffee-200 disabled:to-coffee-200 disabled:text-coffee-400"
+                    : "bg-gradient-to-r from-accent to-accent-hover text-white disabled:from-coffee-200 disabled:to-coffee-200 disabled:text-coffee-400"
                 }`}
               >
                 {busy

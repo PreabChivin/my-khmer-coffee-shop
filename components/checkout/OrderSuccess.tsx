@@ -104,7 +104,7 @@ export default function OrderSuccess({
         </p>
         <Link
           href="/"
-          className="mt-8 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
+          className="mt-8 rounded-full bg-gradient-to-r from-accent to-accent-hover px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
         >
           {t("success.orderSomethingElse")}
         </Link>
@@ -132,7 +132,7 @@ export default function OrderSuccess({
 
         <Link
           href="/"
-          className="mt-8 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
+          className="mt-8 rounded-full bg-gradient-to-r from-accent to-accent-hover px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
         >
           {t("success.orderSomethingElse")}
         </Link>
@@ -310,7 +310,7 @@ export default function OrderSuccess({
 
       <Link
         href="/"
-        className="mt-8 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
+        className="mt-8 rounded-full bg-gradient-to-r from-accent to-accent-hover px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
       >
         {t("success.orderSomethingElse")}
       </Link>

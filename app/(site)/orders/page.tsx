@@ -59,7 +59,7 @@ export default function OrdersPage() {
         <button
           type="button"
           onClick={openAuth}
-          className="mt-6 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
+          className="mt-6 rounded-full bg-gradient-to-r from-accent to-accent-hover px-8 py-3 font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
         >
           {t("notif.loginBtn")}
         </button>
@@ -70,7 +70,7 @@ export default function OrdersPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
       <div className="mb-5 flex items-center gap-3">
-        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-clay-400 to-crimson-400 text-white shadow">
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-hover text-white shadow">
           <Truck size={22} />
         </span>
         <div>

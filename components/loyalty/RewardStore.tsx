@@ -111,7 +111,7 @@ export default function RewardStore() {
                 type="button"
                 disabled={!user || !affordable || busyId === r.id}
                 onClick={() => redeem(r)}
-                className="shrink-0 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-3 py-2 text-xs font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:from-coffee-200 disabled:to-coffee-200 disabled:text-coffee-400"
+                className="shrink-0 rounded-full bg-gradient-to-r from-accent to-accent-hover px-3 py-2 text-xs font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:from-coffee-200 disabled:to-coffee-200 disabled:text-coffee-400"
               >
                 {busyId === r.id ? "..." : affordable ? t("rewards.redeemBtn") : t("rewards.notEnough")}
               </button>

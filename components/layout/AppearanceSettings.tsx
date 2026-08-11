@@ -30,9 +30,20 @@ const FONT_SIZES: {
   { value: "lg", labelKey: "appearance.large", sampleClass: "text-2xl" },
 ];
 
+// 🎨 "Espresso" is today's actual default accent (clay-400, #ffb7b2) — kept
+// as-is so picking it back is a genuine "reset to default," not a jarring
+// unrelated color. The other four are the requested preset hues.
+const ACCENT_PRESETS: { key: string; emoji: string; hex: string }[] = [
+  { key: "espresso", emoji: "☕", hex: "#ffb7b2" },
+  { key: "matcha", emoji: "🌸", hex: "#EC4899" },
+  { key: "sage", emoji: "🌿", hex: "#10B981" },
+  { key: "royal", emoji: "💙", hex: "#3B82F6" },
+  { key: "violet", emoji: "💜", hex: "#8B5CF6" },
+];
+
 export default function AppearanceSettings() {
   const { t, lang, setLang } = useLanguage();
-  const { colorMode, setColorMode, fontSize, setFontSize } = useTheme();
+  const { colorMode, setColorMode, fontSize, setFontSize, accentColor, setAccentColor } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -131,6 +142,46 @@ export default function AppearanceSettings() {
                 {t(option.labelKey)}
               </button>
             ))}
+          </div>
+
+          <p className="mb-1.5 mt-4 text-xs font-medium text-coffee-600 dark:text-cream-200">
+            {t("appearance.colorTheme")}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            {ACCENT_PRESETS.map((preset) => (
+              <button
+                key={preset.key}
+                type="button"
+                onClick={() => setAccentColor(preset.hex)}
+                aria-label={preset.key}
+                aria-pressed={accentColor.toLowerCase() === preset.hex.toLowerCase()}
+                title={preset.key}
+                className={`flex h-9 w-9 items-center justify-center rounded-full text-base shadow-sm transition-transform hover:scale-110 active:scale-95 ${
+                  accentColor.toLowerCase() === preset.hex.toLowerCase()
+                    ? "ring-2 ring-gold-500 ring-offset-2 ring-offset-cream-50 dark:ring-offset-coffee-800"
+                    : ""
+                }`}
+                style={{ backgroundColor: preset.hex }}
+              >
+                {preset.emoji}
+              </button>
+            ))}
+
+            {/* Custom hex picker — its own swatch doubles as the trigger,
+                a native <input type="color"> has no separate "open" button. */}
+            <label
+              className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-coffee-300 text-xs text-coffee-400 transition-transform hover:scale-110 active:scale-95 dark:border-coffee-600 dark:text-cream-400"
+              title={t("appearance.customColor")}
+            >
+              +
+              <input
+                type="color"
+                value={accentColor}
+                onChange={(e) => setAccentColor(e.target.value)}
+                aria-label={t("appearance.customColor")}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              />
+            </label>
           </div>
         </div>
       )}

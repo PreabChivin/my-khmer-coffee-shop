@@ -511,7 +511,7 @@ export default function CheckoutPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 py-3 font-bold text-white shadow-md transition-transform hover:scale-[1.01] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-accent to-accent-hover py-3 font-bold text-white shadow-md transition-transform hover:scale-[1.01] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting ? (
               t("checkout.processing")

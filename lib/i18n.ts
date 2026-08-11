@@ -20,6 +20,8 @@ const dictionary = {
     "appearance.small": "Small",
     "appearance.medium": "Medium",
     "appearance.large": "High",
+    "appearance.colorTheme": "Color Theme",
+    "appearance.customColor": "Custom color",
 
     "hero.tagline": "Modern Taste, Ancient Soul",
 
@@ -514,6 +516,8 @@ const dictionary = {
     "appearance.small": "តូច",
     "appearance.medium": "មធ្យម",
     "appearance.large": "ធំ",
+    "appearance.colorTheme": "ជម្រើសពណ៌",
+    "appearance.customColor": "ពណ៌ផ្ទាល់ខ្លួន",
 
     "hero.tagline": "រសជាតិសម័យថ្មី ព្រលឹងសម័យបុរាណ",
 

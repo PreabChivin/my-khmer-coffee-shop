@@ -241,7 +241,7 @@ export default function DrinkCustomizer({
             <button
               type="button"
               onClick={shakeFortune}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-clay-400 to-crimson-400 py-2.5 text-sm font-bold text-white shadow-sm transition-transform hover:scale-[1.02] active:scale-95"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-accent to-accent-hover py-2.5 text-sm font-bold text-white shadow-sm transition-transform hover:scale-[1.02] active:scale-95"
             >
               <Sparkles size={16} />
               {lang === "km"

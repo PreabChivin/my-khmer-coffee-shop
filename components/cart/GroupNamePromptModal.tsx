@@ -52,7 +52,7 @@ export default function GroupNamePromptModal({
         />
         <button
           type="submit"
-          className="mt-4 w-full rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 py-2.5 font-bold text-white transition-transform hover:scale-[1.02] active:scale-95"
+          className="mt-4 w-full rounded-full bg-gradient-to-r from-accent to-accent-hover py-2.5 font-bold text-white transition-transform hover:scale-[1.02] active:scale-95"
         >
           {t("menu.addToCart")}
         </button>

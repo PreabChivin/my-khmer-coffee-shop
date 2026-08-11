@@ -163,7 +163,7 @@ export default function CartSidebar() {
                 <Link
                   href="/checkout"
                   onClick={closeCart}
-                  className="block w-full rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 py-3 text-center font-bold text-white transition-transform hover:scale-[1.02] active:scale-95"
+                  className="block w-full rounded-full bg-gradient-to-r from-accent to-accent-hover py-3 text-center font-bold text-white transition-transform hover:scale-[1.02] active:scale-95"
                 >
                   {t("group.checkout")}
                 </Link>

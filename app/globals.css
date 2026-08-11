@@ -6,6 +6,14 @@
   /* Soft Milk Tea Cream background + Rich Cocoa Brown text */
   --background: #fffdf9;
   --foreground: #4a2c11;
+  /* 🎨 User-personalizable accent — defaults to the original clay-400
+     look (Espresso preset), so nothing changes until a customer actually
+     opens Settings and picks a color. Overridden at runtime via
+     document.documentElement.style.setProperty("--accent", hex) from
+     ThemeContext; --accent-hover/--accent-glow derive from it automatically
+     via color-mix (same convention as the existing gold glow effects
+     below), so the picker only ever has to set this one variable. */
+  --accent: #ffb7b2;
 }
 
 .dark {
@@ -24,6 +32,10 @@ html[data-font-size="lg"] {
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  /* 🎨 Theme Color Customizer tokens — see --accent's doc comment above. */
+  --color-accent: var(--accent);
+  --color-accent-hover: color-mix(in srgb, var(--accent) 80%, black);
+  --color-accent-glow: color-mix(in srgb, var(--accent) 40%, transparent);
   --font-sans: var(--font-kantumruy);
   --font-khmer: var(--font-kantumruy);
   /* Friendly, rounded pop headings (Gen-Z kawaii) instead of temple Moul. */
