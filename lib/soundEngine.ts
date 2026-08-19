@@ -19,7 +19,11 @@ export type SoundName =
   | "claim"
   | "correct"
   | "wrong"
-  | "spin";
+  | "spin"
+  | "pack"
+  | "reveal"
+  | "legendary"
+  | "upgrade";
 
 const STORAGE_KEY = "arcade-sound-muted";
 
@@ -53,6 +57,26 @@ const SOUNDS: Record<SoundName, Tone[]> = {
   wrong: [
     { freq: 233, at: 0, dur: 0.14, type: "sawtooth", gain: 0.04 },
     { freq: 175, at: 0.12, dur: 0.18, type: "sawtooth", gain: 0.04 },
+  ],
+  // 🃏 Card collector cues
+  pack: [
+    { freq: 180, at: 0, dur: 0.18, type: "sawtooth", gain: 0.04 },
+    { freq: 140, at: 0.14, dur: 0.2, type: "sawtooth", gain: 0.035 },
+  ],
+  reveal: [
+    { freq: 880, at: 0, dur: 0.07, type: "sine", gain: 0.05 },
+    { freq: 1175, at: 0.06, dur: 0.1, type: "sine", gain: 0.05 },
+  ],
+  legendary: [
+    { freq: 523, at: 0, dur: 0.1, type: "triangle", gain: 0.07 },
+    { freq: 784, at: 0.1, dur: 0.1, type: "triangle", gain: 0.07 },
+    { freq: 1047, at: 0.2, dur: 0.12, type: "triangle", gain: 0.075 },
+    { freq: 1568, at: 0.32, dur: 0.28, type: "triangle", gain: 0.08 },
+  ],
+  upgrade: [
+    { freq: 440, at: 0, dur: 0.09, type: "sine", gain: 0.06 },
+    { freq: 660, at: 0.09, dur: 0.09, type: "sine", gain: 0.06 },
+    { freq: 990, at: 0.18, dur: 0.18, type: "sine", gain: 0.065 },
   ],
   spin: [
     { freq: 392, at: 0, dur: 0.07, type: "square", gain: 0.03 },

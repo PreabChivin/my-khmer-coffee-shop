@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Gamepad2, Sparkles, Trophy, Users2, Lock } from "lucide-react";
 import CafeLoungeBanner from "@/components/home/CafeLoungeBanner";
+import CardGameBanner from "@/components/cards/CardGameBanner";
 import PetZoo from "@/components/home/PetZoo";
 import WelcomePopup from "@/components/home/WelcomePopup";
 import HeroAvatarStage from "@/components/home/HeroAvatarStage";
@@ -253,6 +254,9 @@ export default function HomeContent({ shopItems }: { shopItems: PublicShopItemDT
             GameSession wins only; renders nothing on a quiet day. */}
         <LiveWinTicker />
       </section>
+
+      {/* 🃏 Headline feature — Creature Card Collector */}
+      <CardGameBanner />
 
       {/* 💬 Social Lounge entry point */}
       <div className="relative z-10">

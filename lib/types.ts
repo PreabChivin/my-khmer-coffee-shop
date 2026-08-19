@@ -1,3 +1,5 @@
+import type { Element } from "@/lib/creatures";
+
 /** 👤 Public-safe customer account shape (never includes passwordHash). */
 /** 🔐 CUSTOMER (default), STAFF (kitchen/menu/marketing access), or ADMIN
  *  (also User Management — role changes, password resets). */
@@ -203,6 +205,11 @@ export interface MissionDTO {
   rewardPoints: number;
   completed: boolean;
   claimed: boolean;
+  /** Occurrences recorded this period. */
+  progress: number;
+  /** Occurrences needed; 1 for a plain did-it-happen quest. */
+  target: number;
+  cadence: "DAILY" | "WEEKLY";
 }
 
 
@@ -452,3 +459,46 @@ export interface AdminChatMessageDTO {
   };
 }
 
+
+/** 🃏 One owned creature card, flattened with its species data + derived
+ *  power so the UI never has to re-run lib/cardEngine math itself. */
+export interface CreatureCardDTO {
+  id: string;
+  speciesId: string;
+  nameEn: string;
+  nameKm: string;
+  element: Element;
+  /** Body-shape hint for the procedural SVG art. */
+  shape: string;
+  emoji: string;
+  loreEn: string;
+  loreKm: string;
+  stars: number;
+  baseCp: number;
+  /** CP at the current level — what actually matters in battle. */
+  power: number;
+  level: number;
+  exp: number;
+  /** EXP required for the next level; 0 once max level. */
+  expNeeded: number;
+  isShiny: boolean;
+}
+
+export interface CollectionResponseDTO {
+  cards: CreatureCardDTO[];
+  /** Live Diamond balance (User.loyaltyPoints). */
+  loyaltyPoints: number;
+  packCost: number;
+}
+
+export interface PackOpenResultDTO {
+  cards: CreatureCardDTO[];
+  loyaltyPoints: number;
+}
+
+export interface UpgradeResultDTO {
+  card: CreatureCardDTO;
+  loyaltyPoints: number;
+  expGained: number;
+  levelsGained: number;
+}

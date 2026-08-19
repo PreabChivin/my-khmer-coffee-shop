@@ -92,9 +92,33 @@ export default function MissionsPanel() {
                 <p className="truncate font-heading text-sm font-bold text-coffee-900 dark:text-cream-50">
                   {lang === "km" ? m.titleKh : m.title}
                 </p>
-                <p className="text-xs font-bold text-clay-600 dark:text-clay-400">
-                  +{m.rewardPoints} 💎
-                </p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs font-bold text-clay-600 dark:text-clay-400">
+                    +{m.rewardPoints} 💎
+                  </p>
+                  {m.cadence === "WEEKLY" && (
+                    <span className="rounded-full bg-lavender-100 px-1.5 py-0.5 text-[9px] font-extrabold text-lavender-500 dark:bg-coffee-900">
+                      {lang === "km" ? "សប្តាហ៍" : "WEEKLY"}
+                    </span>
+                  )}
+                </div>
+                {/* Multi-step quests show real progress; single-step ones
+                    stay as they were (a bar of 0/1 or 1/1 adds nothing). */}
+                {m.target > 1 && (
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <div className="h-1 flex-1 overflow-hidden rounded-full bg-coffee-200/70 dark:bg-coffee-900">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-matcha-400 to-matcha-600"
+                        style={{
+                          width: `${Math.min(100, Math.round((m.progress / m.target) * 100))}%`,
+                        }}
+                      />
+                    </div>
+                    <span className="text-[9px] font-bold text-coffee-400 dark:text-cream-400">
+                      {Math.min(m.progress, m.target)}/{m.target}
+                    </span>
+                  </div>
+                )}
               </div>
               <button
                 type="button"

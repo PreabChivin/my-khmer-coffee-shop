@@ -12,36 +12,36 @@ datasource db {
 }
 
 model Product {
-  id             String          @id @default(uuid())
-  nameEn         String          @unique
-  nameKh         String
-  descriptionEn  String?
-  descriptionKh  String?
-  price          Float
-  categoryId     String
+  id              String          @id @default(uuid())
+  nameEn          String          @unique
+  nameKh          String
+  descriptionEn   String?
+  descriptionKh   String?
+  price           Float
+  categoryId      String
   // ⚠️ onDelete: Cascade — deleting a Category deletes every Product in it.
   // The Category Manager's delete confirmation must surface the affected
   // product count before calling this, since there is no undo.
-  category       Category        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  image          String
-  isAvailable    Boolean         @default(true)
+  category        Category        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  image           String
+  isAvailable     Boolean         @default(true)
   // 🤝 Partner Integration: co-branded / partner-exclusive items.
-  isPartner      Boolean         @default(false)
-  partnerName    String?
+  isPartner       Boolean         @default(false)
+  partnerName     String?
   // 🔥 Multi-tier Discount System (foodpanda-style badges)
   //   discountPercent — % off (affects price). flatDiscount — $ off (affects
   //   price, applied after the %). promoTag — a cosmetic conditional label
   //   (e.g. "ទិញ 1 ថែម 1", "E-Power Deal") shown as a badge, no price effect.
-  discountPercent Int            @default(0)
-  flatDiscount   Float           @default(0)
-  promoTag       String?
+  discountPercent Int             @default(0)
+  flatDiscount    Float           @default(0)
+  promoTag        String?
   // ⭐ Rating aggregate — average = ratingSum / ratingCount (guard div-by-0).
-  ratingCount    Int             @default(0)
-  ratingSum      Float           @default(0)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  orderItems     OrderItem[]
-  groupCartItems GroupCartItem[]
+  ratingCount     Int             @default(0)
+  ratingSum       Float           @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  orderItems      OrderItem[]
+  groupCartItems  GroupCartItem[]
 
   @@index([categoryId])
 }
@@ -64,12 +64,12 @@ model Category {
 }
 
 model Order {
-  id            String      @id @default(uuid())
+  id            String  @id @default(uuid())
   customerName  String
   customerPhone String
   orderType     String // 'PickUp' | 'Delivery'
   totalAmount   Float
-  orderStatus   String      @default("PENDING") // 'PENDING' | 'AWAITING_VERIFICATION' | 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED'
+  orderStatus   String  @default("PENDING") // 'PENDING' | 'AWAITING_VERIFICATION' | 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED'
   note          String?
   address       String?
   // 📍 Exact pin dropped in the delivery-address map picker (nullable — a
@@ -80,10 +80,10 @@ model Order {
   fortune       String? // "Destiny Cup" coffee fortune assigned at checkout
 
   // 🎡 Wheel of Coffee prize won at checkout (label, redeemed at counter).
-  spinPrize     String?
+  spinPrize String?
 
   // 🐻 Loyalty: number of free-drink rewards redeemed against this order (0 or 1).
-  redeemedFreeDrinks Int     @default(0)
+  redeemedFreeDrinks Int @default(0)
 
   // 💖 Gift a Drink ("Send Love to Crush")
   isGift            Boolean @default(false)
@@ -102,7 +102,7 @@ model Order {
   // ទទួលដំណឹងតាម Telegram" button and starts a chat with the bot via
   // /start <orderId>. Null until then — status-change notifications only
   // fire once this is present. Never the staff group id (see lib/telegram.ts).
-  customerTelegramChatId String?
+  customerTelegramChatId   String?
   // @username on the linked Telegram account, when the customer has one set
   // (Telegram doesn't require one, so this stays null for many). Captured
   // from the webhook payload at link time — see app/api/telegram/webhook.
@@ -117,21 +117,21 @@ model Order {
   // leave it null). onDelete: SetNull keeps the order + its history intact if
   // the account is ever removed.
   userId        String?
-  user          User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user          User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
   // 🎁 Loyalty idempotency guard — flipped true the first time this order is
   // marked COMPLETED and points are credited, so re-completing never double-awards.
-  pointsAwarded Boolean     @default(false)
+  pointsAwarded Boolean @default(false)
 
   // 🕒 Order Timeline — the moment each stage was first reached (set by staff
   // transitions). placedAt is createdAt; null means "not reached yet".
-  preparingAt   DateTime?
-  readyAt       DateTime?
-  completedAt   DateTime?
+  preparingAt DateTime?
+  readyAt     DateTime?
+  completedAt DateTime?
 
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  items         OrderItem[]
-  payment       Payment?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  items     OrderItem[]
+  payment   Payment?
 
   @@index([userId])
 }
@@ -154,75 +154,76 @@ enum Role {
 // (its one row was migrated in here) and kept only as an inert table until
 // a later cleanup migration drops it.
 model User {
-  id            String   @id @default(uuid())
-  email         String   @unique
-  username      String?  @unique
-  passwordHash  String? // null only for future pure-OAuth accounts
-  name          String
-  phone         String?
+  id                        String                @id @default(uuid())
+  email                     String                @unique
+  username                  String?               @unique
+  passwordHash              String? // null only for future pure-OAuth accounts
+  name                      String
+  phone                     String?
   // 🖼️ Profile picture — a compressed base64 JPEG data URL (same storage
   // pattern as ChatMessage.imageUrl: no object storage service, compressed
   // client-side before upload). Rendered as the member's chat avatar.
-  avatarUrl     String?
-  role          Role     @default(CUSTOMER)
+  avatarUrl                 String?
+  role                      Role                  @default(CUSTOMER)
   // 🎂 Date of birth — used to derive the customer's generation tier
   // (lib/generation.ts). Nullable so pre-existing accounts stay valid; the
   // registration form requires it for all new sign-ups.
-  dateOfBirth   DateTime?
+  dateOfBirth               DateTime?
   // 💎 Loyalty Points Reward Program (សន្សំពិន្ទុ) — lifetime points balance.
-  loyaltyPoints Int      @default(0)
+  loyaltyPoints             Int                   @default(0)
   // 🔮 OAuth provider scaffold (wired later once credentials exist).
-  googleId      String?  @unique
-  facebookId    String?  @unique
-  telegramId    String?  @unique
+  googleId                  String?               @unique
+  facebookId                String?               @unique
+  telegramId                String?               @unique
   // 🏅 Admin-awarded personalized badges (direct gift giver).
-  badges        String[] @default([])
+  badges                    String[]              @default([])
   // 🚫 Soft-delete — set by an ADMIN via the User Management panel. Blocks
   // login (see app/api/auth/login/route.ts) without erasing any data;
   // reversible. The separate "Permanently Purge" action does a real DELETE
   // instead of touching this field.
-  deactivatedAt DateTime?
+  deactivatedAt             DateTime?
   // 🔇 Chat moderation (Café Lounge) — ADMIN-only actions, independent of
   // account deactivation so a customer can be timed out of chat without
   // touching their ability to order. chatMutedUntil blocks sending/reacting
   // only (still readable); chatBannedAt blocks the whole feature.
-  chatMutedUntil DateTime?
-  chatBannedAt   DateTime?
+  chatMutedUntil            DateTime?
+  chatBannedAt              DateTime?
   // 🎮 Café Lounge mini-game scoreboard (lifetime, across all matches).
-  gameWins      Int      @default(0)
-  gameLosses    Int      @default(0)
-  gameTies      Int      @default(0)
+  gameWins                  Int                   @default(0)
+  gameLosses                Int                   @default(0)
+  gameTies                  Int                   @default(0)
   // 🤖 True only for accounts created by automated tooling (live-repro
   // testing against production, e2e scripts) via the reserved
   // @claude-agent-test.local email domain — see lib/testAccount.ts. Never
   // settable by a real customer's own sign-up. Lets the admin bulk-purge
   // test noise (app/api/admin/customers/purge-test-accounts) instead of
   // guessing from names one at a time.
-  isTestAccount Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  orders        Order[]
-  redemptions   RedemptionHistory[]
-  notifications Notification[]
-  savedAddresses SavedAddress[]
-  chatMessages  ChatMessage[]
-  chatReactions ChatReaction[]
-  chatTyping    ChatTyping?
-  gamesAsPlayer1 GameSession[] @relation("GamePlayer1")
-  gamesAsPlayer2 GameSession[] @relation("GamePlayer2")
-  gamesTargetingMe GameSession[] @relation("GameTarget")
-  quizPlayerRows QuizPlayer[]
-  directConversationsAsA DirectConversation[] @relation("ConversationUserA")
-  directConversationsAsB DirectConversation[] @relation("ConversationUserB")
-  directMessagesSent     DirectMessage[]      @relation("DirectMessageSender")
+  isTestAccount             Boolean               @default(false)
+  createdAt                 DateTime              @default(now())
+  updatedAt                 DateTime              @updatedAt
+  orders                    Order[]
+  redemptions               RedemptionHistory[]
+  notifications             Notification[]
+  savedAddresses            SavedAddress[]
+  chatMessages              ChatMessage[]
+  chatReactions             ChatReaction[]
+  chatTyping                ChatTyping?
+  gamesAsPlayer1            GameSession[]         @relation("GamePlayer1")
+  gamesAsPlayer2            GameSession[]         @relation("GamePlayer2")
+  gamesTargetingMe          GameSession[]         @relation("GameTarget")
+  quizPlayerRows            QuizPlayer[]
+  creatureCards             CreatureCard[]
+  directConversationsAsA    DirectConversation[]  @relation("ConversationUserA")
+  directConversationsAsB    DirectConversation[]  @relation("ConversationUserB")
+  directMessagesSent        DirectMessage[]       @relation("DirectMessageSender")
   // 🎩 Avatar Shop + Daily Missions — spends the SAME loyaltyPoints balance
   // above ("Cafe Points" is a display label, not a separate currency).
-  inventory              UserInventory[]
-  missionProgress        UserMissionProgress[]
+  inventory                 UserInventory[]
+  missionProgress           UserMissionProgress[]
   // 💎 Points-adjustment audit trail — split so an admin's OWN adjustment
   // history (as the actor) is distinguishable from adjustments made TO them.
-  pointsAdjustmentsReceived PointsAdjustment[] @relation("PointsAdjustmentTarget")
-  pointsAdjustmentsGiven    PointsAdjustment[] @relation("PointsAdjustmentAdmin")
+  pointsAdjustmentsReceived PointsAdjustment[]    @relation("PointsAdjustmentTarget")
+  pointsAdjustmentsGiven    PointsAdjustment[]    @relation("PointsAdjustmentAdmin")
 }
 
 // 📍 Address book — a logged-in customer's saved delivery locations, each
@@ -263,31 +264,31 @@ model Notification {
 // (tiers map to points), optionally labelled. Drawing picks a random eligible
 // customer and notifies them.
 model LuckyDraw {
-  id          String    @id @default(uuid())
-  title       String
-  prizeName   String
-  prizeEmoji  String    @default("🎁")
-  month       String // e.g. "2026-07"
-  minPoints   Int       @default(0)
-  tierLabel   String?
-  winnerId    String?
-  winnerName  String?
-  drawnAt     DateTime?
-  createdAt   DateTime  @default(now())
+  id         String    @id @default(uuid())
+  title      String
+  prizeName  String
+  prizeEmoji String    @default("🎁")
+  month      String // e.g. "2026-07"
+  minPoints  Int       @default(0)
+  tierLabel  String?
+  winnerId   String?
+  winnerName String?
+  drawnAt    DateTime?
+  createdAt  DateTime  @default(now())
 }
 
 // 🎁 Loyalty Redemption Store (ហាងប្ដូររង្វាន់) — catalogue of rewards a
 // customer can spend points on (e.g. Free Coffee = 500 pts).
 model Reward {
-  id          String   @id @default(uuid())
+  id          String              @id @default(uuid())
   name        String
   nameKh      String
   cost        Int // points required
-  emoji       String   @default("🎁")
+  emoji       String              @default("🎁")
   description String?
-  isAvailable Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isAvailable Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
   redemptions RedemptionHistory[]
 }
 
@@ -295,35 +296,35 @@ model Reward {
 // stays meaningful even if the Reward is later edited/deleted. status flags
 // it to staff: PENDING (needs fulfilling) -> FULFILLED (handed over).
 model RedemptionHistory {
-  id         String   @id @default(uuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  rewardId   String?
-  reward     Reward?  @relation(fields: [rewardId], references: [id], onDelete: SetNull)
-  rewardName String
-  rewardEmoji String  @default("🎁")
-  cost       Int
-  status     String   @default("PENDING") // 'PENDING' | 'FULFILLED'
-  createdAt  DateTime @default(now())
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rewardId    String?
+  reward      Reward?  @relation(fields: [rewardId], references: [id], onDelete: SetNull)
+  rewardName  String
+  rewardEmoji String   @default("🎁")
+  cost        Int
+  status      String   @default("PENDING") // 'PENDING' | 'FULFILLED'
+  createdAt   DateTime @default(now())
 
   @@index([userId])
   @@index([status])
 }
 
 model OrderItem {
-  id             String   @id @default(uuid())
-  orderId        String
-  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId      String
-  product        Product  @relation(fields: [productId], references: [id])
-  quantity       Int
-  price          Float // unit price INCLUDING customization surcharge
+  id              String   @id @default(uuid())
+  orderId         String
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id])
+  quantity        Int
+  price           Float // unit price INCLUDING customization surcharge
   // Per-line drink customization (sweetness / ice / extra shots). Null for
   // non-customizable items such as bakery. Stored as JSONB.
-  customizations Json?
+  customizations  Json?
   // 👯 Bestie Cart: whose drink this is, e.g. "ប្រូ វីត" — null for solo orders.
   contributorName String?
-  createdAt      DateTime @default(now())
+  createdAt       DateTime @default(now())
 }
 
 // 🐻 Cute Bear Stamps loyalty program, keyed by customer phone number (no
@@ -408,40 +409,40 @@ model Admin {
 // every other "live" surface in this app (order board, notifications) —
 // no WebSocket/Supabase/Pusher infrastructure.
 model ChatMessage {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  text      String
+  id              String         @id @default(uuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text            String
   // 🖼️ A compressed base64 image data URL (client-compressed, stored inline —
   // this app has no object storage service) or a legacy https link. Renders
   // inline in the bubble.
-  imageUrl  String?
+  imageUrl        String?
   // 🛡️ Soft-delete — hides the message from the member-facing feed without
   // erasing it, mirroring the User.deactivatedAt pattern. Set either by the
   // sender themselves (isDeletedByUser: true) or by Staff/Admin moderation
   // (isDeletedByUser stays false) — the Admin Chat Monitor shows both, this
   // flag is just how it labels which happened.
-  deletedAt DateTime?
-  isDeletedByUser Boolean @default(false)
+  deletedAt       DateTime?
+  isDeletedByUser Boolean        @default(false)
   // ✏️ Edit audit trail — originalText is set ONCE, on the first edit, so it
   // always holds the message exactly as first sent (later edits only update
   // `text` + `editedAt`, never overwrite originalText). null = never edited.
-  originalText String?
-  editedAt     DateTime?
+  originalText    String?
+  editedAt        DateTime?
   // 🚩 Marked for review by Staff/Admin without deleting — keeps the message
   // as evidence for other moderators, surfaced in the Admin Chat Monitor's
   // "Flagged" filter. Also set automatically by lib/chatModerationFilter.ts
   // on send for messages matching a risky-content pattern.
-  flagged   Boolean  @default(false)
+  flagged         Boolean        @default(false)
   // 🎮💌 Message kind — "TEXT" (normal), "STICKER" (one of the predefined
   // lib/stickers.ts set, rendered large with no bubble chrome), "GAME_INVITE"
   // (carries a challenge, links to gameSession), or "GAME_RESULT" (system
   // announcement of a match outcome). Existing rows default to TEXT.
-  kind      String   @default("TEXT")
-  gameSessionId String?
-  gameSession   GameSession? @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  reactions ChatReaction[]
+  kind            String         @default("TEXT")
+  gameSessionId   String?
+  gameSession     GameSession?   @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
+  createdAt       DateTime       @default(now())
+  reactions       ChatReaction[]
 
   @@index([createdAt])
   @@index([userId])
@@ -480,16 +481,16 @@ model ChatTyping {
 // matter who initiated it, and @@unique makes a duplicate room impossible at
 // the DB level rather than relying on app-code discipline alone.
 model DirectConversation {
-  id        String   @id @default(uuid())
+  id        String          @id @default(uuid())
   userAId   String
-  userA     User     @relation("ConversationUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userA     User            @relation("ConversationUserA", fields: [userAId], references: [id], onDelete: Cascade)
   userBId   String
-  userB     User     @relation("ConversationUserB", fields: [userBId], references: [id], onDelete: Cascade)
+  userB     User            @relation("ConversationUserB", fields: [userBId], references: [id], onDelete: Cascade)
   messages  DirectMessage[]
-  createdAt DateTime @default(now())
+  createdAt DateTime        @default(now())
   // Bumped on every new message — lets the "Active Private Chats" list sort
   // by recency with a plain orderBy, no separate last-message join.
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime        @updatedAt
 
   @@unique([userAId, userBId])
   @@index([userAId])
@@ -505,20 +506,20 @@ model DirectConversation {
 // the shared room. Only TEXT/STICKER kinds — no mini-games in DMs (out of
 // scope for this pass) and no reactions (not requested).
 model DirectMessage {
-  id             String             @id @default(uuid())
-  conversationId String
-  conversation   DirectConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  senderId       String
-  sender         User               @relation("DirectMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  text           String
-  imageUrl       String?
-  deletedAt      DateTime?
-  isDeletedByUser Boolean           @default(false)
-  originalText   String?
-  editedAt       DateTime?
-  flagged        Boolean            @default(false)
-  kind           String             @default("TEXT") // "TEXT" | "STICKER"
-  createdAt      DateTime           @default(now())
+  id              String             @id @default(uuid())
+  conversationId  String
+  conversation    DirectConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId        String
+  sender          User               @relation("DirectMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  text            String
+  imageUrl        String?
+  deletedAt       DateTime?
+  isDeletedByUser Boolean            @default(false)
+  originalText    String?
+  editedAt        DateTime?
+  flagged         Boolean            @default(false)
+  kind            String             @default("TEXT") // "TEXT" | "STICKER"
+  createdAt       DateTime           @default(now())
 
   @@index([conversationId, createdAt])
   @@index([senderId])
@@ -535,14 +536,14 @@ model DirectMessage {
 // a formal relation — the winner is always one of the two players, so a FK
 // would only add multi-cascade complexity for zero benefit.
 model GameSession {
-  id        String   @id @default(uuid())
-  gameType  String   @default("TICTACTOE") // "TICTACTOE"
+  id           String        @id @default(uuid())
+  gameType     String        @default("TICTACTOE") // "TICTACTOE"
   // "PENDING" (open challenge) | "ACTIVE" | "COMPLETED" | "DECLINED" | "CANCELLED"
-  status    String   @default("PENDING")
-  player1Id String
-  player1   User     @relation("GamePlayer1", fields: [player1Id], references: [id], onDelete: Cascade)
-  player2Id String?
-  player2   User?    @relation("GamePlayer2", fields: [player2Id], references: [id], onDelete: Cascade)
+  status       String        @default("PENDING")
+  player1Id    String
+  player1      User          @relation("GamePlayer1", fields: [player1Id], references: [id], onDelete: Cascade)
+  player2Id    String?
+  player2      User?         @relation("GamePlayer2", fields: [player2Id], references: [id], onDelete: Cascade)
   // 🎯 Optional targeted challenge — "invite this specific member" rather
   // than an open first-to-accept invite. Null = anyone in the room can
   // accept (the original behavior). Set = only targetUserId may accept;
@@ -550,13 +551,13 @@ model GameSession {
   // (still one shared room, no private channel), just without an Accept
   // button of their own.
   targetUserId String?
-  target       User?   @relation("GameTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
-  winnerId  String? // null when tie or not finished; else equals a player id
-  isTie     Boolean  @default(false)
-  gameState Json // { board: (null|"player1"|"player2")[9], turn: "player1"|"player2" }
-  messages  ChatMessage[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  target       User?         @relation("GameTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  winnerId     String? // null when tie or not finished; else equals a player id
+  isTie        Boolean       @default(false)
+  gameState    Json // { board: (null|"player1"|"player2")[9], turn: "player1"|"player2" }
+  messages     ChatMessage[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   @@index([status])
 }
@@ -570,50 +571,77 @@ model GameSession {
 // GameSession. Questions live in code (lib/quizQuestions.ts), not a DB
 // table — same convention as lib/missions.ts's static MISSIONS list.
 model QuizMatch {
-  id     String @id @default(uuid())
+  id                       String       @id @default(uuid())
   // "WAITING" (lobby, filling up) | "ACTIVE" (questions live) |
   // "COMPLETED" | "CANCELLED"
-  status String @default("WAITING")
+  status                   String       @default("WAITING")
   // Room fills toward this (2-4); auto-starts the instant it's reached.
   // Any participant can also start early once >=2 have joined — without
   // an AI-bot filler, requiring exactly `capacity` could otherwise leave a
   // room waiting forever if fewer real players are online right now.
-  capacity Int @default(4)
+  capacity                 Int          @default(4)
   // Fixed, server-chosen question keys for this room — decided once at
   // creation so every player answers the exact same quiz in the exact same
   // order, never regenerated mid-match.
-  questionIds String[]
+  questionIds              String[]
   // -1 before the match starts; otherwise the 0-based index into
   // questionIds currently live.
-  currentQuestionIndex Int @default(-1)
+  currentQuestionIndex     Int          @default(-1)
   // Server timestamp the CURRENT question went live — the single source of
   // truth for the countdown and for speed-based scoring on every client;
   // never trust a client-reported elapsed time.
   currentQuestionStartedAt DateTime?
   // Guards the podium point-grant so it only ever fires once, even if the
   // completing request is retried or raced.
-  rewardsGranted Boolean @default(false)
-  players   QuizPlayer[]
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  rewardsGranted           Boolean      @default(false)
+  players                  QuizPlayer[]
+  createdAt                DateTime     @default(now())
+  updatedAt                DateTime     @updatedAt
 
   @@index([status])
 }
 
 model QuizPlayer {
-  id      String    @id @default(uuid())
-  matchId String
-  match   QuizMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  userId  String
-  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  score   Int       @default(0)
+  id       String    @id @default(uuid())
+  matchId  String
+  match    QuizMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score    Int       @default(0)
   // { [questionIndex: string]: { choice: 0-3, ms: number } } — one entry
   // per question this player has answered so far this match.
-  answers Json     @default("{}")
-  joinedAt DateTime @default(now())
+  answers  Json      @default("{}")
+  joinedAt DateTime  @default(now())
 
   @@unique([matchId, userId])
   @@index([matchId])
+}
+
+// 🃏 Creature Card Collector — one OWNED card instance. The species roster
+// itself lives in code (lib/creatures.ts), the same convention as
+// lib/missions.ts and lib/quizQuestions.ts: authored game content, not
+// admin-CRUD data, so there is deliberately no species table to keep in
+// sync. Packs are bought with the SAME User.loyaltyPoints balance every
+// other feature uses ("Diamonds" is a display label, never a 2nd currency).
+model CreatureCard {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Key into CREATURES in lib/creatures.ts.
+  speciesId String
+  // 1-5, rolled independently at pull time — the same species can come out
+  // at any star rating, which is the whole point of the gacha.
+  stars     Int
+  // Rolled at pull time inside the species range and scaled by stars, so
+  // even two same-species same-star cards are not identical.
+  baseCp    Int
+  level     Int      @default(1)
+  exp       Int      @default(0)
+  isShiny   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, speciesId])
 }
 
 // 🎩 Avatar Shop & Daily Missions — spends/earns the SAME `User.loyaltyPoints`

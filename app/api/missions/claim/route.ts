@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/customerAuth";
-import { getMission, todayPeriodKey } from "@/lib/missions";
+import { getMission, periodKeyForMission } from "@/lib/missions";
 import { toUserDTO } from "@/lib/userDto";
 import type { UserDTO } from "@/lib/types";
 import type { User } from "@prisma/client";
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const periodKey = todayPeriodKey();
+    const periodKey = periodKeyForMission(mission.key);
     const result = await prisma.$transaction(async (tx): Promise<ClaimTxResult> => {
       const claim = await tx.userMissionProgress.updateMany({
         where: {
