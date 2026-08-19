@@ -665,6 +665,21 @@ select:focus {
   animation: none;
 }
 
+/* ⚡ Homepage live-win-ticker marquee — content is duplicated once by the
+ * component so a -50% translate loops seamlessly. */
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-ticker-scroll {
+  animation: ticker-scroll 22s linear infinite;
+}
+
 /* 💫 Skeleton shimmer for premium loading states */
 @keyframes shimmer-sweep {
   0% {

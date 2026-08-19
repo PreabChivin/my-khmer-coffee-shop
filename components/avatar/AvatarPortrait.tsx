@@ -77,7 +77,7 @@ export default function AvatarPortrait({ baseCharacter, equipped, height = 300 }
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-8xl drop-shadow-lg">{baseCharacter?.emoji ?? "🧑‍🍳"}</span>
+          <span className="text-8xl drop-shadow-lg">{baseCharacter?.emoji ?? "🎮"}</span>
         </div>
       )}
 

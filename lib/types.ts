@@ -101,6 +101,33 @@ export interface LeaderboardRowDTO {
   loyaltyPoints: number;
 }
 
+/** ⚡ One recent real game win, for the homepage's live activity ticker —
+ *  see app/api/games/live-ticker/route.ts's doc comment: this is always
+ *  real GameSession data, never a fabricated placeholder. */
+export interface LiveTickerEntryDTO {
+  id: string;
+  winnerName: string;
+  gameType: "TICTACTOE" | "RPS";
+  at: string;
+}
+
+export interface LiveTickerResponseDTO {
+  entries: LiveTickerEntryDTO[];
+  /** Real completed-match count per gameType since midnight — backs each
+   *  Game Arena card's "played today" badge. */
+  todayPlayedCounts: Record<string, number>;
+}
+
+/** 🎡 Daily Lucky Spin — see lib/spin.ts + app/api/spin/route.ts. */
+export interface SpinStatusDTO {
+  alreadySpunToday: boolean;
+}
+
+export interface SpinResultDTO {
+  pointsWon: number;
+  loyaltyPoints: number;
+}
+
 /** 🔍 The intentionally-public subset of another user's profile, shown via
  *  PublicPlayerModal — id/name/points/badges/equipped items ONLY, never
  *  email/phone/passwordHash. `equipped` includes the BASE_CHARACTER slot
