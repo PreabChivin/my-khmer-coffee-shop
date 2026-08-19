@@ -147,8 +147,8 @@ export default function CollectionPage() {
           </h1>
           <p className="mt-1 text-sm text-coffee-500 dark:text-cream-300">
             {km
-              ? `សត្វ ${owned} ក្បាល · កម្លាំងខ្ពស់បំផុត ⚔ ${strongest}`
-              : `${owned} creatures · strongest ⚔ ${strongest}`}
+              ? `សត្វ ${owned} ក្បាល · កម្លាំងខ្ពស់បំផុត CP ${strongest}`
+              : `${owned} creatures · strongest CP ${strongest}`}
           </p>
         </div>
 

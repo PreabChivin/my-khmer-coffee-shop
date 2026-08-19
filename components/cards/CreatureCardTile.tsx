@@ -89,7 +89,7 @@ export default function CreatureCardTile({
           <span className="rounded-full bg-coffee-100 px-1.5 py-0.5 text-coffee-700 dark:bg-coffee-800 dark:text-cream-200">
             Lv.{card.level}
           </span>
-          <span className="text-crimson-600 dark:text-crimson-400">⚔ {card.power}</span>
+          <span className="text-crimson-600 dark:text-crimson-400">CP {card.power}</span>
         </div>
 
         {/* exp bar */}
