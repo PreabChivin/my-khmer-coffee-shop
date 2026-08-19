@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
       gameWins: created.gameWins,
       role: created.role,
       deactivatedAt: null,
+      isTestAccount: false,
     };
     return NextResponse.json(body, { status: 201 });
   } catch (err) {

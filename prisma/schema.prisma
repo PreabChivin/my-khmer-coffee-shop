@@ -192,6 +192,13 @@ model User {
   gameWins      Int      @default(0)
   gameLosses    Int      @default(0)
   gameTies      Int      @default(0)
+  // 🤖 True only for accounts created by automated tooling (live-repro
+  // testing against production, e2e scripts) via the reserved
+  // @claude-agent-test.local email domain — see lib/testAccount.ts. Never
+  // settable by a real customer's own sign-up. Lets the admin bulk-purge
+  // test noise (app/api/admin/customers/purge-test-accounts) instead of
+  // guessing from names one at a time.
+  isTestAccount Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   orders        Order[]

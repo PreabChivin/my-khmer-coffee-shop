@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
       gameWins: u.gameWins,
       role: u.role,
       deactivatedAt: u.deactivatedAt ? u.deactivatedAt.toISOString() : null,
+      isTestAccount: u.isTestAccount,
     }));
     return NextResponse.json(body);
   } catch {

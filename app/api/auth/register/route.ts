@@ -9,6 +9,7 @@ import {
 } from "@/lib/customerAuth";
 import { registerSchema } from "@/lib/validation/auth";
 import { toUserDTO } from "@/lib/userDto";
+import { isTestAccountEmail } from "@/lib/testAccount";
 
 export async function POST(request: NextRequest) {
   let raw: unknown;
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
         username: username || null,
         phone: phone || null,
         dateOfBirth: new Date(`${dateOfBirth}T00:00:00Z`),
+        isTestAccount: isTestAccountEmail(email),
       },
     });
 

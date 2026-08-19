@@ -31,6 +31,9 @@ export interface AdminCustomerRowDTO {
   role: Role;
   /** ISO string when soft-deleted (login blocked), else null. */
   deactivatedAt: string | null;
+  /** True for accounts auto-flagged by the reserved test-email domain —
+   *  see lib/testAccount.ts. Drives the "🤖 TEST" badge + bulk purge. */
+  isTestAccount: boolean;
 }
 
 /** 👑 Admin per-customer profile: the account + lifetime arcade scoreboard. */
