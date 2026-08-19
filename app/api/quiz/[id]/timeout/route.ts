@@ -36,8 +36,11 @@ export async function POST(
     if (match.status === "ACTIVE" && match.currentQuestionStartedAt) {
       const elapsed = Date.now() - match.currentQuestionStartedAt.getTime();
       if (elapsed >= QUESTION_DURATION_MS - CLOCK_SKEW_GRACE_MS) {
-        await prisma.$transaction((tx) =>
-          tryAdvanceQuizMatch(tx, id, match.currentQuestionIndex, match.questionIds.length)
+        // Same generous timeout as the answer route — this can also be the
+        // call that finishes the match and fans out reward grants.
+        await prisma.$transaction(
+          (tx) => tryAdvanceQuizMatch(tx, id, match.currentQuestionIndex, match.questionIds.length),
+          { timeout: 20000 }
         );
       }
     }

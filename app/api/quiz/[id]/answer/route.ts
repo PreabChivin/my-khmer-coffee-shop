@@ -73,28 +73,36 @@ export async function POST(
     const correct = choiceIndex === question.correctIndex;
     const points = computeAnswerPoints(correct, msTaken);
 
-    await prisma.$transaction(async (tx) => {
-      await tx.quizPlayer.update({
-        where: { id: myRow.id },
-        data: {
-          score: { increment: points },
-          answers: { ...myAnswers, [String(idx)]: { choice: choiceIndex, ms: msTaken } },
-        },
-      });
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.quizPlayer.update({
+          where: { id: myRow.id },
+          data: {
+            score: { increment: points },
+            answers: { ...myAnswers, [String(idx)]: { choice: choiceIndex, ms: msTaken } },
+          },
+        });
 
-      const fresh = await tx.quizMatch.findUniqueOrThrow({ where: { id }, include: quizMatchInclude });
-      const allAnswered = fresh.players.every((p) => {
-        const a = (p.answers as StoredAnswers | null) ?? {};
-        return Boolean(a[String(idx)]);
-      });
-      if (allAnswered) {
-        await tryAdvanceQuizMatch(tx, id, idx, fresh.questionIds.length);
-      } else if (msTaken > QUESTION_DURATION_MS) {
-        // I was the last to answer but well past the deadline — still try
-        // to advance in case the timeout route hasn't fired yet.
-        await tryAdvanceQuizMatch(tx, id, idx, fresh.questionIds.length);
-      }
-    });
+        const fresh = await tx.quizMatch.findUniqueOrThrow({ where: { id }, include: quizMatchInclude });
+        const allAnswered = fresh.players.every((p) => {
+          const a = (p.answers as StoredAnswers | null) ?? {};
+          return Boolean(a[String(idx)]);
+        });
+        if (allAnswered) {
+          await tryAdvanceQuizMatch(tx, id, idx, fresh.questionIds.length);
+        } else if (msTaken > QUESTION_DURATION_MS) {
+          // I was the last to answer but well past the deadline — still try
+          // to advance in case the timeout route hasn't fired yet.
+          await tryAdvanceQuizMatch(tx, id, idx, fresh.questionIds.length);
+        }
+      },
+      // Prisma's default 5s transaction timeout isn't enough when this
+      // call happens to be the one that finishes the match — completing
+      // fans out into a sequential round-trip per player (points +
+      // 2 mission bumps each) against a serverless Postgres connection,
+      // confirmed to exceed 5s live with just 2 players in the room.
+      { timeout: 20000 }
+    );
 
     const updated = await prisma.quizMatch.findUniqueOrThrow({ where: { id }, include: quizMatchInclude });
     return NextResponse.json(toQuizMatchDetailDTO(updated, session.id));
