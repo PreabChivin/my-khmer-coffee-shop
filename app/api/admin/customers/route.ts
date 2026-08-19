@@ -3,9 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
 import type { AdminCustomerRowDTO } from "@/lib/types";
 
-// 👑 Admin-only: every registered customer with their order count, for the
-// "Registered Customers" dashboard table. Generation is derived client-side
-// from dateOfBirth (lib/generation.ts).
+// 👑 Admin-only: every registered customer with their arcade win count, for
+// the "Registered Customers" dashboard table. Generation is derived
+// client-side from dateOfBirth (lib/generation.ts).
 export async function GET(request: NextRequest) {
   if (!getAdminFromRequest(request)) {
     return NextResponse.json({ error: "អ្នកមិនមានសិទ្ធិចូលប្រើមុខងារនេះទេ។" }, { status: 401 });
@@ -14,7 +14,6 @@ export async function GET(request: NextRequest) {
   try {
     const users = await prisma.user.findMany({
       orderBy: { createdAt: "desc" },
-      include: { _count: { select: { orders: true } } },
     });
 
     const body: AdminCustomerRowDTO[] = users.map((u) => ({
@@ -26,7 +25,7 @@ export async function GET(request: NextRequest) {
       dateOfBirth: u.dateOfBirth ? u.dateOfBirth.toISOString() : null,
       loyaltyPoints: u.loyaltyPoints,
       joinedAt: u.createdAt.toISOString(),
-      orderCount: u._count.orders,
+      gameWins: u.gameWins,
       role: u.role,
       deactivatedAt: u.deactivatedAt ? u.deactivatedAt.toISOString() : null,
     }));

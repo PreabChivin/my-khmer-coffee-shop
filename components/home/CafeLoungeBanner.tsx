@@ -29,7 +29,7 @@ export default function CafeLoungeBanner() {
         </span>
         <div className="min-w-0 flex-1 text-white">
           <p className="font-heading text-lg font-extrabold drop-shadow-sm">
-            Café Lounge ✨ ជជែកលេង
+            Social Lounge ✨ ជជែកលេង
           </p>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-white/90">
             <span className="flex items-center gap-1">

@@ -6,20 +6,10 @@ import { Bell, Gift } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { useAuthModal } from "@/contexts/AuthModalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import type { TranslationKey } from "@/lib/i18n";
-import type { NotificationDTO, OrderHistoryItemDTO, OrderStatus } from "@/lib/types";
+import type { NotificationDTO } from "@/lib/types";
 
 const SEEN_KEY = "cafe-notif-seen";
 const POLL_MS = 60000;
-
-const STATUS_ALERT: Record<OrderStatus, { emoji: string; key: TranslationKey }> = {
-  PENDING: { emoji: "⏳", key: "notif.status.pending" },
-  AWAITING_VERIFICATION: { emoji: "👀", key: "notif.status.awaiting" },
-  PREPARING: { emoji: "☕", key: "notif.status.preparing" },
-  READY: { emoji: "🛵", key: "notif.status.ready" },
-  COMPLETED: { emoji: "✅", key: "notif.status.completed" },
-  CANCELLED: { emoji: "🥺", key: "notif.status.cancelled" },
-};
 
 interface Alert {
   id: string;
@@ -34,7 +24,6 @@ export default function NotificationBell() {
   const { user } = useSession();
   const { openAuth } = useAuthModal();
   const { t } = useLanguage();
-  const [orders, setOrders] = useState<OrderHistoryItemDTO[]>([]);
   const [notifs, setNotifs] = useState<NotificationDTO[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [lastSeen, setLastSeen] = useState(0);
@@ -72,29 +61,6 @@ export default function NotificationBell() {
     // Re-fetch when auth changes so targeted notifications appear/disappear.
   }, [user]);
 
-  // Poll the customer's order statuses while signed in. (Logged-out users
-  // simply have their order alerts filtered out in the memo below.)
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    const load = async () => {
-      try {
-        const res = await fetch("/api/orders/mine");
-        if (!res.ok) return;
-        const data: OrderHistoryItemDTO[] = await res.json();
-        if (!cancelled) setOrders(data);
-      } catch {
-        // transient
-      }
-    };
-    load();
-    const timer = setInterval(load, POLL_MS);
-    return () => {
-      cancelled = true;
-      clearInterval(timer);
-    };
-  }, [user]);
-
   useEffect(() => {
     if (!isOpen) return;
     function onDown(e: MouseEvent) {
@@ -107,17 +73,6 @@ export default function NotificationBell() {
   }, [isOpen]);
 
   const alerts = useMemo<Alert[]>(() => {
-    const orderAlerts: Alert[] = (user ? orders : []).map((o) => {
-      const s = STATUS_ALERT[o.orderStatus];
-      return {
-        id: `o-${o.id}`,
-        emoji: s.emoji,
-        title: `${t("notif.orderLabel")} #${o.id.slice(0, 8).toUpperCase()}`,
-        body: t(s.key),
-        ts: new Date(o.updatedAt).getTime(),
-        href: "/orders",
-      };
-    });
     const notifAlerts: Alert[] = notifs.map((n) => ({
       id: `n-${n.id}`,
       emoji: n.emoji,
@@ -126,8 +81,8 @@ export default function NotificationBell() {
       ts: new Date(n.createdAt).getTime(),
       href: n.href,
     }));
-    return [...orderAlerts, ...notifAlerts].sort((a, b) => b.ts - a.ts).slice(0, 15);
-  }, [user, orders, notifs, t]);
+    return notifAlerts.sort((a, b) => b.ts - a.ts).slice(0, 15);
+  }, [notifs]);
 
   const unread = useMemo(
     () => alerts.filter((a) => a.ts > lastSeen).length,

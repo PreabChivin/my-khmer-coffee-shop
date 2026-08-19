@@ -1,19 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import Link from "next/link";
 import { PawPrint, X } from "lucide-react";
 import BongBear from "@/components/mascots/BongBear";
 import Confetti from "@/components/Confetti";
-import ProductCard from "@/components/menu/ProductCard";
+import { TIER_RING_CLASS } from "@/lib/shopTiers";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { computeAverageRating } from "@/lib/pricing";
-import { hasAnyPromo } from "@/components/menu/PromoBadge";
-import { pickSpotlightProducts } from "@/lib/productSpotlight";
-import type { ProductDTO } from "@/lib/types";
+import type { PublicShopItemDTO } from "@/lib/types";
 
 const ZOO_OFF_KEY = "cafe.zooOff";
 
-type Craving = "host" | "pastry" | "coffee" | "tea" | "largest" | "promo";
+type Craving = "host" | "hat" | "eyewear" | "outfit" | "handheld" | "rare";
 type BounceStyle = "bounce-cute" | "leap" | "wiggle";
 
 interface Critter {
@@ -28,43 +26,43 @@ const ROSTER: Critter[] = [
   {
     id: "bongbear",
     emoji: "bongbear",
-    line: "ចង់បានភេសជ្ជៈពិសេសអត់ លោកខ្ញុំមានណែនាំ! ✨",
+    line: "ចង់តុបតែងតួអង្គអត់ លោកខ្ញុំមានណែនាំ! ✨",
     craving: "host",
     bounce: "bounce-cute",
   },
   {
     id: "piggy",
     emoji: "🐷",
-    line: "ញ៉ាំ croissant ជាមួយជ្រូកអត់? 🥐",
-    craving: "pastry",
+    line: "ជ្រូកចង់បានមួកកំប្លែងណាស់! 🧢",
+    craving: "hat",
     bounce: "bounce-cute",
   },
   {
     id: "chick",
     emoji: "🐔",
-    line: "មាន់ស្រែសុំអាយស៍ឡាតេមួយកែវ! ☕️",
-    craving: "coffee",
+    line: "មាន់ចង់សាកវ៉ែនតាថ្មី! 👓✨",
+    craving: "eyewear",
     bounce: "leap",
   },
   {
     id: "ducky",
     emoji: "🦆",
-    line: "ទាកាប៉ាឃ្លានតែបៃតងស្ទើរងាប់! 🍵",
-    craving: "tea",
+    line: "ទាចង់ប្តូរសម្លៀកបំពាក់ថ្មី! 👕",
+    craving: "outfit",
     bounce: "bounce-cute",
   },
   {
     id: "ellie",
     emoji: "🐘",
-    line: "ដំរីតូចសុំកែវ XXL មួយ! 🥤",
-    craving: "largest",
+    line: "ដំរីចង់បានវត្ថុកាន់ស្អាតៗ! 🧋",
+    craving: "handheld",
     bounce: "wiggle",
   },
   {
     id: "dino",
     emoji: "🦖",
-    line: "ដាយណូស័រឃ្លានបាយ អត់បានញ៉ាំកាហ្វេ! 🦖⚡️",
-    craving: "promo",
+    line: "ដាយណូស័រចង់បានវត្ថុកម្របំផុត! ⚡️🔥",
+    craving: "rare",
     bounce: "leap",
   },
 ];
@@ -174,39 +172,33 @@ function initialSlots(): SlotState[] {
   }));
 }
 
-function pickBest(list: ProductDTO[]): ProductDTO | null {
+const TIER_RANK: Record<string, number> = { LEGENDARY: 4, EPIC: 3, RARE: 2, COMMON: 1 };
+
+/** The "flagship" pick from a list — highest tier first, then highest cost,
+ *  so a critter's recommendation always reads as a genuine standout rather
+ *  than an arbitrary pick. */
+function pickBest(list: PublicShopItemDTO[]): PublicShopItemDTO | null {
   if (list.length === 0) return null;
-  const rated = [...list]
-    .filter((p) => p.ratingCount > 0)
-    .sort(
-      (a, b) =>
-        computeAverageRating(b.ratingSum, b.ratingCount) -
-        computeAverageRating(a.ratingSum, a.ratingCount)
-    );
-  return rated[0] ?? list[0];
+  return [...list].sort(
+    (a, b) => (TIER_RANK[b.tier] ?? 0) - (TIER_RANK[a.tier] ?? 0) || b.cost - a.cost
+  )[0];
 }
 
-/** Picks a REAL product matching each critter's craving — never fabricated.
- *  Falls back to the general top-spotlight pick if nothing matches, so a
+/** Picks a REAL avatar-shop item matching each critter's craving — never
+ *  fabricated. Falls back to the overall top pick if nothing matches, so a
  *  critter always has something honest to recommend. */
-function pickForCraving(products: ProductDTO[], craving: Craving): ProductDTO | null {
-  const available = products.filter((p) => p.isAvailable);
-  const fallback = () => pickSpotlightProducts(products, 1)[0] ?? null;
-
+function pickForCraving(items: PublicShopItemDTO[], craving: Craving): PublicShopItemDTO | null {
+  const fallback = () => pickBest(items);
   switch (craving) {
-    case "coffee":
-      return pickBest(available.filter((p) => p.category === "Coffee")) ?? fallback();
-    case "tea":
-      return pickBest(available.filter((p) => p.category === "Tea")) ?? fallback();
-    case "pastry":
-      return (
-        pickBest(available.filter((p) => p.category !== "Coffee" && p.category !== "Tea")) ??
-        fallback()
-      );
-    case "largest":
-      return [...available].sort((a, b) => b.price - a.price)[0] ?? fallback();
-    case "promo":
-      return pickBest(available.filter((p) => hasAnyPromo(p))) ?? fallback();
+    case "hat":
+      return pickBest(items.filter((i) => i.category === "HAT")) ?? fallback();
+    case "eyewear":
+      return pickBest(items.filter((i) => i.category === "EYEWEAR")) ?? fallback();
+    case "outfit":
+      return pickBest(items.filter((i) => i.category === "OUTFIT")) ?? fallback();
+    case "handheld":
+      return pickBest(items.filter((i) => i.category === "HANDHELD")) ?? fallback();
+    case "rare":
     case "host":
     default:
       return fallback();
@@ -222,12 +214,12 @@ function pickForCraving(products: ProductDTO[], craving: Craving): ProductDTO | 
  *  Slots rotate through the full 6-member roster over time via a simple
  *  round-robin pointer, so every character still appears eventually without
  *  ever exceeding the 3-active cap. Contained to a slim safety lane fixed at
- *  the very bottom of the viewport — never over the header, product grid, or
- *  cart trigger — z-30, below ChatFab's z-60. Every 45-60s roaming pauses
+ *  the very bottom of the viewport — never over the header or game content
+ *  — z-30, below ChatFab's z-60. Every 45-60s roaming pauses
  *  for a 10s "gathering": all 6 cluster in one spot, each with its own
  *  gesture, taking turns (one at a time) showing their line, before
  *  dispersing back to independent roaming. Scoped to the home page only. */
-export default function PetZoo({ products }: { products: ProductDTO[] }) {
+export default function PetZoo({ items }: { items: PublicShopItemDTO[] }) {
   const { lang } = useLanguage();
   const [hydrated, setHydrated] = useState(false);
   const [zooOn, setZooOn] = useState(true);
@@ -337,8 +329,8 @@ export default function PetZoo({ products }: { products: ProductDTO[] }) {
   }, [mode]);
 
   const recommendation = useMemo(
-    () => (activeCritter ? pickForCraving(products, activeCritter.craving) : null),
-    [activeCritter, products]
+    () => (activeCritter ? pickForCraving(items, activeCritter.craving) : null),
+    [activeCritter, items]
   );
 
   function toggleZoo() {
@@ -571,9 +563,26 @@ export default function PetZoo({ products }: { products: ProductDTO[] }) {
                 <X size={14} />
               </button>
             </div>
-            {/* Reuses the real menu ProductCard — customization, group-cart,
-                and pricing all behave exactly as they do in the main grid. */}
-            <ProductCard product={recommendation} />
+            {/* A compact preview — buying/equipping happens in the real
+                Avatar Studio, not duplicated here. */}
+            <div
+              className={`khmer-card flex flex-col items-center gap-2 rounded-3xl bg-cream-50 p-6 text-center ring-2 dark:bg-coffee-800 ${TIER_RING_CLASS[recommendation.tier]}`}
+            >
+              <span className="text-6xl drop-shadow-md">{recommendation.emoji}</span>
+              <p className="font-heading text-base font-extrabold text-coffee-900 dark:text-cream-50">
+                {lang === "km" ? recommendation.nameKh : recommendation.name}
+              </p>
+              <p className="text-sm font-bold text-clay-600 dark:text-clay-400">
+                {recommendation.cost.toLocaleString()} 💎
+              </p>
+              <Link
+                href="/avatar-studio"
+                onClick={() => setActiveCritter(null)}
+                className="mt-2 rounded-full bg-gradient-to-r from-clay-400 to-crimson-400 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95"
+              >
+                {lang === "km" ? "ទៅកាន់ស្ទូឌីយោអវតារ →" : "Go to Avatar Studio →"}
+              </Link>
+            </div>
           </div>
         </div>
       )}

@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { Gift, X, Scale } from "lucide-react";
-import OrderHistoryList from "@/components/orders/OrderHistoryList";
 import { tierProgress } from "@/lib/loyaltyPoints";
 import type { CustomerProfileDTO, PointsAdjustmentDTO } from "@/lib/types";
 
-const POINTS_REASONS = ["Manual Reward", "Event Bonus", "POS Correction", "Other"] as const;
+const POINTS_REASONS = ["Manual Reward", "Event Bonus", "Admin Correction", "Other"] as const;
 
-/** 👑 Admin drill-down: a customer's account, lifetime value, points/tier,
- *  and complete purchase history. Fetches /api/admin/customers/[id]. */
+/** 👑 Admin drill-down: a customer's account, points/tier, and lifetime
+ *  arcade scoreboard. Fetches /api/admin/customers/[id]. */
 export default function CustomerHistoryModal({
   userId,
   onClose,
@@ -168,22 +167,30 @@ export default function CustomerHistoryModal({
               </p>
             </div>
 
-            {/* LTV + points + tier snapshot */}
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              <div className="rounded-2xl bg-gold-100 px-2 py-2.5 text-center dark:bg-coffee-900">
+            {/* Arcade scoreboard + points + tier snapshot */}
+            <div className="mt-3 grid grid-cols-4 gap-2">
+              <div className="rounded-2xl bg-matcha-100 px-2 py-2.5 text-center dark:bg-coffee-900">
                 <p className="text-[10px] font-bold uppercase tracking-wide text-coffee-400 dark:text-cream-400">
-                  LTV
+                  Wins
                 </p>
                 <p className="text-base font-extrabold text-coffee-900 dark:text-cream-50">
-                  ${profile.lifetimeValue.toFixed(2)}
+                  {profile.gameWins}
                 </p>
               </div>
               <div className="rounded-2xl bg-clay-100 px-2 py-2.5 text-center dark:bg-coffee-900">
                 <p className="text-[10px] font-bold uppercase tracking-wide text-coffee-400 dark:text-cream-400">
-                  Orders
+                  Losses
                 </p>
                 <p className="text-base font-extrabold text-coffee-900 dark:text-cream-50">
-                  {profile.orderCount}
+                  {profile.gameLosses}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-gold-100 px-2 py-2.5 text-center dark:bg-coffee-900">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-coffee-400 dark:text-cream-400">
+                  Ties
+                </p>
+                <p className="text-base font-extrabold text-coffee-900 dark:text-cream-50">
+                  {profile.gameTies}
                 </p>
               </div>
               <div className="rounded-2xl bg-crimson-100 px-2 py-2.5 text-center dark:bg-coffee-900">
@@ -385,34 +392,6 @@ export default function CustomerHistoryModal({
               )}
             </div>
 
-            {/* 📍 Saved delivery addresses — read-only here; managed by the
-                customer themselves at checkout. */}
-            {profile.savedAddresses.length > 0 && (
-              <div className="mt-3">
-                <p className="mb-1.5 text-xs font-bold text-coffee-700 dark:text-cream-200">
-                  📍 អាសយដ្ឋានដែលបានរក្សាទុក
-                </p>
-                <ul className="space-y-1.5">
-                  {profile.savedAddresses.map((addr) => (
-                    <li
-                      key={addr.id}
-                      className="rounded-xl bg-cream-100 px-3 py-2 text-xs dark:bg-coffee-900"
-                    >
-                      <span className="font-bold text-coffee-800 dark:text-cream-100">
-                        {addr.label}
-                      </span>
-                      <span className="ml-1.5 text-coffee-500 dark:text-cream-300">
-                        {addr.address}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
-              <OrderHistoryList orders={profile.orders} />
-            </div>
           </>
         )}
       </div>

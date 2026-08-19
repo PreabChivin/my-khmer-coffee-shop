@@ -1,27 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { LogOut, Camera, Loader2, Pencil, Check, X } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LoyaltyProgress from "@/components/loyalty/LoyaltyProgress";
-import RewardStore from "@/components/loyalty/RewardStore";
 import MissionsPanel from "@/components/games/MissionsPanel";
 import AvatarShop from "@/components/games/AvatarShop";
-import OrderHistoryList from "@/components/orders/OrderHistoryList";
-import RecommendationsCard from "@/components/loyalty/RecommendationsCard";
 import LoyaltyLevelBadge from "@/components/loyalty/LoyaltyLevelBadge";
 import { generationFromDOB } from "@/lib/generation";
 import { compressImageToDataUrl } from "@/lib/imageCompress";
-import type { OrderHistoryItemDTO } from "@/lib/types";
 
 const MAX_AVATAR_SOURCE_BYTES = 3 * 1024 * 1024;
 
 export default function AccountPage() {
   const { user, isLoading, logout, refresh } = useSession();
   const { lang, t } = useLanguage();
-  const [orders, setOrders] = useState<OrderHistoryItemDTO[] | null>(null);
 
   // ✏️ Edit-profile form state
   const [isEditing, setIsEditing] = useState(false);
@@ -35,22 +30,6 @@ export default function AccountPage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    fetch("/api/orders/mine")
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) => {
-        if (!cancelled) setOrders(data);
-      })
-      .catch(() => {
-        if (!cancelled) setOrders([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
 
   function startEditing() {
     if (!user) return;
@@ -349,30 +328,14 @@ export default function AccountPage() {
         </div>
       )}
 
-      {/* ✨ Recommended for you */}
-      <RecommendationsCard />
-
-      {/* 💎 Loyalty points + tier progress */}
+      {/* 💎 Arcade Points + tier progress */}
       <LoyaltyProgress points={user.loyaltyPoints} />
 
-      {/* 🎁 Redeem Rewards store */}
-      <RewardStore />
-
-      {/* 🎯 Daily Missions — earn bonus Cafe Points */}
+      {/* 🎯 Daily Missions — earn Arcade Points */}
       <MissionsPanel />
 
-      {/* 🧢 Avatar Shop — spend Cafe Points on cosmetics */}
+      {/* 🧢 Avatar Shop — spend Arcade Points on cosmetics */}
       <AvatarShop />
-
-      {/* 🧾 My Orders */}
-      <h2 className="mb-3 mt-8 font-heading text-lg font-extrabold text-coffee-900 dark:text-cream-50">
-        {t("account.myOrders")}
-      </h2>
-      {orders === null ? (
-        <p className="text-sm text-coffee-400 dark:text-cream-400">{t("account.loadingOrders")}</p>
-      ) : (
-        <OrderHistoryList orders={orders} />
-      )}
     </div>
   );
 }

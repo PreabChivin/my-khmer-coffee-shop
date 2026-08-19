@@ -1,78 +1,96 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Bike, Clock, QrCode, Sprout, Store } from "lucide-react";
-import ProductCard from "@/components/menu/ProductCard";
-import HeroSlideshow from "@/components/home/HeroSlideshow";
-import PromoBannerCarousel from "@/components/home/PromoBannerCarousel";
-import StoriesPanel from "@/components/home/StoriesPanel";
+import Link from "next/link";
+import { Gamepad2, Sparkles, Trophy, Users2, Lock } from "lucide-react";
 import CafeLoungeBanner from "@/components/home/CafeLoungeBanner";
 import PetZoo from "@/components/home/PetZoo";
-import CategoryScroller, { ALL_CATEGORIES_ID } from "@/components/menu/CategoryScroller";
-import HomeSidebar from "@/components/home/HomeSidebar";
 import { HomeLeftRail, HomeRightRail } from "@/components/home/SideRails";
 import WelcomePopup from "@/components/home/WelcomePopup";
+import { useChat } from "@/contexts/ChatContext";
+import { useSession } from "@/contexts/SessionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import type { CategoryDTO, ProductDTO } from "@/lib/types";
-import type { TranslationKey } from "@/lib/i18n";
+import type { PublicShopItemDTO } from "@/lib/types";
 
-const FEATURES: {
-  icon: typeof Sprout;
-  titleKey: TranslationKey;
-  descKey: TranslationKey;
-}[] = [
+interface GameLobbyCard {
+  key: string;
+  emoji: string;
+  titleKm: string;
+  titleEn: string;
+  descKm: string;
+  descEn: string;
+}
+
+// 🎮 Real, working, multiplayer today — both reuse the existing Café Lounge
+// challenge/accept flow (GameSession + app/api/chat/games/*), opened via the
+// Social Lounge drawer's own game menu rather than a separate matchmaker.
+const LIVE_GAMES: GameLobbyCard[] = [
   {
-    icon: Sprout,
-    titleKey: "home.feature1Title",
-    descKey: "home.feature1Desc",
+    key: "TICTACTOE",
+    emoji: "⭕",
+    titleKm: "អុក-តុក-តេ",
+    titleEn: "Tic-Tac-Toe",
+    descKm: "ប្រកួត ១ទល់១ ក្នុង Social Lounge",
+    descEn: "1v1 in the Social Lounge",
   },
   {
-    icon: QrCode,
-    titleKey: "home.feature2Title",
-    descKey: "home.feature2Desc",
-  },
-  {
-    icon: Bike,
-    titleKey: "home.feature3Title",
-    descKey: "home.feature3Desc",
+    key: "RPS",
+    emoji: "✊",
+    titleKm: "កូន-ក្រដាស-កន្ត្រៃ",
+    titleEn: "Rock · Paper · Scissors",
+    descKm: "ប្រកួត ១ទល់១ ក្នុង Social Lounge",
+    descEn: "1v1 in the Social Lounge",
   },
 ];
 
-export default function HomeContent({
-  initialProducts,
-  initialCategories,
-}: {
-  initialProducts: ProductDTO[];
-  initialCategories: CategoryDTO[];
-}) {
-  const { t } = useLanguage();
-  const [products] = useState(initialProducts);
-  const [categories] = useState(initialCategories);
-  const [activeCategoryId, setActiveCategoryId] = useState(ALL_CATEGORIES_ID);
-  const [searchQuery, setSearchQuery] = useState("");
-  const normalizedQuery = searchQuery.trim().toLowerCase();
+// 🔒 Announced concepts that aren't real games yet — shown honestly as
+// locked/upcoming rather than faked or silently dropped.
+const COMING_SOON_GAMES: GameLobbyCard[] = [
+  {
+    key: "QUIZ",
+    emoji: "☕",
+    titleKm: "ការប្រកួតសំណួរកាហ្វេ",
+    titleEn: "Coffee Quiz Battle",
+    descKm: "ឆាប់ៗនេះ",
+    descEn: "Coming Soon",
+  },
+  {
+    key: "RUNNER",
+    emoji: "🏃",
+    titleKm: "រត់អាកែត 3D",
+    titleEn: "Cafe Runner 3D",
+    descKm: "ឆាប់ៗនេះ",
+    descEn: "Coming Soon",
+  },
+  {
+    key: "TAP",
+    emoji: "🧋",
+    titleKm: "តាប់តែលឿន",
+    titleEn: "Boba Tap Rush",
+    descKm: "ឆាប់ៗនេះ",
+    descEn: "Coming Soon",
+  },
+  {
+    key: "PUZZLE",
+    emoji: "🧩",
+    titleKm: "ល្បែងផ្គុំរូបនំ",
+    titleEn: "Pastry Puzzle",
+    descKm: "ឆាប់ៗនេះ",
+    descEn: "Coming Soon",
+  },
+];
 
-  const visibleProducts = useMemo(() => {
-    // 🔍 A hero search query searches every category at once; otherwise fall
-    // back to the category scroller's selection.
-    if (normalizedQuery) {
-      return products.filter((p) =>
-        [p.nameEn, p.nameKh, p.descriptionEn, p.descriptionKh]
-          .filter(Boolean)
-          .some((field) => field!.toLowerCase().includes(normalizedQuery))
-      );
-    }
-    return activeCategoryId === ALL_CATEGORIES_ID
-      ? products
-      : products.filter((p) => p.categoryId === activeCategoryId);
-  }, [products, activeCategoryId, normalizedQuery]);
+const FEATURES = [
+  { icon: Gamepad2, titleKm: "លេងផ្ទាល់", titleEn: "Play in real time", descKm: "ប្រកួតជាមួយសមាជិកផ្សេងទៀតភ្លាមៗ", descEn: "Match live against other players" },
+  { icon: Trophy, titleKm: "ឡើងចំណាត់ថ្នាក់", titleEn: "Climb the ranks", descKm: "ឈ្នះកាន់តែច្រើន ចំណាត់ថ្នាក់កាន់តែខ្ពស់", descEn: "Win more, rank higher on the Leaderboard" },
+  { icon: Sparkles, titleKm: "តុបតែងតួអង្គ", titleEn: "Customize your avatar", descKm: "ចំណាយពិន្ទុដែលរកបានទៅលើសម្លៀកបំពាក់", descEn: "Spend earned points on gear" },
+];
 
-  // 🧑‍🍳 Staff/Admin can view the storefront while staying logged in — the
-  // dashboard lives at its own /admin route, and they reach it from the
-  // "View Storefront"/staff-badge links (see StaffKitchenView + Header). We
-  // deliberately no longer bounce a staff session off "/": login still lands
-  // them on /admin by default (AuthModal), but they're free to flip over to
-  // the customer view and back without ending their session.
+export default function HomeContent({ shopItems }: { shopItems: PublicShopItemDTO[] }) {
+  const { user } = useSession();
+  const { openChat } = useChat();
+  const { lang } = useLanguage();
+  const km = lang === "km";
+
   return (
     <div>
       {/* 🎉 First-visit registration promo (unauth guests only, shown once) */}
@@ -83,58 +101,100 @@ export default function HomeContent({
       <HomeLeftRail />
       <HomeRightRail />
 
-      <HeroSlideshow searchQuery={searchQuery} onSearchChange={setSearchQuery} products={products} />
-
-      {/* 🎉 Top Promotional Banner Carousel */}
-      <PromoBannerCarousel />
-
-      {/* 📸 Highlights — real promo/partner items as tappable story bubbles */}
-      <StoriesPanel products={products} />
-
-      {/* 💬 Café Lounge entry point — creative invite into chat/games/stickers */}
-      <CafeLoungeBanner />
-
-      {/* 🍩 Categorized horizontal menu scroller */}
-      <CategoryScroller
-        categories={categories}
-        activeId={activeCategoryId}
-        onSelect={setActiveCategoryId}
-      />
-
-      {/* Two-column Foodpanda-style layout: sidebar + product grid */}
-      <section id="menu-grid" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-8 sm:px-6">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
-          <HomeSidebar />
-
-          <div className="min-w-0 flex-1">
-            {normalizedQuery && visibleProducts.length === 0 ? (
-              <p className="rounded-2xl border-2 border-dashed border-coffee-300 px-6 py-10 text-center text-coffee-500 dark:border-coffee-600 dark:text-cream-300">
-                {t("menu.noResults")}
-              </p>
-            ) : (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {visibleProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            )}
+      {/* Hero */}
+      <section className="kbach-overlay relative overflow-hidden bg-gradient-to-br from-lavender-500 via-crimson-500 to-clay-500 text-white">
+        <div className="pointer-events-none absolute -right-10 -top-16 h-64 w-64 rounded-full bg-white/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-10 left-10 h-48 w-48 rounded-full bg-gold-400/20 blur-3xl" />
+        <div className="relative mx-auto max-w-6xl px-4 py-16 text-center sm:px-6 sm:py-20">
+          <p className="animate-pop-in font-heading text-3xl font-extrabold drop-shadow-md sm:text-5xl">
+            BENCHIMIN ARCADE 🕹️
+          </p>
+          <p className="mx-auto mt-3 max-w-xl text-sm font-semibold text-white/90 sm:text-base">
+            ទីលានប្រកួតប្រជែងហ្គេមកំសាន្ត និងលេងជាមួយគ្នាយ៉ាងសប្បាយរីករាយ
+          </p>
+          {user && (
+            <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-4 py-1.5 text-sm font-bold backdrop-blur-sm">
+              💎 {user.loyaltyPoints.toLocaleString()} {km ? "ពិន្ទុអាកែត" : "Arcade Points"}
+            </p>
+          )}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/leaderboard"
+              className="btn-tactile flex items-center gap-1.5 rounded-full bg-white/90 px-5 py-2.5 text-sm font-extrabold text-crimson-600 shadow-md transition-transform hover:scale-105"
+            >
+              <Trophy size={16} /> {km ? "តារាងចំណាត់ថ្នាក់" : "Leaderboard"}
+            </Link>
+            <Link
+              href="/avatar-studio"
+              className="btn-tactile flex items-center gap-1.5 rounded-full bg-white/20 px-5 py-2.5 text-sm font-extrabold text-white shadow-md backdrop-blur-sm transition-transform hover:scale-105"
+            >
+              <Sparkles size={16} /> {km ? "ស្ទូឌីយោអវតារ" : "Avatar Studio"}
+            </Link>
           </div>
         </div>
       </section>
 
+      {/* 💬 Social Lounge entry point */}
+      <CafeLoungeBanner />
+
+      {/* 🎮 Game Arena lobby */}
+      <section id="game-arena" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-10 sm:px-6">
+        <h2 className="mb-1 flex items-center gap-2 font-heading text-2xl font-extrabold text-coffee-900 dark:text-cream-50">
+          <Gamepad2 size={22} /> {km ? "ទីលានហ្គេម" : "Game Arena"}
+        </h2>
+        <p className="mb-5 text-sm text-coffee-500 dark:text-cream-300">
+          {km ? "ជ្រើសរើសហ្គេម ហើយប្រកួតភ្លាមៗជាមួយសមាជិកផ្សេងទៀត" : "Pick a game and challenge another player right now"}
+        </p>
+
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          {LIVE_GAMES.map((g) => (
+            <button
+              key={g.key}
+              type="button"
+              onClick={openChat}
+              className="khmer-card btn-tactile group flex flex-col items-center gap-2 rounded-3xl bg-gradient-to-br from-matcha-400 to-matcha-600 p-5 text-center text-white shadow-md"
+            >
+              <span className="text-5xl drop-shadow-md transition-transform group-hover:scale-110">
+                {g.emoji}
+              </span>
+              <p className="font-heading text-sm font-extrabold">{km ? g.titleKm : g.titleEn}</p>
+              <p className="text-[11px] font-semibold text-white/85">{km ? g.descKm : g.descEn}</p>
+              <span className="mt-1 rounded-full bg-white/25 px-3 py-1 text-[10px] font-extrabold">
+                {km ? "ចាប់ផ្ដើមលេង" : "PLAY NOW"}
+              </span>
+            </button>
+          ))}
+          {COMING_SOON_GAMES.map((g) => (
+            <div
+              key={g.key}
+              className="khmer-card flex flex-col items-center gap-2 rounded-3xl bg-cream-100 p-5 text-center opacity-70 dark:bg-coffee-800"
+            >
+              <span className="text-5xl grayscale">{g.emoji}</span>
+              <p className="font-heading text-sm font-extrabold text-coffee-700 dark:text-cream-200">
+                {km ? g.titleKm : g.titleEn}
+              </p>
+              <span className="mt-1 flex items-center gap-1 rounded-full bg-coffee-200 px-3 py-1 text-[10px] font-extrabold text-coffee-600 dark:bg-coffee-900 dark:text-cream-400">
+                <Lock size={10} /> {km ? g.descKm : g.descEn}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Features band */}
       <section className="border-y border-gold-500/30 bg-cream-50 dark:bg-coffee-900">
         <div className="mx-auto grid max-w-6xl gap-6 px-4 py-10 sm:grid-cols-3 sm:px-6">
-          {FEATURES.map((feature) => (
-            <div key={feature.titleKey} className="flex items-start gap-4">
+          {FEATURES.map((f) => (
+            <div key={f.titleEn} className="flex items-start gap-4">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-gold-500/50 bg-clay-50 text-clay-500 dark:bg-coffee-800">
-                <feature.icon size={22} />
+                <f.icon size={22} />
               </span>
               <div>
                 <h3 className="font-semibold text-coffee-900 dark:text-cream-50">
-                  {t(feature.titleKey)}
+                  {km ? f.titleKm : f.titleEn}
                 </h3>
                 <p className="text-sm text-coffee-500 dark:text-cream-300">
-                  {t(feature.descKey)}
+                  {km ? f.descKm : f.descEn}
                 </p>
               </div>
             </div>
@@ -142,52 +202,28 @@ export default function HomeContent({
         </div>
       </section>
 
-      {/* Cutie welcome — pastel vibe band */}
+      {/* Vibe band */}
       <section className="kbach-overlay relative overflow-hidden bg-gradient-to-br from-clay-400 via-crimson-400 to-clay-500 text-white">
         <div className="pointer-events-none absolute left-1/2 top-0 h-40 w-40 -translate-x-1/2 rounded-full bg-white/20 blur-3xl" />
         <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-4 px-4 py-16 text-center sm:px-6">
-          <div className="animate-bounce-cute text-5xl">🧋💖</div>
+          <div className="animate-bounce-cute text-5xl">🕹️💖</div>
           <p className="font-heading text-2xl font-extrabold drop-shadow-sm sm:text-3xl">
-            {t("welcome.greeting")}
+            {km ? "សប្បាយ លេង ជាមួយគ្នា!" : "Play together, have fun!"}
           </p>
           <p className="max-w-md text-sm font-medium text-white/90">
-            {t("welcome.subtitle")}
+            {km
+              ? "ចូលរួម Social Lounge ដើម្បីជជែក ផ្ញើស្ទីខឺ និងអញ្ជើញមិត្តភក្តិមកប្រកួត"
+              : "Join the Social Lounge to chat, send stickers, and invite friends to play"}
           </p>
-        </div>
-      </section>
-
-      <section className="kbach-overlay bg-clay-500 text-cream-50">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 py-14 text-center sm:px-6 md:flex-row md:justify-between md:text-left">
-          <div className="flex items-center gap-4">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full border border-gold-400/60 bg-clay-600">
-              <Clock size={26} />
-            </span>
-            <div>
-              <p className="text-sm uppercase tracking-widest text-gold-400">
-                {t("home.storeHours")}
-              </p>
-              <p className="text-lg font-semibold">{t("home.hoursWeekday")}</p>
-              <p className="text-lg font-semibold">{t("home.hoursWeekend")}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full border border-gold-400/60 bg-clay-600">
-              <Store size={26} />
-            </span>
-            <div className="text-left">
-              <p className="text-sm uppercase tracking-widest text-gold-400">
-                {t("home.visitUs")}
-              </p>
-              <p className="text-lg font-semibold">{t("home.address")}</p>
-            </div>
+          <div className="flex items-center gap-1.5 rounded-full bg-white/20 px-4 py-2 text-xs font-bold backdrop-blur-sm">
+            <Users2 size={14} /> {km ? "លេងជាមួយសហគមន៍" : "Play with the community"}
           </div>
         </div>
       </section>
 
-      {/* 🐷🐔🦆🐘🦖🐻 Pet Zoo — roaming critter engine, contained to a bottom
-          safety lane so nothing ever wanders over real UI */}
-      <PetZoo products={products} />
+      {/* 🐷🐔🦆🐘🦖🐻 Pet Zoo — roaming critter engine, recommends real avatar
+          items from the shop catalog */}
+      <PetZoo items={shopItems} />
     </div>
   );
 }

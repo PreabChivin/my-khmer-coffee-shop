@@ -15,7 +15,7 @@ function formatDate(iso: string) {
 }
 
 /** 👥 Registered Customers — full customer roster with generation, points,
- *  joined date, and order count. Rows open the lifetime-history + LTV modal. */
+ *  joined date, and arcade wins. Rows open the player scoreboard modal. */
 export default function RegisteredCustomersPanel({
   onError,
 }: {
@@ -98,7 +98,7 @@ export default function RegisteredCustomersPanel({
                     <th className="px-2 py-2 font-bold">ជេន · Gen</th>
                     <th className="px-2 py-2 text-right font-bold">ពិន្ទុ · Points</th>
                     <th className="px-2 py-2 font-bold">ចូលរួម · Joined</th>
-                    <th className="px-2 py-2 text-right font-bold">ការកម្ម៉ង់ · Orders</th>
+                    <th className="px-2 py-2 text-right font-bold">ឈ្នះ · Wins</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -134,7 +134,7 @@ export default function RegisteredCustomersPanel({
                           {formatDate(c.joinedAt)}
                         </td>
                         <td className="px-2 py-2.5 text-right font-semibold text-coffee-700 dark:text-cream-200">
-                          {c.orderCount}
+                          🏆 {c.gameWins}
                         </td>
                       </tr>
                     );

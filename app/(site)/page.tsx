@@ -1,37 +1,30 @@
 import { prisma } from "@/lib/prisma";
 import HomeContent from "@/components/home/HomeContent";
-import type { CategoryDTO, ProductDTO } from "@/lib/types";
+import type { PublicShopItemDTO } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-async function getAllProducts(): Promise<ProductDTO[]> {
-  const products = await prisma.product.findMany({
-    include: { category: true },
-    orderBy: [{ category: { name: "asc" } }, { createdAt: "asc" }],
+/** Public avatar-shop catalog (no ownership info) — used by the homepage's
+ *  Pet Zoo, which is visible to guests too, so it can't go through the
+ *  session-gated /api/shop/items. */
+async function getShopCatalog(): Promise<PublicShopItemDTO[]> {
+  const items = await prisma.shopItem.findMany({
+    where: { isAvailable: true },
+    orderBy: { cost: "asc" },
   });
-  return products.map(({ category, ...p }) => ({
-    ...p,
-    category: category.name,
-  }));
-}
-
-async function getAllCategories(): Promise<CategoryDTO[]> {
-  const categories = await prisma.category.findMany({
-    orderBy: { createdAt: "asc" },
-  });
-  return categories.map((c) => ({
-    id: c.id,
-    name: c.name,
-    iconKey: c.iconKey,
-    iconUrl: c.iconUrl,
+  return items.map((i) => ({
+    id: i.id,
+    slug: i.slug,
+    name: i.name,
+    nameKh: i.nameKh,
+    category: i.category,
+    tier: i.tier,
+    cost: i.cost,
+    emoji: i.emoji,
   }));
 }
 
 export default async function HomePage() {
-  const [products, categories] = await Promise.all([
-    getAllProducts(),
-    getAllCategories(),
-  ]);
-
-  return <HomeContent initialProducts={products} initialCategories={categories} />;
+  const items = await getShopCatalog();
+  return <HomeContent shopItems={items} />;
 }

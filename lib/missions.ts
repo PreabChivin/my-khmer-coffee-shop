@@ -1,12 +1,8 @@
 import { dayKey } from "@/lib/chatDateGroups";
 
 /** 🎯 Daily Missions — static definitions (all DAILY cadence for now; no
- *  admin CRUD, unlike Reward). Rewards credit the SAME `User.loyaltyPoints`
- *  balance the Reward store spends — "Cafe Points" is a display label for
- *  that one balance, not a second currency. Values are scaled ~10x down
- *  from the original brief (which assumed $1 = 100 pts) to stay
- *  proportionate to the real $1 = 10 pts rate (lib/loyaltyPoints.ts) and
- *  the existing 500/1500/3000 tier thresholds. */
+ *  admin CRUD, unlike Reward). Rewards credit `User.loyaltyPoints` — Arcade
+ *  Points is a display label for that one balance, not a second currency. */
 export interface Mission {
   key: string;
   title: string;
@@ -17,16 +13,16 @@ export interface Mission {
 
 export const MISSIONS: Mission[] = [
   {
-    key: "buy_coffee_daily",
-    title: "Buy a coffee or pastry today",
-    titleKh: "ទិញកាហ្វេ/បង្អែម ១ ដងថ្ងៃនេះ",
-    emoji: "☕",
+    key: "win_game_daily",
+    title: "Win a match in the Arena",
+    titleKh: "ឈ្នះការប្រកួត ១ ដងថ្ងៃនេះ",
+    emoji: "🏆",
     rewardPoints: 20,
   },
   {
     key: "play_game_daily",
-    title: "Play a match in Café Lounge",
-    titleKh: "ចូលលេងហ្គេមក្នុង Café Lounge ១ ដង",
+    title: "Play a match in Social Lounge",
+    titleKh: "ចូលលេងហ្គេមក្នុង Social Lounge ១ ដង",
     emoji: "🎮",
     rewardPoints: 10,
   },
@@ -39,8 +35,8 @@ export const MISSIONS: Mission[] = [
   },
   {
     key: "send_message_daily",
-    title: "Send a message in Café Lounge",
-    titleKh: "ផ្ញើសារ ១ ក្នុង Café Lounge ថ្ងៃនេះ",
+    title: "Send a message in Social Lounge",
+    titleKh: "ផ្ញើសារ ១ ក្នុង Social Lounge ថ្ងៃនេះ",
     emoji: "💬",
     rewardPoints: 30,
   },

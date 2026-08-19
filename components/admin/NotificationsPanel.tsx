@@ -106,7 +106,7 @@ export default function NotificationsPanel({
           />
           <div className="mt-2 grid grid-cols-2 gap-2">
             <input
-              placeholder="Link (optional, e.g. /orders)"
+              placeholder="Link (optional, e.g. /leaderboard)"
               value={form.href}
               onChange={(e) => setForm({ ...form, href: e.target.value })}
               className="rounded-xl border border-coffee-300 px-3 py-2 text-sm text-coffee-900 outline-none focus:border-clay-400 dark:border-coffee-600 dark:bg-coffee-900 dark:text-cream-50"

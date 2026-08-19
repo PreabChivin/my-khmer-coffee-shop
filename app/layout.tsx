@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { Kantumruy_Pro, Moul } from "next/font/google";
-import { CartProvider } from "@/contexts/CartContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { FulfillmentProvider } from "@/contexts/FulfillmentContext";
-import { GroupCartProvider } from "@/contexts/GroupCartContext";
 import { SessionProvider } from "@/contexts/SessionContext";
 import { AuthModalProvider } from "@/contexts/AuthModalContext";
 import { ChatProvider } from "@/contexts/ChatContext";
@@ -23,9 +20,9 @@ const moul = Moul({
 });
 
 export const metadata: Metadata = {
-  title: "បេនជីមីន កាហ្វេ | BenChimin Cafe",
+  title: "បេនជីមីន អាកែត | BENCHIMIN ARCADE",
   description:
-    "ហាងកាហ្វេខ្មែរប្រពៃណី — ស្រស់ថ្មីជារៀងរាល់ថ្ងៃ។ Traditional Khmer coffee house — order ahead and pay with KHQR.",
+    "ទីលានប្រកួតប្រជែងហ្គេមកំសាន្ត និងលេងជាមួយគ្នាយ៉ាងសប្បាយរីករាយ។ A social gaming arcade — play, compete, and hang out together.",
 };
 
 export default function RootLayout({
@@ -44,13 +41,7 @@ export default function RootLayout({
           <LanguageProvider>
             <SessionProvider>
               <AuthModalProvider>
-                <FulfillmentProvider>
-                  <GroupCartProvider>
-                    <CartProvider>
-                      <ChatProvider>{children}</ChatProvider>
-                    </CartProvider>
-                  </GroupCartProvider>
-                </FulfillmentProvider>
+                <ChatProvider>{children}</ChatProvider>
               </AuthModalProvider>
             </SessionProvider>
           </LanguageProvider>

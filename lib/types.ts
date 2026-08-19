@@ -1,29 +1,3 @@
-export interface ProductDTO {
-  id: string;
-  nameEn: string;
-  nameKh: string;
-  descriptionEn: string | null;
-  descriptionKh: string | null;
-  price: number;
-  /** Resolved Category.name — kept as a plain string for backward
-   *  compatibility with display + customization-eligibility logic. */
-  category: string;
-  /** 🍩 Category Menu: the real foreign key, used for filtering. */
-  categoryId: string;
-  image: string;
-  isAvailable: boolean;
-  /** 🤝 Partner Integration: co-branded / partner-exclusive items. */
-  isPartner: boolean;
-  partnerName: string | null;
-  /** 🔥 Multi-tier Discount System. */
-  discountPercent: number; // % off (0 = none)
-  flatDiscount: number; // $ off, applied after the % (0 = none)
-  promoTag: string | null; // cosmetic conditional badge, e.g. "ទិញ 1 ថែម 1"
-  /** ⭐ Rating aggregate — compute average with computeAverageRating(). */
-  ratingCount: number;
-  ratingSum: number;
-}
-
 /** 👤 Public-safe customer account shape (never includes passwordHash). */
 /** 🔐 CUSTOMER (default), STAFF (kitchen/menu/marketing access), or ADMIN
  *  (also User Management — role changes, password resets). */
@@ -53,36 +27,18 @@ export interface AdminCustomerRowDTO {
   dateOfBirth: string | null;
   loyaltyPoints: number;
   joinedAt: string;
-  orderCount: number;
+  gameWins: number;
   role: Role;
   /** ISO string when soft-deleted (login blocked), else null. */
   deactivatedAt: string | null;
 }
 
-/** 🧾 One row in a customer's / admin's order-history view. */
-export interface OrderHistoryItemDTO {
-  id: string;
-  createdAt: string;
-  /** Last change timestamp — drives the header "unread since last seen" badge. */
-  updatedAt: string;
-  orderStatus: OrderStatus;
-  orderType: OrderType;
-  totalAmount: number;
-  paymentStatus: PaymentStatus | null;
-  paymentMethod: string | null;
-  pointsAwarded: boolean;
-  /** 🕒 Timeline stage timestamps for the history card's mini-stepper. */
-  timeline: OrderTimelineStamps;
-  items: { nameEn: string; nameKh: string; quantity: number; price: number }[];
-}
-
-/** 👑 Admin per-customer profile: the account + lifetime value + history. */
+/** 👑 Admin per-customer profile: the account + lifetime arcade scoreboard. */
 export interface CustomerProfileDTO {
   user: UserDTO;
-  lifetimeValue: number;
-  orderCount: number;
-  orders: OrderHistoryItemDTO[];
-  savedAddresses: SavedAddressDTO[];
+  gameWins: number;
+  gameLosses: number;
+  gameTies: number;
 }
 
 /** 📣 A notification shown in the customer's bell (broadcast or targeted). */
@@ -94,158 +50,6 @@ export interface NotificationDTO {
   emoji: string;
   createdAt: string;
   isBroadcast: boolean;
-}
-
-/** 🎟️ A monthly lucky-draw configuration + result. */
-export interface LuckyDrawDTO {
-  id: string;
-  title: string;
-  prizeName: string;
-  prizeEmoji: string;
-  month: string;
-  minPoints: number;
-  tierLabel: string | null;
-  winnerName: string | null;
-  drawnAt: string | null;
-  createdAt: string;
-}
-
-export type OrderType = "PickUp" | "Delivery";
-
-export type OrderStatus =
-  | "PENDING"
-  | "AWAITING_VERIFICATION"
-  | "PREPARING"
-  | "READY"
-  | "COMPLETED"
-  | "CANCELLED";
-
-export type PaymentStatus = "UNPAID" | "PAID" | "FAILED";
-
-/** Ice level for customizable drinks (Starbucks-style modifiers). */
-export type IceLevel = "none" | "less" | "normal" | "extra";
-
-/**
- * Per-line drink customization captured before an item is added to the cart.
- * Persisted as a nullable JSONB column on OrderItem — always null for
- * non-customizable items (e.g. bakery).
- */
-export interface DrinkCustomization {
-  /** Sweetness percentage: 0 | 25 | 50 | 100 (natural palm sugar). */
-  sweetness: number;
-  ice: IceLevel;
-  /** Extra espresso shots (0–3); each adds a server-authoritative surcharge. */
-  shots: number;
-  /** 🧋 Boba pearls topping — adds a server-authoritative surcharge. */
-  boba: boolean;
-}
-
-export interface CartItem {
-  /** Unique per customized line — two identical products with different
-   *  customizations are distinct cart lines. */
-  lineId: string;
-  productId: string;
-  nameEn: string;
-  nameKh: string;
-  /** Unit price INCLUDING customization surcharge. */
-  price: number;
-  /** Product base price, before customization surcharge. */
-  basePrice: number;
-  image: string;
-  quantity: number;
-  category: string;
-  customization: DrinkCustomization | null;
-}
-
-export interface CheckoutRequestItem {
-  productId: string;
-  quantity: number;
-  customization?: DrinkCustomization | null;
-  /** 👯 Bestie Cart: whose drink this is, e.g. "Bong Vitou". */
-  contributorName?: string | null;
-}
-
-export interface CheckoutRequestBody {
-  customerName: string;
-  customerPhone: string;
-  orderType: OrderType;
-  address?: string;
-  /** 📍 Exact pin dropped in the delivery-address map picker (optional —
-   *  absent for PickUp orders or a manually-typed fallback address). */
-  latitude?: number;
-  longitude?: number;
-  note?: string;
-  /** "Destiny Cup" fortune revealed to the customer, stored with the order. */
-  fortune?: string | null;
-  /** 🎡 Wheel of Coffee prize label won at checkout. */
-  spinPrize?: string | null;
-  /** 🐻 Index into `items` whose single unit should be redeemed free. */
-  redeemFreeDrinkIndex?: number | null;
-  /** 💖 Gift a Drink */
-  isGift?: boolean;
-  giftRecipientName?: string;
-  giftMessage?: string;
-  /** 👯 Present when checking out a shared Bestie Cart. */
-  groupCartId?: string | null;
-  /** 🔔 This device's Telegram session token (localStorage) — when the
-   *  customer connected via the header button, links this order's chat. */
-  telegramSessionToken?: string | null;
-  items: CheckoutRequestItem[];
-}
-
-export interface CheckoutResponseBody {
-  orderId: string;
-  totalAmount: number;
-  isGift: boolean;
-}
-
-/** 📍 One entry in a logged-in customer's address book. */
-export interface SavedAddressDTO {
-  id: string;
-  label: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-}
-
-/** A single geocoding result — either a forward search hit or a reverse
- *  lookup's resolved label. */
-export interface GeocodeResult {
-  label: string;
-  lat: number;
-  lng: number;
-}
-
-/** 🕒 Per-stage timeline timestamps (ISO strings, null = not reached yet). */
-export interface OrderTimelineStamps {
-  placedAt: string;
-  preparingAt: string | null;
-  readyAt: string | null;
-  completedAt: string | null;
-}
-
-export interface OrderStatusResponseBody {
-  orderId: string;
-  orderStatus: OrderStatus;
-  orderType: OrderType;
-  paymentStatus: PaymentStatus | null;
-  /** ⭐ Null until the customer rates this order (also the "already rated" guard). */
-  customerRating: number | null;
-  /** 🔔 True once the customer has linked their Telegram chat via the deep-link button. */
-  telegramLinked: boolean;
-  /** 🕒 Timeline stage timestamps. */
-  timeline: OrderTimelineStamps;
-}
-
-/** 🎁 A redeemable reward in the loyalty store. */
-export interface RewardDTO {
-  id: string;
-  name: string;
-  nameKh: string;
-  cost: number;
-  emoji: string;
-  description: string | null;
-  isAvailable: boolean;
 }
 
 /** 🖼️ Optional per-item layer positioning override — for asset packs whose
@@ -276,6 +80,25 @@ export interface ShopItemDTO {
   imageOffset: ImageOffset | null;
   owned: boolean;
   equipped: boolean;
+}
+
+/** 🐷 The public (no-ownership) subset of the shop catalog — fetched
+ *  server-side for the homepage's Pet Zoo, which recommends real avatar
+ *  items to guests and members alike, so it can't depend on the
+ *  session-gated `/api/shop/items`. */
+export type PublicShopItemDTO = Pick<
+  ShopItemDTO,
+  "id" | "slug" | "name" | "nameKh" | "category" | "tier" | "cost" | "emoji"
+>;
+
+/** 🏆 One ranked row on the Leaderboard — All-Time only for now (see
+ *  app/api/leaderboard/route.ts's doc comment for why Daily/Weekly aren't
+ *  real yet). */
+export interface LeaderboardRowDTO {
+  rank: number;
+  id: string;
+  name: string;
+  loyaltyPoints: number;
 }
 
 /** 🔍 The intentionally-public subset of another user's profile, shown via
@@ -347,53 +170,6 @@ export interface MissionDTO {
   claimed: boolean;
 }
 
-/** 🧾 A customer's redemption record. */
-export interface RedemptionDTO {
-  id: string;
-  rewardName: string;
-  rewardEmoji: string;
-  cost: number;
-  status: "PENDING" | "FULFILLED";
-  createdAt: string;
-}
-
-/** 👑 Admin view of a pending/fulfilled redemption to hand over. */
-export interface AdminRedemptionDTO extends RedemptionDTO {
-  userId: string;
-  customerName: string;
-  customerEmail: string;
-}
-
-/** 🐻 Cute Bear Stamps loyalty status for a phone number. */
-export interface LoyaltyStatusResponseBody {
-  phone: string;
-  stampCount: number;
-  stampsTowardNext: number;
-  availableFreeDrinks: number;
-}
-
-/** 👯 A single drink inside a shared Bestie Cart. */
-export interface GroupCartItemDTO {
-  id: string;
-  contributorName: string;
-  productId: string;
-  quantity: number;
-  customization: DrinkCustomization | null;
-  product: {
-    nameEn: string;
-    nameKh: string;
-    price: number;
-    image: string;
-    category: string;
-  };
-}
-
-export interface GroupCartStateDTO {
-  id: string;
-  status: "OPEN" | "CHECKED_OUT";
-  orderId: string | null;
-  items: GroupCartItemDTO[];
-}
 
 /** 🍩 Category Menu — a homepage/menu category, resolvable to an icon via
  *  lib/iconResolver.ts. productCount is only present on the admin CRUD list
@@ -600,27 +376,3 @@ export interface AdminChatMessageDTO {
   };
 }
 
-/** ✨ One recommended product on the account page — a heuristic over the
- *  member's own order history (their most-ordered product/category), NOT a
- *  trained ML model. `reason` tells the UI which of the two heuristics
- *  produced it, so it can show a matching Khmer label. */
-export interface RecommendationDTO {
-  product: ProductDTO;
-  reason: "your-usual" | "popular-in-category" | "popular-overall";
-}
-
-/** 📊 Admin-side sales trend — a moving-average projection over recent daily
- *  totals, NOT a trained predictive model (see app/api/admin/analytics/predict
- *  for the exact heuristic and why). */
-export interface SalesPredictionDTO {
-  /** Last 7 days of {date, total}, oldest first — the basis for the trend. */
-  recentDaily: { date: string; total: number }[];
-  /** Simple average of recentDaily. */
-  averageDailyTotal: number;
-  /** Naive projection: averageDailyTotal carried forward one week. */
-  projectedNextWeekTotal: number;
-  /** "up" / "down" / "flat" — first half vs second half of recentDaily. */
-  trend: "up" | "down" | "flat";
-  /** % change between the two halves, signed. */
-  trendPercent: number;
-}

@@ -54,7 +54,6 @@ export async function POST(request: NextRequest) {
         passwordHash,
         role,
       },
-      include: { _count: { select: { orders: true } } },
     });
 
     const body: AdminCustomerRowDTO = {
@@ -66,7 +65,7 @@ export async function POST(request: NextRequest) {
       dateOfBirth: null,
       loyaltyPoints: created.loyaltyPoints,
       joinedAt: created.createdAt.toISOString(),
-      orderCount: created._count.orders,
+      gameWins: created.gameWins,
       role: created.role,
       deactivatedAt: null,
     };

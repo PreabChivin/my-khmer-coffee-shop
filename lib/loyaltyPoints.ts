@@ -1,17 +1,11 @@
 /**
- * 💎 Loyalty Points Reward Program (សន្សំពិន្ទុ) — single source of truth for
- * the earn ratio and membership tiers. Points are credited once, when staff
- * mark an order COMPLETED (see the admin orders PATCH route).
+ * 💎 Arcade Points (formerly "Loyalty Points") — single source of truth for
+ * membership tiers, still backed by `User.loyaltyPoints`. Earned by playing
+ * games and completing daily missions (see `lib/missions.ts`,
+ * `lib/missionProgress.ts`) and spent in the Avatar Studio
+ * (`lib/shopPurchase.ts`). The historical `pointsForAmount`/order-completion
+ * earning path was removed along with the ordering system it depended on.
  */
-
-/** Earn ratio: $1 spent = 10 points. */
-export const POINTS_PER_DOLLAR = 10;
-
-/** Points earned for a given order total (rounded to the nearest point). */
-export function pointsForAmount(amount: number): number {
-  if (!Number.isFinite(amount) || amount <= 0) return 0;
-  return Math.round(amount * POINTS_PER_DOLLAR);
-}
 
 export interface LoyaltyTier {
   name: string;

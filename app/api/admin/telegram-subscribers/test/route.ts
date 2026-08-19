@@ -9,7 +9,7 @@ const schema = z.object({
 });
 
 const DEFAULT_MESSAGE =
-  "🧪 នេះជាសារសាកល្បងពី BENCHIMIN CAFE — ប្រសិនបើអ្នកឃើញសារនេះ ការភ្ជាប់ Telegram របស់អ្នកដំណើរការល្អហើយ! ☕️💖";
+  "🧪 នេះជាសារសាកល្បងពី BENCHIMIN ARCADE — ប្រសិនបើអ្នកឃើញសារនេះ ការភ្ជាប់ Telegram របស់អ្នកដំណើរការល្អហើយ! 🕹️💖";
 
 /** POST /api/admin/telegram-subscribers/test — Body: { chatId, message? }
  *  Sends a one-off Telegram DM to any discovered chat id (connected to a

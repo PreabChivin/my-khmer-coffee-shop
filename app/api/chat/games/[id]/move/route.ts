@@ -145,6 +145,7 @@ export async function POST(
             });
             await bumpMissionProgress(tx, winnerId, "play_game_daily");
             await bumpMissionProgress(tx, loserId, "play_game_daily");
+            await bumpMissionProgress(tx, winnerId, "win_game_daily");
             const [winner, loser] = await Promise.all([
               tx.user.findUnique({ where: { id: winnerId }, select: { name: true } }),
               tx.user.findUnique({ where: { id: loserId }, select: { name: true } }),
@@ -210,6 +211,7 @@ export async function POST(
         await tx.user.update({ where: { id: loserId }, data: { gameLosses: { increment: 1 } } });
         await bumpMissionProgress(tx, winnerId, "play_game_daily");
         await bumpMissionProgress(tx, loserId, "play_game_daily");
+        await bumpMissionProgress(tx, winnerId, "win_game_daily");
 
         const [winner, loser] = await Promise.all([
           tx.user.findUnique({ where: { id: winnerId }, select: { name: true } }),

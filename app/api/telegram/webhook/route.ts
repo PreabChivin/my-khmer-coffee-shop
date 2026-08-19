@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { sendCustomerAlert } from "@/lib/telegram";
 
 // Telegram's own deep-link payload charset: A-Z a-z 0-9 _ and - (max 64
-// chars) — this also happens to match our Order UUID format exactly.
+// chars).
 const START_COMMAND = /^\/start(?:@\w+)?(?:\s+([A-Za-z0-9_-]{1,64}))?/;
 
 interface TelegramUpdate {
@@ -46,12 +46,14 @@ export async function POST(request: NextRequest) {
       const payload = match[1];
       // "s_<token>" = device-session link from the header connect button
       // (saves to TelegramSession, keyed by the browser's localStorage
-      // token); a bare payload = per-order link from the payment/tracking
-      // screen (saves to that Order). Distinct prefix → no ambiguity.
+      // token) — the only deep-link shape this app generates.
       if (payload?.startsWith("s_")) {
         await handleSessionStart(String(chatId), payload.slice(2), username);
       } else {
-        await handleStart(String(chatId), payload, username);
+        await sendCustomerAlert(
+          String(chatId),
+          "👋 សួស្តី Bestie! ដើម្បីទទួលការជូនដំណឹង សូមចុចប៊ូតុង 🔔 នៅលើ Header របស់អ្នកណា៎! 🕹️✨"
+        );
       }
     }
   } catch (err) {
@@ -79,42 +81,6 @@ async function handleSessionStart(chatId: string, token: string, username?: stri
 
   await sendCustomerAlert(
     chatId,
-    "🔔 ភ្ជាប់ជោគជ័យហើយណា៎! ចាប់ពីពេលនេះទៅ រាល់ការកម្ម៉ង់ដែលអ្នកកម្ម៉ង់ពីឧបករណ៍នេះ នឹងទទួលបានការជូនដំណឹងស្វ័យប្រវត្តិភ្លាមៗ! ☕️💖"
-  );
-}
-
-async function handleStart(chatId: string, orderId: string | undefined, username?: string) {
-  if (!orderId) {
-    await sendCustomerAlert(
-      chatId,
-      "👋 សួស្តី Bestie! ដើម្បីទទួលការជូនដំណឹងអំពីការកម្ម៉ង់ សូមចុចប៊ូតុង 🔔 នៅលើទំព័រតាមដានការកម្ម៉ង់ ឬនៅលើ Header របស់អ្នកណា៎! ☕️✨"
-    );
-    return;
-  }
-
-  const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order) {
-    await sendCustomerAlert(
-      chatId,
-      "🥺 រកមិនឃើញការកម្ម៉ង់នេះទេ Bestie។ សូមចុចប៊ូតុងម្តងទៀតពីទំព័រតាមដានការកម្ម៉ង់របស់អ្នកណា៎!"
-    );
-    return;
-  }
-
-  await prisma.order.update({
-    where: { id: orderId },
-    data: {
-      customerTelegramChatId: chatId,
-      customerTelegramUsername: username,
-      // Preserve the original link moment if this order was already linked
-      // (e.g. the customer re-taps the deep link) — only stamp it once.
-      telegramLinkedAt: order.telegramLinkedAt ?? new Date(),
-    },
-  });
-
-  const shortId = orderId.slice(0, 8).toUpperCase();
-  await sendCustomerAlert(
-    chatId,
-    `🔔 ភ្ជាប់ជោគជ័យហើយណា៎! ពួកយើងនឹងជូនដំណឹងអ្នកភ្លាមៗនៅពេលការកម្ម៉ង់ #${shortId} របស់អ្នកមានការផ្លាស់ប្តូរ ☕️💖`
+    "🔔 ភ្ជាប់ជោគជ័យហើយណា៎! ចាប់ពីពេលនេះទៅ អ្នកនឹងទទួលបានការជូនដំណឹងស្វ័យប្រវត្តិភ្លាមៗ! 🕹️💖"
   );
 }

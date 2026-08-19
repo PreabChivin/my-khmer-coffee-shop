@@ -1,14 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useSession } from "@/contexts/SessionContext";
 import { useAuthModal } from "@/contexts/AuthModalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LoyaltyProgress from "@/components/loyalty/LoyaltyProgress";
 import MissionsPanel from "@/components/games/MissionsPanel";
-import GroupCartBanner from "@/components/cart/GroupCartBanner";
-import ProductCard from "@/components/menu/ProductCard";
-import type { RecommendationDTO } from "@/lib/types";
 
 // Rails only turn on once there's real free margin beside the centered
 // max-w-6xl (1152px) column: 576 (half content) + 24 (gap) + 288 (rail) = 888.
@@ -44,46 +40,7 @@ function GuestRailCard({
   );
 }
 
-/** ✨ Same data as RecommendationsCard (GET /api/recommendations), but laid
- *  out as a single narrow column — the card's own sm:/lg: grid assumes a
- *  full-width page section, which would squeeze into a ~288px rail. */
-function RailRecommendations() {
-  const { t } = useLanguage();
-  const [picks, setPicks] = useState<RecommendationDTO[] | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/recommendations")
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data: RecommendationDTO[]) => {
-        if (!cancelled) setPicks(data);
-      })
-      .catch(() => {
-        if (!cancelled) setPicks([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (!picks || picks.length === 0) return null;
-
-  return (
-    <div>
-      <h2 className="mb-3 font-heading text-base font-extrabold text-coffee-900 dark:text-cream-50">
-        {t("account.recommendedTitle")}
-      </h2>
-      <div className="flex flex-col gap-4">
-        {picks.slice(0, 2).map((pick) => (
-          <ProductCard key={pick.product.id} product={pick.product} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/** 💎 Left rail: whatever's live right now — an in-progress group cart takes
- *  priority, then the account's Cafe Points/tier progress (or a sign-in
+/** 💎 Left rail: the account's Arcade Points/tier progress (or a sign-in
  *  nudge for guests). */
 export function HomeLeftRail() {
   const { user } = useSession();
@@ -91,7 +48,6 @@ export function HomeLeftRail() {
 
   return (
     <aside className={`${RAIL_BASE} left-[calc(50%-888px)]`} aria-label="quick access">
-      <GroupCartBanner />
       {user ? (
         <LoyaltyProgress points={user.loyaltyPoints} />
       ) : (
@@ -105,15 +61,14 @@ export function HomeLeftRail() {
   );
 }
 
-/** 🎯 Right rail: daily missions (or a sign-in nudge) plus personalized
- *  product picks — both already power the account page, just re-laid-out
- *  for a narrow column here. */
+/** 🎯 Right rail: daily missions (or a sign-in nudge) — already powers the
+ *  account page, just re-laid-out for a narrow column here. */
 export function HomeRightRail() {
   const { user } = useSession();
   const { t } = useLanguage();
 
   return (
-    <aside className={`${RAIL_BASE} right-[calc(50%-888px)]`} aria-label="rewards and picks">
+    <aside className={`${RAIL_BASE} right-[calc(50%-888px)]`} aria-label="missions">
       {user ? (
         <MissionsPanel />
       ) : (
@@ -123,7 +78,6 @@ export function HomeRightRail() {
           desc={t("home.railGuestMissionsDesc")}
         />
       )}
-      <RailRecommendations />
     </aside>
   );
 }

@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
-import { toOrderHistoryItem } from "@/lib/orderHistory";
 import { toUserDTO } from "@/lib/userDto";
 import type { CustomerProfileDTO } from "@/lib/types";
 
-// 👑 Admin-only per-customer profile: account details, lifetime value (sum of
-// PAID order totals), order count, and full purchase history.
+// 👑 Admin-only per-customer profile: account details + lifetime arcade
+// scoreboard (wins/losses/ties from GameSession play).
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -23,38 +22,11 @@ export async function GET(
       return NextResponse.json({ error: "រកមិនឃើញអតិថិជននេះទេ។" }, { status: 404 });
     }
 
-    const [orders, savedAddresses] = await Promise.all([
-      prisma.order.findMany({
-        where: { userId: id },
-        orderBy: { createdAt: "desc" },
-        include: {
-          payment: true,
-          items: { include: { product: true } },
-        },
-      }),
-      prisma.savedAddress.findMany({
-        where: { userId: id },
-        orderBy: { createdAt: "desc" },
-      }),
-    ]);
-
-    // Lifetime value = sum of totals for orders that were actually paid.
-    const lifetimeValue = orders
-      .filter((o) => o.payment?.paymentStatus === "PAID")
-      .reduce((sum, o) => sum + o.totalAmount, 0);
-
     const body: CustomerProfileDTO = {
       user: toUserDTO(user),
-      lifetimeValue: Math.round(lifetimeValue * 100) / 100,
-      orderCount: orders.length,
-      orders: orders.map(toOrderHistoryItem),
-      savedAddresses: savedAddresses.map((a) => ({
-        id: a.id,
-        label: a.label,
-        address: a.address,
-        latitude: a.latitude,
-        longitude: a.longitude,
-      })),
+      gameWins: user.gameWins,
+      gameLosses: user.gameLosses,
+      gameTies: user.gameTies,
     };
     return NextResponse.json(body);
   } catch {

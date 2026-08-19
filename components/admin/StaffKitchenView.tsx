@@ -3,40 +3,20 @@
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import { Home } from "lucide-react";
-import AdminStats from "@/components/admin/AdminStats";
-import OrdersBoard from "@/components/admin/OrdersBoard";
-import ProductManagementPanel from "@/components/admin/ProductManagementPanel";
 import RegisteredCustomersPanel from "@/components/admin/RegisteredCustomersPanel";
-import RedemptionsPanel from "@/components/admin/RedemptionsPanel";
 import NotificationsPanel from "@/components/admin/NotificationsPanel";
 import TelegramSubscribersPanel from "@/components/admin/TelegramSubscribersPanel";
-import LuckyDrawPanel from "@/components/admin/LuckyDrawPanel";
 import AdminChatMonitorPanel from "@/components/admin/AdminChatMonitorPanel";
-import AdminPredictivePanel from "@/components/admin/AdminPredictivePanel";
 import AdminToast from "@/components/admin/AdminToast";
-import type { ProductDTO } from "@/lib/types";
 
 /**
- * 🧸 ផ្ទាំងគ្រប់គ្រងការកម្ម៉ង់របស់ Besties — the single unified Staff View.
- * Replaces the ENTIRE customer homepage (banners, menu grid, cart) the
- * instant a staff member logs in. Two-column workspace: Live Orders Control
- * on the left, Dynamic Menu & Partner CMS on the right. Nothing here is ever
- * reachable by a logged-out customer, and everything unmounts (state and
- * all) the moment the Header's "ចុចចេញ/Logout" button is clicked.
+ * 🕹️ ផ្ទាំងគ្រប់គ្រង Social/Arcade — the single unified Staff View for the
+ * gaming platform: player roster, chat moderation, notifications, and
+ * Telegram connection status. The old order/product/reward-fulfilment
+ * panels (POS management for the cafe's ordering business) are gone along
+ * with the ordering system itself.
  */
-export default function StaffKitchenView({
-  products,
-  onProductCreated,
-  onProductUpdated,
-  onProductDeleted,
-  isAdminRole,
-}: {
-  products: ProductDTO[];
-  onProductCreated: (created: ProductDTO) => void;
-  onProductUpdated: (updated: ProductDTO) => void;
-  onProductDeleted: (id: string) => void;
-  isAdminRole: boolean;
-}) {
+export default function StaffKitchenView({ isAdminRole }: { isAdminRole: boolean }) {
   // 🚨 One shared error toast for the whole dashboard — any failed mutation
   // in either panel surfaces here instead of freezing or failing silently.
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -45,65 +25,41 @@ export default function StaffKitchenView({
   return (
     <div className="min-h-screen bg-cream-100 dark:bg-coffee-900">
       <div className="mx-auto max-w-[1600px] px-4 pt-6 sm:px-6">
-        {/* 🏠 Dashboard title + a clear escape hatch back to the customer
-            storefront. On desktop the button sits at the right edge of the
-            title row; on smaller/mobile (Capacitor) screens it stacks
-            centered beneath the title so nothing clips. Navigating away is a
-            plain client-side <Link> — the STAFF/ADMIN session cookie is
-            untouched, so they can flip back and forth freely. */}
+        {/* 🏠 Dashboard title + a clear escape hatch back to the arcade.
+            Navigating away is a plain client-side <Link> — the STAFF/ADMIN
+            session cookie is untouched, so they can flip back and forth
+            freely. */}
         <div className="relative flex flex-col items-center gap-3">
           <h1 className="text-center font-heading text-2xl font-extrabold text-coffee-900 dark:text-cream-50 sm:text-3xl">
-            ផ្ទាំងគ្រប់គ្រងការកម្ម៉ង់របស់ Besties 🧸
+            ផ្ទាំងគ្រប់គ្រង Arcade 🕹️
           </h1>
           <Link
             href="/"
-            aria-label="ទៅកាន់ទំព័រដើម · View Storefront"
+            aria-label="ទៅកាន់ទីលានហ្គេម · View Arcade"
             className="btn-tactile flex items-center gap-2 rounded-full bg-gradient-to-r from-gold-400 to-clay-400 px-5 py-2.5 text-sm font-bold text-white shadow-md lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2"
           >
             <Home size={16} />
-            ទៅកាន់ទំព័រដើម · View Storefront 🏠
+            ទៅកាន់ទីលានហ្គេម · View Arcade 🏠
           </Link>
         </div>
-        <AdminStats />
-        <AdminPredictivePanel />
       </div>
 
-      {/* Compact two-column workspace: Live Orders Control | Menu & Partner CMS */}
-      <div className="mx-auto grid max-w-[1600px] grid-cols-1 items-start gap-4 px-4 pb-16 sm:px-6 xl:grid-cols-2">
-        <OrdersBoard onError={showError} />
-        <ProductManagementPanel
-          products={products}
-          onProductCreated={onProductCreated}
-          onProductUpdated={onProductUpdated}
-          onProductDeleted={onProductDeleted}
-          onError={showError}
-        />
-      </div>
-
-      {/* 🎁 Reward redemptions awaiting fulfilment */}
-      <div className="px-4 sm:px-6">
-        <RedemptionsPanel onError={showError} />
-      </div>
-
-      {/* 📣 Marketing: broadcast/targeted notifications + monthly lucky draw */}
-      <div className="px-4 sm:px-6">
+      {/* 📣 Marketing: broadcast/targeted notifications */}
+      <div className="mt-4 px-4 sm:px-6">
         <NotificationsPanel onError={showError} />
       </div>
-      <div className="px-4 sm:px-6">
-        <LuckyDrawPanel onError={showError} />
-      </div>
 
-      {/* 🔔 Telegram notification connection status per registered customer */}
+      {/* 🔔 Telegram notification connection status per registered player */}
       <div className="px-4 sm:px-6">
         <TelegramSubscribersPanel onError={showError} />
       </div>
 
-      {/* 👥 Full registered-customer roster with generation + LTV drill-down */}
+      {/* 👥 Full registered-player roster */}
       <div className="px-4 sm:px-6">
         <RegisteredCustomersPanel onError={showError} />
       </div>
 
-      {/* 💬 Café Lounge moderation — Staff view/flag/delete, Admin also mutes/bans */}
+      {/* 💬 Social Lounge moderation — Staff view/flag/delete, Admin also mutes/bans */}
       <div className="px-4 pb-16 sm:px-6">
         <AdminChatMonitorPanel isAdminRole={isAdminRole} onError={showError} />
       </div>
