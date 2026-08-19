@@ -10,10 +10,19 @@ import WelcomePopup from "@/components/home/WelcomePopup";
 import HeroAvatarStage from "@/components/home/HeroAvatarStage";
 import LiveWinTicker from "@/components/home/LiveWinTicker";
 import LuckySpinWidget from "@/components/home/LuckySpinWidget";
-import { useChat } from "@/contexts/ChatContext";
+import GameLobbyModal from "@/components/games/GameLobbyModal";
 import { useSession } from "@/contexts/SessionContext";
+import { useAuthModal } from "@/contexts/AuthModalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import type { LiveTickerResponseDTO, PublicShopItemDTO } from "@/lib/types";
+import type { GameType, LiveTickerResponseDTO, PublicShopItemDTO } from "@/lib/types";
+
+type Capacity = "DUEL" | "PARTY" | "SOLO";
+
+const CAPACITY_BADGE: Record<Capacity, { km: string; en: string }> = {
+  DUEL: { km: "👥 សម្រាប់ ២ នាក់ (1v1)", en: "👥 2 Players (1v1 Duel)" },
+  PARTY: { km: "👥 សម្រាប់ ២-៤ នាក់", en: "👥 2-4 Players (Party Room)" },
+  SOLO: { km: "👤 លេងម្នាក់ឯង", en: "👤 Solo Play" },
+};
 
 interface GameLobbyCard {
   key: string;
@@ -23,6 +32,7 @@ interface GameLobbyCard {
   descKm: string;
   descEn: string;
   gradient: string;
+  capacity: Capacity;
 }
 
 // 🎮 Real, working, multiplayer today — both reuse the existing Social
@@ -36,18 +46,20 @@ const LIVE_GAMES: GameLobbyCard[] = [
     emoji: "⭕",
     titleKm: "អុក-តុក-តេ",
     titleEn: "Tic-Tac-Toe",
-    descKm: "ប្រកួត ១ទល់១ ក្នុង Social Lounge",
-    descEn: "1v1 in the Social Lounge",
+    descKm: "ចូលលេងភ្លាមៗ — គូគូស្វ័យប្រវត្តិ",
+    descEn: "Instant play — auto-matched",
     gradient: "from-lavender-500 via-lavender-400 to-crimson-400",
+    capacity: "DUEL",
   },
   {
     key: "RPS",
     emoji: "✊",
     titleKm: "កូន-ក្រដាស-កន្ត្រៃ",
     titleEn: "Rock · Paper · Scissors",
-    descKm: "ប្រកួត ១ទល់១ ក្នុង Social Lounge",
-    descEn: "1v1 in the Social Lounge",
+    descKm: "ចូលលេងភ្លាមៗ — គូគូស្វ័យប្រវត្តិ",
+    descEn: "Instant play — auto-matched",
     gradient: "from-crimson-500 via-clay-500 to-gold-400",
+    capacity: "DUEL",
   },
 ];
 
@@ -62,6 +74,7 @@ const COMING_SOON_GAMES: GameLobbyCard[] = [
     descKm: "ឆាប់ៗនេះ",
     descEn: "Coming Soon",
     gradient: "from-coffee-300 to-coffee-400",
+    capacity: "PARTY",
   },
   {
     key: "RUNNER",
@@ -71,6 +84,7 @@ const COMING_SOON_GAMES: GameLobbyCard[] = [
     descKm: "ឆាប់ៗនេះ",
     descEn: "Coming Soon",
     gradient: "from-coffee-300 to-coffee-400",
+    capacity: "SOLO",
   },
   {
     key: "LUDO",
@@ -80,6 +94,7 @@ const COMING_SOON_GAMES: GameLobbyCard[] = [
     descKm: "ឆាប់ៗនេះ",
     descEn: "Coming Soon",
     gradient: "from-coffee-300 to-coffee-400",
+    capacity: "PARTY",
   },
   {
     key: "TAP",
@@ -89,6 +104,7 @@ const COMING_SOON_GAMES: GameLobbyCard[] = [
     descKm: "ឆាប់ៗនេះ",
     descEn: "Coming Soon",
     gradient: "from-coffee-300 to-coffee-400",
+    capacity: "SOLO",
   },
   {
     key: "PUZZLE",
@@ -98,6 +114,7 @@ const COMING_SOON_GAMES: GameLobbyCard[] = [
     descKm: "ឆាប់ៗនេះ",
     descEn: "Coming Soon",
     gradient: "from-coffee-300 to-coffee-400",
+    capacity: "SOLO",
   },
 ];
 
@@ -109,7 +126,7 @@ const FEATURES = [
 
 export default function HomeContent({ shopItems }: { shopItems: PublicShopItemDTO[] }) {
   const { user } = useSession();
-  const { openChat } = useChat();
+  const { openAuth } = useAuthModal();
   const { lang } = useLanguage();
   const km = lang === "km";
 
@@ -125,6 +142,18 @@ export default function HomeContent({ shopItems }: { shopItems: PublicShopItemDT
       })
       .catch(() => {});
   }, []);
+
+  // 🚪 Which real game's waiting room is open right now, if any — clicking
+  // "PLAY NOW" skips the chat invite entirely and opens GameLobbyModal
+  // straight into auto-matchmaking.
+  const [activeLobby, setActiveLobby] = useState<GameType | null>(null);
+  function playNow(gameType: GameType) {
+    if (!user) {
+      openAuth();
+      return;
+    }
+    setActiveLobby(gameType);
+  }
 
   return (
     <div>
@@ -169,13 +198,12 @@ export default function HomeContent({ shopItems }: { shopItems: PublicShopItemDT
               >
                 <Sparkles size={16} /> {km ? "ស្ទូឌីយោអវតារ" : "Avatar Studio"}
               </Link>
-              <button
-                type="button"
-                onClick={openChat}
+              <Link
+                href="#game-arena"
                 className="btn-tactile flex items-center gap-1.5 rounded-full bg-gold-400 px-5 py-2.5 text-sm font-extrabold text-coffee-900 shadow-md transition-transform hover:scale-105"
               >
                 <Gamepad2 size={16} /> {km ? "លេងភ្លាម" : "Play Now"}
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -215,12 +243,15 @@ export default function HomeContent({ shopItems }: { shopItems: PublicShopItemDT
                 </span>
                 <p className="font-heading text-base font-extrabold">{km ? g.titleKm : g.titleEn}</p>
                 <p className="text-[11px] font-semibold text-white/85">{km ? g.descKm : g.descEn}</p>
+                <span className="animate-stage-glow rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold">
+                  {km ? CAPACITY_BADGE[g.capacity].km : CAPACITY_BADGE[g.capacity].en}
+                </span>
                 <button
                   type="button"
-                  onClick={openChat}
-                  className="btn-tactile mt-2 w-full rounded-full bg-white/95 py-2 text-xs font-extrabold text-coffee-900 shadow-md transition-transform hover:scale-105"
+                  onClick={() => playNow(g.key as GameType)}
+                  className="btn-tactile mt-1 w-full rounded-full bg-white/95 py-2 text-xs font-extrabold text-coffee-900 shadow-md transition-transform hover:scale-105"
                 >
-                  {km ? "លេងភ្លាម 🎮" : "PLAY NOW 🎮"}
+                  {km ? "លេងភ្លាម ⚡" : "PLAY NOW ⚡"}
                 </button>
               </div>
             );
@@ -237,6 +268,9 @@ export default function HomeContent({ shopItems }: { shopItems: PublicShopItemDT
               <p className="font-heading text-base font-extrabold text-coffee-700 dark:text-cream-200">
                 {km ? g.titleKm : g.titleEn}
               </p>
+              <span className="rounded-full bg-coffee-200 px-2.5 py-1 text-[10px] font-bold text-coffee-600 dark:bg-coffee-900 dark:text-cream-400">
+                {km ? CAPACITY_BADGE[g.capacity].km : CAPACITY_BADGE[g.capacity].en}
+              </span>
               <p className="text-[11px] font-semibold text-coffee-400 dark:text-cream-400">
                 {km ? "ចាំមើលឆាប់ៗនេះណា៎!" : "Stay tuned!"}
               </p>
@@ -244,6 +278,10 @@ export default function HomeContent({ shopItems }: { shopItems: PublicShopItemDT
           ))}
         </div>
       </section>
+
+      {activeLobby && (
+        <GameLobbyModal gameType={activeLobby} onClose={() => setActiveLobby(null)} />
+      )}
 
       {/* Features band */}
       <section className="border-y border-gold-500/30 bg-cream-50 dark:bg-coffee-900">
