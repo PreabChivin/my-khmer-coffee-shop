@@ -10,6 +10,7 @@ import CafeLoungeBanner from "@/components/home/CafeLoungeBanner";
 import PetZoo from "@/components/home/PetZoo";
 import CategoryScroller, { ALL_CATEGORIES_ID } from "@/components/menu/CategoryScroller";
 import HomeSidebar from "@/components/home/HomeSidebar";
+import { HomeLeftRail, HomeRightRail } from "@/components/home/SideRails";
 import WelcomePopup from "@/components/home/WelcomePopup";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { CategoryDTO, ProductDTO } from "@/lib/types";
@@ -76,6 +77,11 @@ export default function HomeContent({
     <div>
       {/* 🎉 First-visit registration promo (unauth guests only, shown once) */}
       <WelcomePopup />
+
+      {/* 💎🎯 Side rails — fill the wide margins beside the centered column on
+          large screens with real, functional widgets instead of empty space */}
+      <HomeLeftRail />
+      <HomeRightRail />
 
       <HeroSlideshow searchQuery={searchQuery} onSearchChange={setSearchQuery} products={products} />
 

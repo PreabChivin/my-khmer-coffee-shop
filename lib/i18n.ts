@@ -485,6 +485,12 @@ const dictionary = {
     "account.recommendedCategory": "More like what you love",
     "account.recommendedPopular": "Popular right now",
 
+    "home.railGuestLoyaltyTitle": "Join & start earning",
+    "home.railGuestLoyaltyDesc": "Sign in to track Cafe Points, unlock tiers, and redeem rewards.",
+    "home.railGuestMissionsTitle": "Daily Missions await",
+    "home.railGuestMissionsDesc": "Sign in to complete missions and earn bonus points.",
+    "home.railSignIn": "Log In",
+
     "ordersPage.lockedTitle": "Track your orders",
     "ordersPage.lockedSubtitle":
       "Log in to see the status of all your orders 💖",
@@ -978,6 +984,12 @@ const dictionary = {
     "account.recommendedYourUsual": "របស់ដែលអ្នកតែងតែបញ្ជា",
     "account.recommendedCategory": "ស្រដៀងនឹងអ្វីដែលអ្នកចូលចិត្ត",
     "account.recommendedPopular": "កំពុងពេញនិយមឥឡូវនេះ",
+
+    "home.railGuestLoyaltyTitle": "ចូលរួម ហើយចាប់ផ្តើមរកពិន្ទុ",
+    "home.railGuestLoyaltyDesc": "ចូលគណនីដើម្បីតាមដានពិន្ទុកាហ្វេ ដោះសោកម្រិត និងប្តូររង្វាន់។",
+    "home.railGuestMissionsTitle": "បេសកកម្មប្រចាំថ្ងៃកំពុងរង់ចាំ",
+    "home.railGuestMissionsDesc": "ចូលគណនីដើម្បីបំពេញបេសកកម្ម និងទទួលពិន្ទុបន្ថែម។",
+    "home.railSignIn": "ចូល",
 
     "ordersPage.lockedTitle": "តាមដានការកម្ម៉ង់របស់អ្នក",
     "ordersPage.lockedSubtitle":
