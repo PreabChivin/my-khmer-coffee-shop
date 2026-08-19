@@ -21,12 +21,19 @@ export default function ChatGameOverlay({
   gameId,
   myUserId,
   onClose,
+  initialGame,
 }: {
   gameId: string;
   myUserId: string;
   onClose: () => void;
+  /** Optional pre-fetched game state to render immediately instead of
+   *  waiting out the first poll — the caller may already have a fresh copy
+   *  (e.g. GameLobbyModal just fetched it to detect the match went ACTIVE).
+   *  Without this, the board briefly mounts with disabled cells for as long
+   *  as the first poll takes, even though it's already the viewer's turn. */
+  initialGame?: GameDetailDTO;
 }) {
-  const [game, setGame] = useState<GameDetailDTO | null>(null);
+  const [game, setGame] = useState<GameDetailDTO | null>(initialGame ?? null);
   const [error, setError] = useState<string | null>(null);
   const [pendingCell, setPendingCell] = useState<number | null>(null);
   const [pendingChoice, setPendingChoice] = useState(false);

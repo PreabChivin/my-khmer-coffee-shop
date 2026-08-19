@@ -125,8 +125,13 @@ export default function GameLobbyModal({
   if (!user) return null;
 
   // Handed off to real gameplay — countdown finished and the board is live.
+  // Pass along the game state we already have so the board renders
+  // immediately playable instead of sitting disabled through its own first
+  // poll (see ChatGameOverlay's initialGame doc comment).
   if (game && game.status === "ACTIVE" && countdown === null) {
-    return <ChatGameOverlayModal gameId={game.id} myUserId={user.id} onClose={onClose} />;
+    return (
+      <ChatGameOverlayModal gameId={game.id} myUserId={user.id} onClose={onClose} initialGame={game} />
+    );
   }
 
   return (
@@ -245,14 +250,16 @@ function ChatGameOverlayModal({
   gameId,
   myUserId,
   onClose,
+  initialGame,
 }: {
   gameId: string;
   myUserId: string;
   onClose: () => void;
+  initialGame?: GameDetailDTO;
 }) {
   return (
     <div className="fixed inset-0 z-[70]">
-      <ChatGameOverlay gameId={gameId} myUserId={myUserId} onClose={onClose} />
+      <ChatGameOverlay gameId={gameId} myUserId={myUserId} onClose={onClose} initialGame={initialGame} />
     </div>
   );
 }
