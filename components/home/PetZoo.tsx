@@ -97,6 +97,12 @@ const LANE_MAX_VW = 68;
 // the old 4/22/40px stagger would have overlapped at the new size.
 const SLOT_BOTTOM_PX = [4, 46, 88];
 
+// 🪟 Stacking: the roaming/gathering lanes sit at z-[5], BELOW the page's
+// own content (every dashboard section is relative z-10). Pets stay fully
+// visible in the empty gaps between cards, but a card, button or heading
+// always paints over them — this is the fix for the roaming-lane overlap
+// flagged as unresolved below, and it needs no change to the walk logic.
+//
 // 🎉 Periodic "gathering" — every 45-60s, all 6 roster members leave their
 // independent roaming loop, cluster together in one spot, and take turns
 // (one at a time, ~1.7s each) showing their speech bubble over a fixed 10s
@@ -387,7 +393,7 @@ export default function PetZoo({ items }: { items: PublicShopItemDTO[] }) {
       {zooOn && mode === "roaming" && (
         <div
           aria-hidden
-          className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-48 sm:h-56"
+          className="pointer-events-none fixed inset-x-0 bottom-0 z-[5] h-48 sm:h-56"
         >
           {slots.map((slot, slotIndex) => {
             const critter = ROSTER[slot.critterIdx];
@@ -487,7 +493,7 @@ export default function PetZoo({ items }: { items: PublicShopItemDTO[] }) {
       {zooOn && mode === "gathering" && (
         <div
           aria-hidden
-          className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-64 sm:h-72"
+          className="pointer-events-none fixed inset-x-0 bottom-0 z-[5] h-64 sm:h-72"
         >
           {ROSTER.map((critter, i) => {
             const spot = GATHER_SPOTS[i];

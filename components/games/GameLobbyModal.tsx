@@ -5,6 +5,7 @@ import { X, Loader2 } from "lucide-react";
 import ChatGameOverlay from "@/components/game/ChatGameOverlay";
 import { useSession } from "@/contexts/SessionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { playSound } from "@/lib/soundEngine";
 import type { GameDetailDTO, GameType } from "@/lib/types";
 
 const POLL_MS = 1500;
@@ -96,6 +97,7 @@ export default function GameLobbyModal({
   useEffect(() => {
     if (game?.status === "ACTIVE" && wasPendingRef.current) {
       wasPendingRef.current = false;
+      playSound("match");
       setCountdown(COUNTDOWN_FROM);
     }
   }, [game?.status]);

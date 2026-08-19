@@ -6,6 +6,7 @@ import Confetti from "@/components/Confetti";
 import { useSession } from "@/contexts/SessionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { QUESTION_DURATION_MS } from "@/lib/quizEngine";
+import { playSound } from "@/lib/soundEngine";
 import type { QuizMatchDetailDTO, QuizPlayerDTO } from "@/lib/types";
 
 const POLL_MS = 1500;
@@ -37,7 +38,6 @@ export default function QuizLobbyModal({ onClose }: { onClose: () => void }) {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [now, setNow] = useState(() => Date.now());
-  const [celebrate, setCelebrate] = useState(false);
   const wasWaitingRef = useRef(false);
   const timeoutFiredForIndexRef = useRef<number | null>(null);
   const celebratedForIndexRef = useRef<number | null>(null);
@@ -129,16 +129,14 @@ export default function QuizLobbyModal({ onClose }: { onClose: () => void }) {
     }
   }, [now, match]);
 
-  // 🎉 Confetti once per question, only when I actually got it right.
+  // 🔊 One result chime per question, the moment my own answer is revealed.
+  // Sound only — playSound talks to an external system, which is what an
+  // effect is for; the confetti is derived in render instead (below).
   useEffect(() => {
     if (!match?.question || match.question.correctIndex === null) return;
-    if (match.question.myChoice === match.question.correctIndex) {
-      if (celebratedForIndexRef.current !== match.question.index) {
-        celebratedForIndexRef.current = match.question.index;
-        setCelebrate(true);
-        setTimeout(() => setCelebrate(false), 900);
-      }
-    }
+    if (celebratedForIndexRef.current === match.question.index) return;
+    celebratedForIndexRef.current = match.question.index;
+    playSound(match.question.myChoice === match.question.correctIndex ? "correct" : "wrong");
   }, [match?.question]);
 
   // 💎 Refresh the header points pill once the podium (and its rewards)
@@ -186,6 +184,7 @@ export default function QuizLobbyModal({ onClose }: { onClose: () => void }) {
 
   async function answer(choiceIndex: number) {
     if (!match?.question || submitting || match.question.myChoice !== null) return;
+    playSound("click");
     setSubmitting(true);
     setError(null);
     try {
@@ -207,6 +206,15 @@ export default function QuizLobbyModal({ onClose }: { onClose: () => void }) {
     }
   }
 
+  // Derived, not stored: true only while my own answer for the current
+  // question is revealed AND correct. A new question changes the Confetti
+  // key, which remounts it for a fresh burst; it removes itself when done.
+  const currentQ = match?.question ?? null;
+  const gotCurrentQuestionRight =
+    currentQ !== null &&
+    currentQ.correctIndex !== null &&
+    currentQ.myChoice === currentQ.correctIndex;
+
   if (!user) return null;
 
   const me = match?.players.find((p) => p.id === user.id) ?? null;
@@ -218,7 +226,9 @@ export default function QuizLobbyModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-coffee-900/85 p-4 backdrop-blur-md">
-      {celebrate && <Confetti />}
+      {gotCurrentQuestionRight && currentQ && (
+        <Confetti key={`quiz-correct-${currentQ.index}`} />
+      )}
       <div className="khmer-card relative flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-gradient-to-b from-coffee-900 to-lavender-900 text-white shadow-2xl">
         <button
           type="button"

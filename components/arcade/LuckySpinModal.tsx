@@ -7,6 +7,7 @@ import { useAuthModal } from "@/contexts/AuthModalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Confetti from "@/components/Confetti";
 import { SPIN_SEGMENTS } from "@/lib/spin";
+import { playSound } from "@/lib/soundEngine";
 import type { SpinResultDTO, SpinStatusDTO } from "@/lib/types";
 
 const SEGMENT_DEG = 360 / SPIN_SEGMENTS.length;
@@ -32,7 +33,7 @@ function wheelBackground(): string {
  *  day, credited via POST /api/spin. The wheel always visually lands on
  *  the server-chosen prize (SPIN_SEGMENTS), never an independent random
  *  animation, so what the user sees always matches what they were paid. */
-export default function LuckySpinWidget() {
+export default function LuckySpinModal() {
   const { user, refresh } = useSession();
   const { openAuth } = useAuthModal();
   const { lang } = useLanguage();
@@ -55,6 +56,7 @@ export default function LuckySpinWidget() {
   }, [open, user, alreadySpun]);
 
   function toggle() {
+    playSound("click");
     if (!user) {
       openAuth();
       return;
@@ -66,6 +68,7 @@ export default function LuckySpinWidget() {
     if (spinning || alreadySpun) return;
     setSpinning(true);
     setError(null);
+    playSound("spin");
     try {
       const res = await fetch("/api/spin", { method: "POST" });
       const data = await res.json();
@@ -85,6 +88,7 @@ export default function LuckySpinWidget() {
         setAlreadySpun(true);
         setCelebrate(true);
         setSpinning(false);
+        playSound("claim");
         refresh();
         setTimeout(() => setCelebrate(false), 1000);
       }, 3200);

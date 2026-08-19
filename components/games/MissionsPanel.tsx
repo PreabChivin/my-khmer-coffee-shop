@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "@/contexts/SessionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Confetti from "@/components/Confetti";
+import { playSound } from "@/lib/soundEngine";
 import type { MissionDTO } from "@/lib/types";
 
 export default function MissionsPanel() {
@@ -31,6 +32,7 @@ export default function MissionsPanel() {
   }, []);
 
   async function claim(mission: MissionDTO) {
+    playSound("click");
     setBusyKey(mission.key);
     setMsg(null);
     try {
@@ -46,6 +48,7 @@ export default function MissionsPanel() {
       }
       setMsg({ ok: true, text: `${mission.emoji} ${t("missions.claimSuccess")}` });
       setCelebrate(true);
+      playSound("claim");
       setTimeout(() => setCelebrate(false), 1000);
       await refresh(); // updates the points balance
       await loadMissions();
@@ -57,7 +60,7 @@ export default function MissionsPanel() {
   }
 
   return (
-    <div className="mt-8">
+    <div className="mt-4">
       <h2 className="mb-3 font-heading text-lg font-extrabold text-coffee-900 dark:text-cream-50">
         {t("missions.title")}
       </h2>

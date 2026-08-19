@@ -22,6 +22,9 @@ const dictionary = {
     "appearance.large": "High",
     "appearance.colorTheme": "Color Theme",
     "appearance.customColor": "Custom color",
+    "appearance.sound": "Arcade Sound",
+    "appearance.soundOn": "Sound on",
+    "appearance.soundOff": "Muted",
 
     "hero.tagline": "Modern Taste, Ancient Soul",
 
@@ -524,6 +527,9 @@ const dictionary = {
     "appearance.large": "ធំ",
     "appearance.colorTheme": "ជម្រើសពណ៌",
     "appearance.customColor": "ពណ៌ផ្ទាល់ខ្លួន",
+    "appearance.sound": "សំឡេងអាកែត",
+    "appearance.soundOn": "បើកសំឡេង",
+    "appearance.soundOff": "បិទសំឡេង",
 
     "hero.tagline": "រសជាតិសម័យថ្មី ព្រលឹងសម័យបុរាណ",
 

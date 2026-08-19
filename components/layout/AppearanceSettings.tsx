@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Monitor, Moon, Settings, Sun } from "lucide-react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Monitor, Moon, Settings, Sun, Volume2, VolumeX } from "lucide-react";
 import {
   useTheme,
   type ColorMode,
@@ -9,6 +9,7 @@ import {
 } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LANGUAGES } from "@/lib/i18n";
+import { isSoundMuted, setSoundMuted, subscribeSoundMuted } from "@/lib/soundEngine";
 
 const THEME_OPTIONS: {
   value: ColorMode;
@@ -46,6 +47,15 @@ export default function AppearanceSettings() {
   const { colorMode, setColorMode, fontSize, setFontSize, accentColor, setAccentColor } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  // 🔊 Global arcade-sound mute. useSyncExternalStore is the right primitive
+  // here: the engine IS an external store, and the explicit server snapshot
+  // (always "unmuted") keeps SSR markup and the first client paint in
+  // agreement before localStorage is read.
+  const muted = useSyncExternalStore(
+    subscribeSoundMuted,
+    isSoundMuted,
+    () => false
+  );
 
   useEffect(() => {
     if (!isOpen) return;
@@ -145,6 +155,23 @@ export default function AppearanceSettings() {
           </div>
 
           <p className="mb-1.5 mt-4 text-xs font-medium text-coffee-600 dark:text-cream-200">
+            {t("appearance.sound")}
+          </p>
+          <button
+            type="button"
+            onClick={() => setSoundMuted(!muted)}
+            aria-pressed={!muted}
+            className={`mb-4 flex w-full items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-semibold transition-colors ${
+              muted
+                ? "border-coffee-300 text-coffee-500 hover:bg-coffee-100 dark:border-coffee-600 dark:text-cream-300 dark:hover:bg-coffee-700"
+                : "border-gold-500 bg-coffee-800 text-gold-400"
+            }`}
+          >
+            {muted ? <VolumeX size={15} /> : <Volume2 size={15} />}
+            {muted ? t("appearance.soundOff") : t("appearance.soundOn")}
+          </button>
+
+          <p className="mb-1.5 text-xs font-medium text-coffee-600 dark:text-cream-200">
             {t("appearance.colorTheme")}
           </p>
           <div className="flex flex-wrap items-center gap-2">

@@ -119,6 +119,11 @@ export interface LiveTickerResponseDTO {
   /** Real completed-match count per gameType since midnight — backs each
    *  Game Arena card's "played today" badge. */
   todayPlayedCounts: Record<string, number>;
+  /** Rooms open and joinable RIGHT NOW, per gameType — an unaccepted
+   *  PENDING challenge for the 1v1 games, a WAITING room for the quiz.
+   *  Backs each card's "N rooms live" indicator; genuinely 0 on a quiet
+   *  day rather than a decorative number. */
+  openRoomCounts: Record<string, number>;
 }
 
 /** 🎡 Daily Lucky Spin — see lib/spin.ts + app/api/spin/route.ts. */

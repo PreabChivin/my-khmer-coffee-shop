@@ -14,7 +14,7 @@ export async function GET() {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
-    const [recentWins, todayCounts, todayQuizCount] = await Promise.all([
+    const [recentWins, todayCounts, todayQuizCount, openGameRooms, openQuizRooms] = await Promise.all([
       prisma.gameSession.findMany({
         where: { status: "COMPLETED", winnerId: { not: null } },
         orderBy: { updatedAt: "desc" },
@@ -39,6 +39,14 @@ export async function GET() {
       prisma.quizMatch.count({
         where: { status: { in: ["ACTIVE", "COMPLETED"] }, updatedAt: { gte: startOfDay } },
       }),
+      // 🟢 Rooms joinable right now — an open, untargeted PENDING challenge
+      // anyone can Quick Match into.
+      prisma.gameSession.groupBy({
+        by: ["gameType"],
+        where: { status: "PENDING", player2Id: null, targetUserId: null },
+        _count: { _all: true },
+      }),
+      prisma.quizMatch.count({ where: { status: "WAITING" } }),
     ]);
 
     const todayPlayedCounts: Record<string, number> = Object.fromEntries(
@@ -46,6 +54,13 @@ export async function GET() {
     );
     if (todayQuizCount > 0) {
       todayPlayedCounts.QUIZ = todayQuizCount;
+    }
+
+    const openRoomCounts: Record<string, number> = Object.fromEntries(
+      openGameRooms.map((row) => [row.gameType, row._count._all])
+    );
+    if (openQuizRooms > 0) {
+      openRoomCounts.QUIZ = openQuizRooms;
     }
 
     const body: LiveTickerResponseDTO = {
@@ -56,10 +71,11 @@ export async function GET() {
         at: g.updatedAt.toISOString(),
       })),
       todayPlayedCounts,
+      openRoomCounts,
     };
     return NextResponse.json(body);
   } catch {
-    const body: LiveTickerResponseDTO = { entries: [], todayPlayedCounts: {} };
+    const body: LiveTickerResponseDTO = { entries: [], todayPlayedCounts: {}, openRoomCounts: {} };
     return NextResponse.json(body);
   }
 }
