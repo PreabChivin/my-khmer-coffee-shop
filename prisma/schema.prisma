@@ -211,6 +211,7 @@ model User {
   gamesAsPlayer1 GameSession[] @relation("GamePlayer1")
   gamesAsPlayer2 GameSession[] @relation("GamePlayer2")
   gamesTargetingMe GameSession[] @relation("GameTarget")
+  quizPlayerRows QuizPlayer[]
   directConversationsAsA DirectConversation[] @relation("ConversationUserA")
   directConversationsAsB DirectConversation[] @relation("ConversationUserB")
   directMessagesSent     DirectMessage[]      @relation("DirectMessageSender")
@@ -558,6 +559,61 @@ model GameSession {
   updatedAt DateTime @updatedAt
 
   @@index([status])
+}
+
+// 🧠 Trivia Quiz Show — a separate model family from GameSession above,
+// which is hard-fixed to exactly 2 players (player1Id/player2Id columns).
+// A quiz room supports 2-4 simultaneous players, so it needs a real
+// join-table shape instead. Same polling architecture as everything else
+// (no Socket.io/Supabase — see the lobby-transport decision this app already
+// made): GET /api/quiz/[id] is polled while a room is open, exactly like
+// GameSession. Questions live in code (lib/quizQuestions.ts), not a DB
+// table — same convention as lib/missions.ts's static MISSIONS list.
+model QuizMatch {
+  id     String @id @default(uuid())
+  // "WAITING" (lobby, filling up) | "ACTIVE" (questions live) |
+  // "COMPLETED" | "CANCELLED"
+  status String @default("WAITING")
+  // Room fills toward this (2-4); auto-starts the instant it's reached.
+  // Any participant can also start early once >=2 have joined — without
+  // an AI-bot filler, requiring exactly `capacity` could otherwise leave a
+  // room waiting forever if fewer real players are online right now.
+  capacity Int @default(4)
+  // Fixed, server-chosen question keys for this room — decided once at
+  // creation so every player answers the exact same quiz in the exact same
+  // order, never regenerated mid-match.
+  questionIds String[]
+  // -1 before the match starts; otherwise the 0-based index into
+  // questionIds currently live.
+  currentQuestionIndex Int @default(-1)
+  // Server timestamp the CURRENT question went live — the single source of
+  // truth for the countdown and for speed-based scoring on every client;
+  // never trust a client-reported elapsed time.
+  currentQuestionStartedAt DateTime?
+  // Guards the podium point-grant so it only ever fires once, even if the
+  // completing request is retried or raced.
+  rewardsGranted Boolean @default(false)
+  players   QuizPlayer[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([status])
+}
+
+model QuizPlayer {
+  id      String    @id @default(uuid())
+  matchId String
+  match   QuizMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score   Int       @default(0)
+  // { [questionIndex: string]: { choice: 0-3, ms: number } } — one entry
+  // per question this player has answered so far this match.
+  answers Json     @default("{}")
+  joinedAt DateTime @default(now())
+
+  @@unique([matchId, userId])
+  @@index([matchId])
 }
 
 // 🎩 Avatar Shop & Daily Missions — spends/earns the SAME `User.loyaltyPoints`

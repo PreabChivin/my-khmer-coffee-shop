@@ -14,7 +14,7 @@ export async function GET() {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
-    const [recentWins, todayCounts] = await Promise.all([
+    const [recentWins, todayCounts, todayQuizCount] = await Promise.all([
       prisma.gameSession.findMany({
         where: { status: "COMPLETED", winnerId: { not: null } },
         orderBy: { updatedAt: "desc" },
@@ -33,7 +33,20 @@ export async function GET() {
         where: { status: "COMPLETED", updatedAt: { gte: startOfDay } },
         _count: { _all: true },
       }),
+      // Trivia Quiz Show uses a separate QuizMatch model (2-4 players, not
+      // GameSession's fixed pair) — counted separately, same "real data
+      // only" rule as everything else on this card grid.
+      prisma.quizMatch.count({
+        where: { status: { in: ["ACTIVE", "COMPLETED"] }, updatedAt: { gte: startOfDay } },
+      }),
     ]);
+
+    const todayPlayedCounts: Record<string, number> = Object.fromEntries(
+      todayCounts.map((row) => [row.gameType, row._count._all])
+    );
+    if (todayQuizCount > 0) {
+      todayPlayedCounts.QUIZ = todayQuizCount;
+    }
 
     const body: LiveTickerResponseDTO = {
       entries: recentWins.map((g) => ({
@@ -42,9 +55,7 @@ export async function GET() {
         gameType: g.gameType === "RPS" ? "RPS" : "TICTACTOE",
         at: g.updatedAt.toISOString(),
       })),
-      todayPlayedCounts: Object.fromEntries(
-        todayCounts.map((row) => [row.gameType, row._count._all])
-      ),
+      todayPlayedCounts,
     };
     return NextResponse.json(body);
   } catch {

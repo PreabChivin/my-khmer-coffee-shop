@@ -375,6 +375,47 @@ export interface GameStatsDTO {
   ties: number;
 }
 
+/** 🧠 Trivia Quiz Show — separate DTO family from GameDetailDTO (2-4
+ *  players, not a fixed pair). See lib/quizDto.ts for how these are built
+ *  and app/api/quiz/* for the routes that serve them. */
+export type QuizMatchStatus = "WAITING" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+
+export interface QuizPlayerDTO {
+  id: string;
+  name: string;
+  score: number;
+  hasAnsweredCurrent: boolean;
+}
+
+export interface QuizQuestionDTO {
+  index: number;
+  totalQuestions: number;
+  category: string;
+  textKm: string;
+  choicesKm: [string, string, string, string];
+  /** Only present once safe to reveal — I've already answered this
+   *  question, or the match has moved past it. Withheld from every other
+   *  still-deciding player, same anti-peek principle as RPS's
+   *  opponentChoice. */
+  correctIndex: number | null;
+  /** My own submitted choice for this question, if I've answered. */
+  myChoice: number | null;
+}
+
+export interface QuizMatchDetailDTO {
+  id: string;
+  status: QuizMatchStatus;
+  capacity: number;
+  players: QuizPlayerDTO[];
+  question: QuizQuestionDTO | null;
+  /** ISO timestamp — client computes the countdown from this, not a
+   *  server-pushed "seconds remaining" that would go stale between polls. */
+  questionDeadlineAt: string | null;
+  myUserId: string;
+  /** Sorted desc by score — populated only once status is COMPLETED. */
+  podium: QuizPlayerDTO[] | null;
+}
+
 /** 👑 Admin Chat Monitor row — deliberately a separate shape from
  *  ChatMessageDTO (never sent to regular members): includes the author's
  *  email and live moderation status, and — unlike the customer feed —

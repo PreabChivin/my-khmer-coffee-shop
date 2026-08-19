@@ -11,6 +11,7 @@ import HeroAvatarStage from "@/components/home/HeroAvatarStage";
 import LiveWinTicker from "@/components/home/LiveWinTicker";
 import LuckySpinWidget from "@/components/home/LuckySpinWidget";
 import GameLobbyModal from "@/components/games/GameLobbyModal";
+import QuizLobbyModal from "@/components/games/QuizLobbyModal";
 import { useSession } from "@/contexts/SessionContext";
 import { useAuthModal } from "@/contexts/AuthModalContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -63,19 +64,23 @@ const LIVE_GAMES: GameLobbyCard[] = [
   },
 ];
 
+// 🧠 Trivia Quiz Show — a real 2-4 player party room (QuizMatch/QuizPlayer
+// + app/api/quiz/*), rendered as its own card since it opens QuizLobbyModal
+// rather than the 1v1 GameLobbyModal the games above use.
+const QUIZ_CARD: GameLobbyCard = {
+  key: "QUIZ",
+  emoji: "🧠",
+  titleKm: "ការប្រកួតសំណួរ",
+  titleEn: "Trivia Quiz Show",
+  descKm: "ចូលលេងភ្លាមៗ — ២-៤ នាក់ក្នុងបន្ទប់មួយ",
+  descEn: "Instant play — 2-4 players per room",
+  gradient: "from-gold-400 via-clay-400 to-lavender-500",
+  capacity: "PARTY",
+};
+
 // 🔒 Announced concepts that aren't real games yet — shown honestly as
 // locked/upcoming rather than faked or silently dropped.
 const COMING_SOON_GAMES: GameLobbyCard[] = [
-  {
-    key: "QUIZ",
-    emoji: "🧠",
-    titleKm: "ការប្រកួតសំណួរ",
-    titleEn: "Trivia Quiz Show",
-    descKm: "ឆាប់ៗនេះ",
-    descEn: "Coming Soon",
-    gradient: "from-coffee-300 to-coffee-400",
-    capacity: "PARTY",
-  },
   {
     key: "RUNNER",
     emoji: "🏃",
@@ -147,12 +152,20 @@ export default function HomeContent({ shopItems }: { shopItems: PublicShopItemDT
   // "PLAY NOW" skips the chat invite entirely and opens GameLobbyModal
   // straight into auto-matchmaking.
   const [activeLobby, setActiveLobby] = useState<GameType | null>(null);
+  const [quizOpen, setQuizOpen] = useState(false);
   function playNow(gameType: GameType) {
     if (!user) {
       openAuth();
       return;
     }
     setActiveLobby(gameType);
+  }
+  function playQuizNow() {
+    if (!user) {
+      openAuth();
+      return;
+    }
+    setQuizOpen(true);
   }
 
   return (
@@ -227,35 +240,16 @@ export default function HomeContent({ shopItems }: { shopItems: PublicShopItemDT
         </p>
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {LIVE_GAMES.map((g) => {
-            const playedToday = todayCounts[g.key] ?? 0;
-            return (
-              <div
-                key={g.key}
-                className={`khmer-card group relative flex flex-col items-center gap-2 overflow-hidden rounded-3xl bg-gradient-to-br p-6 text-center text-white shadow-lg transition-transform hover:-translate-y-1 hover:scale-[1.03] hover:shadow-2xl ${g.gradient}`}
-              >
-                <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
-                <span className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-black/25 px-2.5 py-1 text-[10px] font-extrabold backdrop-blur-sm">
-                  🟢 {playedToday} {km ? "លេងថ្ងៃនេះ" : "played today"}
-                </span>
-                <span className="mt-4 text-6xl drop-shadow-md transition-transform group-hover:scale-110 group-hover:-rotate-6">
-                  {g.emoji}
-                </span>
-                <p className="font-heading text-base font-extrabold">{km ? g.titleKm : g.titleEn}</p>
-                <p className="text-[11px] font-semibold text-white/85">{km ? g.descKm : g.descEn}</p>
-                <span className="animate-stage-glow rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold">
-                  {km ? CAPACITY_BADGE[g.capacity].km : CAPACITY_BADGE[g.capacity].en}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => playNow(g.key as GameType)}
-                  className="btn-tactile mt-1 w-full rounded-full bg-white/95 py-2 text-xs font-extrabold text-coffee-900 shadow-md transition-transform hover:scale-105"
-                >
-                  {km ? "លេងភ្លាម ⚡" : "PLAY NOW ⚡"}
-                </button>
-              </div>
-            );
-          })}
+          {LIVE_GAMES.map((g) => (
+            <LiveGameCard
+              key={g.key}
+              game={g}
+              playedToday={todayCounts[g.key] ?? 0}
+              km={km}
+              onPlay={() => playNow(g.key as GameType)}
+            />
+          ))}
+          <LiveGameCard game={QUIZ_CARD} playedToday={todayCounts.QUIZ ?? 0} km={km} onPlay={playQuizNow} />
           {COMING_SOON_GAMES.map((g) => (
             <div
               key={g.key}
@@ -282,6 +276,7 @@ export default function HomeContent({ shopItems }: { shopItems: PublicShopItemDT
       {activeLobby && (
         <GameLobbyModal gameType={activeLobby} onClose={() => setActiveLobby(null)} />
       )}
+      {quizOpen && <QuizLobbyModal onClose={() => setQuizOpen(false)} />}
 
       {/* Features band */}
       <section className="border-y border-gold-500/30 bg-cream-50 dark:bg-coffee-900">
@@ -326,6 +321,44 @@ export default function HomeContent({ shopItems }: { shopItems: PublicShopItemDT
       {/* 🐷🐔🦆🐘🦖🐻 Pet Zoo — roaming critter engine, recommends real avatar
           items from the shop catalog */}
       <PetZoo items={shopItems} />
+    </div>
+  );
+}
+
+function LiveGameCard({
+  game,
+  playedToday,
+  km,
+  onPlay,
+}: {
+  game: GameLobbyCard;
+  playedToday: number;
+  km: boolean;
+  onPlay: () => void;
+}) {
+  return (
+    <div
+      className={`khmer-card group relative flex flex-col items-center gap-2 overflow-hidden rounded-3xl bg-gradient-to-br p-6 text-center text-white shadow-lg transition-transform hover:-translate-y-1 hover:scale-[1.03] hover:shadow-2xl ${game.gradient}`}
+    >
+      <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
+      <span className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-black/25 px-2.5 py-1 text-[10px] font-extrabold backdrop-blur-sm">
+        🟢 {playedToday} {km ? "លេងថ្ងៃនេះ" : "played today"}
+      </span>
+      <span className="mt-4 text-6xl drop-shadow-md transition-transform group-hover:scale-110 group-hover:-rotate-6">
+        {game.emoji}
+      </span>
+      <p className="font-heading text-base font-extrabold">{km ? game.titleKm : game.titleEn}</p>
+      <p className="text-[11px] font-semibold text-white/85">{km ? game.descKm : game.descEn}</p>
+      <span className="animate-stage-glow rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold">
+        {km ? CAPACITY_BADGE[game.capacity].km : CAPACITY_BADGE[game.capacity].en}
+      </span>
+      <button
+        type="button"
+        onClick={onPlay}
+        className="btn-tactile mt-1 w-full rounded-full bg-white/95 py-2 text-xs font-extrabold text-coffee-900 shadow-md transition-transform hover:scale-105"
+      >
+        {km ? "លេងភ្លាម ⚡" : "PLAY NOW ⚡"}
+      </button>
     </div>
   );
 }
