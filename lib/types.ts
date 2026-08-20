@@ -502,3 +502,58 @@ export interface UpgradeResultDTO {
   expGained: number;
   levelsGained: number;
 }
+
+/** ⚔️ 8-Card Elemental Battle Arena -- see lib/battleEngine.ts +
+ *  lib/battleDto.ts for how these are built, app/api/battle/* for routes. */
+export interface BattleDeckResponseDTO {
+  cardIds: string[];
+  cards: CreatureCardDTO[];
+}
+
+export interface BattleRosterCardDTO {
+  cardId: string;
+  speciesId: string;
+  nameEn: string;
+  nameKm: string;
+  element: Element;
+  shape: string;
+  emoji: string;
+  stars: number;
+  power: number;
+  maxHp: number;
+  hp: number;
+  fainted: boolean;
+}
+
+export type BattleActionDTO =
+  | {
+      type: "ATTACK";
+      attackerUserId: string;
+      damage: number;
+      multiplier: number;
+      label: "SUPER" | "WEAK" | "NEUTRAL";
+      defenderFainted: boolean;
+    }
+  | { type: "SWITCH"; userId: string; activeIndex: number };
+
+export interface BattlePlayerStateDTO {
+  userId: string;
+  name: string;
+  roster: BattleRosterCardDTO[];
+  activeIndex: number;
+}
+
+export type BattleMatchStatus = "WAITING" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+
+export interface BattleMatchDetailDTO {
+  id: string;
+  status: BattleMatchStatus;
+  myUserId: string;
+  /** Always [me, opponent] once 2 players are present, or just [me] while
+   *  WAITING for an opponent. */
+  players: BattlePlayerStateDTO[];
+  turnUserId: string | null;
+  isMyTurn: boolean;
+  winnerUserId: string | null;
+  lastAction: BattleActionDTO | null;
+}

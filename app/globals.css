@@ -804,3 +804,61 @@ select:focus {
 .animate-rarity-burst {
   animation: rarity-burst 0.8s ease-out forwards;
 }
+
+/* ===== ⚔️ Battle Arena ===== */
+
+/* Defender flinch on a landed hit. */
+@keyframes battle-hit-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px) rotate(-2deg); }
+  40% { transform: translateX(5px) rotate(2deg); }
+  60% { transform: translateX(-4px) rotate(-1deg); }
+  80% { transform: translateX(3px) rotate(1deg); }
+}
+
+.animate-battle-hit {
+  animation: battle-hit-shake 0.4s ease-in-out;
+}
+
+/* Elemental burst behind the defender on impact -- color set inline per
+ * element via style={{ background: ... }} from the caller. */
+@keyframes battle-burst {
+  0% { transform: scale(0.3); opacity: 0.9; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+.animate-battle-burst {
+  animation: battle-burst 0.55s ease-out forwards;
+}
+
+/* A fainted creature slumps out rather than just vanishing. */
+@keyframes battle-faint {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(18px) rotate(8deg); opacity: 0.15; }
+}
+
+.animate-battle-faint {
+  animation: battle-faint 0.6s ease-in forwards;
+}
+
+/* A freshly promoted/switched-in active creature hops onto the field. */
+@keyframes battle-enter {
+  0% { transform: translateY(14px) scale(0.85); opacity: 0; }
+  70% { transform: translateY(-3px) scale(1.03); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.animate-battle-enter {
+  animation: battle-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Elemental advantage banner slam-in. */
+@keyframes battle-banner-in {
+  0% { transform: scale(0.6) translateY(-10px); opacity: 0; }
+  60% { transform: scale(1.08) translateY(0); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.animate-battle-banner {
+  animation: battle-banner-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}

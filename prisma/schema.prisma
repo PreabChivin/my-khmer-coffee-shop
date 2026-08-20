@@ -213,6 +213,8 @@ model User {
   gamesTargetingMe          GameSession[]         @relation("GameTarget")
   quizPlayerRows            QuizPlayer[]
   creatureCards             CreatureCard[]
+  battleDeck                BattleDeck?
+  battlePlayerRows          BattlePlayer[]
   directConversationsAsA    DirectConversation[]  @relation("ConversationUserA")
   directConversationsAsB    DirectConversation[]  @relation("ConversationUserB")
   directMessagesSent        DirectMessage[]       @relation("DirectMessageSender")
@@ -642,6 +644,63 @@ model CreatureCard {
 
   @@index([userId])
   @@index([userId, speciesId])
+}
+
+// ⚔️ 8-Card Elemental Battle Arena.
+//
+// BattleDeck is a single saved loadout per user (exactly 8 owned card ids) --
+// built at the deck-builder screen, then reused every time that player
+// queues. Deliberately one deck slot for v1, not named multi-deck presets.
+//
+// BattleMatch/BattlePlayer mirror QuizMatch/QuizPlayer's shape (a separate
+// model family per game, same polling architecture, same reason: an
+// isolated blast radius so a bug in one game can never touch another's live
+// rows). roster is a full SNAPSHOT of each of the 8 cards' battle stats
+// taken the instant the match goes ACTIVE -- CP, HP, element -- so a card
+// fed/leveled by an unrelated request mid-battle can never retroactively
+// change an in-progress fight, and the battle loop never has to re-join
+// against the live CreatureCard table on every poll.
+model BattleDeck {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardIds   String[]
+  updatedAt DateTime @updatedAt
+}
+
+model BattleMatch {
+  id             String         @id @default(uuid())
+  // "WAITING" (lobby) | "ACTIVE" | "COMPLETED" | "CANCELLED"
+  status         String         @default("WAITING")
+  // userId of whoever acts next; null while WAITING.
+  turnUserId     String?
+  winnerUserId   String?
+  // { type: "ATTACK", attackerUserId, damage, label, defeated } |
+  // { type: "SWITCH", userId, activeIndex } -- the most recent action, for
+  // the client's hit-flash/elemental-banner FX. Cleared to null on a fresh
+  // WAITING->ACTIVE transition.
+  lastAction     Json?
+  rewardsGranted Boolean        @default(false)
+  players        BattlePlayer[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([status])
+}
+
+model BattlePlayer {
+  id          String      @id @default(uuid())
+  matchId     String
+  match       BattleMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // BattleRosterCard[8] -- see lib/battleDto.ts for the exact shape.
+  roster      Json
+  activeIndex Int         @default(0)
+  joinedAt    DateTime    @default(now())
+
+  @@unique([matchId, userId])
+  @@index([matchId])
 }
 
 // 🎩 Avatar Shop & Daily Missions — spends/earns the SAME `User.loyaltyPoints`

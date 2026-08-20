@@ -83,6 +83,32 @@ export const ELEMENTS: Record<Element, ElementMeta> = {
 
 export const ELEMENT_KEYS = Object.keys(ELEMENTS) as Element[];
 
+/** Damage multipliers for the Elemental Wheel -- both within the brief's
+ *  requested bands (super effective +50% to +100%, not-very-effective
+ *  -30% to -50%). Applied in lib/battleEngine.ts; never on the client. */
+export const SUPER_EFFECTIVE_MULTIPLIER = 1.75;
+export const NOT_EFFECTIVE_MULTIPLIER = 0.6;
+export const NEUTRAL_MULTIPLIER = 1;
+
+export type MatchupLabel = "SUPER" | "WEAK" | "NEUTRAL";
+
+/** attacker's element vs defender's element -> the multiplier + a label
+ *  the UI can show ("SUPER EFFECTIVE!" / "NOT EFFECTIVE"). Reuses the same
+ *  `beats` relation ELEMENTS already declares -- no second data source to
+ *  keep in sync. */
+export function elementalMatchup(
+  attacker: Element,
+  defender: Element
+): { multiplier: number; label: MatchupLabel } {
+  if (ELEMENTS[attacker].beats === defender) {
+    return { multiplier: SUPER_EFFECTIVE_MULTIPLIER, label: "SUPER" };
+  }
+  if (ELEMENTS[defender].beats === attacker) {
+    return { multiplier: NOT_EFFECTIVE_MULTIPLIER, label: "WEAK" };
+  }
+  return { multiplier: NEUTRAL_MULTIPLIER, label: "NEUTRAL" };
+}
+
 /** Shape hint consumed by the SVG art component — keeps the roster data
  *  purely declarative instead of hard-coding a drawing per species. */
 export type BodyShape = "beast" | "wyrm" | "avian" | "aquatic" | "bloom" | "spirit";

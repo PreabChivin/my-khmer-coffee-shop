@@ -1,7 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { PackageOpen, Layers, Swords } from "lucide-react";
+import BattleLobbyModal from "@/components/battle/BattleLobbyModal";
+import { useSession } from "@/contexts/SessionContext";
+import { useAuthModal } from "@/contexts/AuthModalContext";
 import CreatureCardArt from "@/components/cards/CreatureCardArt";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { playSound } from "@/lib/soundEngine";
@@ -18,7 +22,19 @@ const SHOWCASE = [
 /** 🃏 Dashboard headline for the Creature Card Collector. */
 export default function CardGameBanner() {
   const { lang } = useLanguage();
+  const { user } = useSession();
+  const { openAuth } = useAuthModal();
+  const [battleOpen, setBattleOpen] = useState(false);
   const km = lang === "km";
+
+  function enterArena() {
+    playSound("match");
+    if (!user) {
+      openAuth();
+      return;
+    }
+    setBattleOpen(true);
+  }
 
   return (
     <section className="relative z-10 mx-auto max-w-7xl px-4 pt-10 sm:px-6">
@@ -57,12 +73,22 @@ export default function CardGameBanner() {
               </Link>
             </div>
 
-            <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] font-semibold text-white/60 lg:justify-start">
-              <Swords size={12} />
-              {km
-                ? "ការប្រកួតកាត ១ទល់១ នឹងមកដល់ជំហានបន្ទាប់"
-                : "1v1 card battles arrive in the next update"}
-            </p>
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2.5 lg:justify-start">
+              <button
+                type="button"
+                onClick={enterArena}
+                className="btn-tactile flex items-center gap-1.5 rounded-full bg-white/15 px-5 py-2.5 text-sm font-extrabold text-white shadow-md backdrop-blur-sm transition-transform hover:scale-105"
+              >
+                <Swords size={16} /> {km ? "ទីលានប្រយុទ្ធ ១ទល់១" : "1v1 Battle Arena"}
+              </button>
+              <Link
+                href="/battle-deck"
+                onClick={() => playSound("click")}
+                className="text-[11px] font-semibold text-white/60 underline-offset-2 hover:text-white hover:underline"
+              >
+                {km ? "រៀបចំកញ្ចប់ប្រយុទ្ធ" : "Build your deck"}
+              </Link>
+            </div>
           </div>
 
           {/* Fanned showcase cards */}
@@ -81,6 +107,7 @@ export default function CardGameBanner() {
           </div>
         </div>
       </div>
+      {battleOpen && <BattleLobbyModal onClose={() => setBattleOpen(false)} />}
     </section>
   );
 }

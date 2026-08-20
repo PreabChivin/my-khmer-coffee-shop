@@ -23,7 +23,13 @@ export type SoundName =
   | "pack"
   | "reveal"
   | "legendary"
-  | "upgrade";
+  | "upgrade"
+  | "hit"
+  | "superEffective"
+  | "notEffective"
+  | "faint"
+  | "victory"
+  | "defeat";
 
 const STORAGE_KEY = "arcade-sound-muted";
 
@@ -77,6 +83,30 @@ const SOUNDS: Record<SoundName, Tone[]> = {
     { freq: 440, at: 0, dur: 0.09, type: "sine", gain: 0.06 },
     { freq: 660, at: 0.09, dur: 0.09, type: "sine", gain: 0.06 },
     { freq: 990, at: 0.18, dur: 0.18, type: "sine", gain: 0.065 },
+  ],
+  // ⚔️ Battle Arena cues
+  hit: [{ freq: 200, at: 0, dur: 0.08, type: "square", gain: 0.05 }],
+  superEffective: [
+    { freq: 330, at: 0, dur: 0.06, type: "square", gain: 0.05 },
+    { freq: 660, at: 0.05, dur: 0.06, type: "square", gain: 0.06 },
+    { freq: 990, at: 0.1, dur: 0.1, type: "square", gain: 0.07 },
+  ],
+  notEffective: [{ freq: 140, at: 0, dur: 0.16, type: "triangle", gain: 0.04 }],
+  faint: [
+    { freq: 440, at: 0, dur: 0.09, type: "sawtooth", gain: 0.05 },
+    { freq: 220, at: 0.08, dur: 0.14, type: "sawtooth", gain: 0.05 },
+    { freq: 110, at: 0.18, dur: 0.2, type: "sawtooth", gain: 0.045 },
+  ],
+  victory: [
+    { freq: 523, at: 0, dur: 0.12, type: "triangle", gain: 0.07 },
+    { freq: 659, at: 0.11, dur: 0.12, type: "triangle", gain: 0.07 },
+    { freq: 784, at: 0.22, dur: 0.14, type: "triangle", gain: 0.075 },
+    { freq: 1047, at: 0.36, dur: 0.32, type: "triangle", gain: 0.08 },
+  ],
+  defeat: [
+    { freq: 392, at: 0, dur: 0.16, type: "sine", gain: 0.055 },
+    { freq: 330, at: 0.14, dur: 0.16, type: "sine", gain: 0.05 },
+    { freq: 261, at: 0.28, dur: 0.3, type: "sine", gain: 0.045 },
   ],
   spin: [
     { freq: 392, at: 0, dur: 0.07, type: "square", gain: 0.03 },

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Crown, Gamepad2, LogOut, MessageCircle, Sparkles, Trophy, User, Layers } from "lucide-react";
+import { Crown, Gamepad2, LogOut, MessageCircle, Sparkles, Trophy, User, Layers, Swords } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { useAuthModal } from "@/contexts/AuthModalContext";
 import { getOrCreateTelegramSessionToken } from "@/lib/telegramSession";
@@ -97,6 +97,7 @@ export default function Header() {
           {!isStaff && (
             <>
               <NavIconLink href="/collection" label="បណ្តុំសត្វ · My Collection" icon={<Layers size={19} />} />
+              <NavIconLink href="/battle-deck" label="កញ្ចប់ប្រយុទ្ធ · Battle Deck" icon={<Swords size={19} />} />
               <NavIconLink href="/leaderboard" label="តារាងចំណាត់ថ្នាក់ · Leaderboard" icon={<Trophy size={19} />} />
               <NavIconLink href="/avatar-studio" label="ស្ទូឌីយោអវតារ · Avatar Studio" icon={<Sparkles size={19} />} />
               <NavIconLink href="/social" label="Social Lounge" icon={<MessageCircle size={19} />} />
